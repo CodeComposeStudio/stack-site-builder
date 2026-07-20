@@ -4,3 +4,6 @@ dist/
 .aas-cache/
 *.log
 .DS_Store
+
+# pnpm content-addressable store (local to this devcontainer)
+.pnpm-store/
