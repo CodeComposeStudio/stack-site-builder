@@ -1,0 +1,28 @@
+{
+  "name": "stack-site-builder",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "forwardPorts": [4321],
+  "portsAttributes": {
+    "4321": {
+      "label": "Astro dev server (playground)",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postCreateCommand": "pnpm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "astro-build.astro-vscode",
+        "bradlc.vscode-tailwindcss",
+        "unifiedjs.vscode-mdx",
+        "esbenp.prettier-vscode",
+        "DavidAnson.vscode-markdownlint"
+      ],
+      "settings": {
+        "editor.formatOnSave": true
+      }
+    }
+  }
+}

@@ -3,6 +3,7 @@
   "type": "module",
   "version": "1.10.0",
   "license": "MIT",
+  "packageManager": "pnpm@11.7.0",
   "description": "The engine behind the awesome-*-stack catalog sites: an Astro theme with the catalog/concepts/articles/slides/samples routes, components, styles and markdown pipeline. Sites provide content, taxonomy data and config.",
   "repository": {
     "type": "git",
@@ -15,6 +16,11 @@
     "src",
     "dev"
   ],
+  "scripts": {
+    "dev": "pnpm --filter playground dev",
+    "build": "pnpm --filter playground build",
+    "check": "pnpm --filter playground check"
+  },
   "exports": {
     ".": {
       "types": "./index.d.ts",

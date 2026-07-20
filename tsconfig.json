@@ -2,15 +2,13 @@
   "extends": "astro/tsconfigs/strict",
   // Editor-time config. The theme is site-agnostic: `@aas-data/*` resolves to
   // whatever site is being built (the integration sets a Vite alias). For the
-  // editor/typechecker we point it at the ai-stack site, the reference
-  // consumer — its `astro check` also type-checks these sources (see
-  // sites/awesome-ai-stack/tsconfig.json).
-  "include": ["src/**/*", "../../sites/awesome-ai-stack/.astro/types.d.ts"],
+  // editor/typechecker we point it at the in-repo playground site.
+  "include": ["src/**/*", "playground/.astro/types.d.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@aas-data/*": ["../../sites/awesome-ai-stack/src/data/*"],
-      "@assets/*": ["../../sites/awesome-ai-stack/src/assets/*"]
+      "@aas-data/*": ["playground/src/data/*"],
+      "@assets/*": ["playground/src/assets/*"]
     }
   }
 }
