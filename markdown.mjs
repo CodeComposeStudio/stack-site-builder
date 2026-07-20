@@ -230,8 +230,9 @@ function remarkSlideDirectives() {
 
 // Turn `[[Term]]` (and `[[Term|display text]]`) wikilinks into links, resolving
 // each against the site's central glossary (passed as an option). Internal targets
-// emit the `../../stack|concept/<slug>/` relative form (locale- and base-agnostic
-// on the depth-3 detail routes); external `href` entries pass through and get
+// emit a `../stack|concept/<slug>/` relative form (locale- and base-agnostic), with
+// the number of `../` set by how deep the source page sits in its locale (see `up`
+// below); external `href` entries pass through and get
 // target="_blank" from rehype-external-links downstream. An unknown term throws,
 // failing the build so a typo can't silently degrade to plain text. Code spans
 // and fenced blocks are untouched (mdast `inlineCode`/`code` carry no children).
@@ -263,6 +264,12 @@ function remarkGlossary({ glossary }) {
   return (tree, file) => {
     const path = (file && (file.path || (file.history && file.history[0]))) || '';
     const lang = /[/\\]ko[/\\]/.test(path) ? 'ko' : 'en';
+    // How far the relative wikilink targets below must climb to reach the locale
+    // root. The collection detail routes sit two deep within their locale
+    // (/ko/stack/<slug>/), but a standalone `pages` entry is only one deep
+    // (/ko/about/). Using the wrong count overshoots the locale prefix — from
+    // /ko/about/ a `../../` lands on the default-locale glossary, not /ko/'s.
+    const up = /[/\\]content[/\\]pages[/\\]/.test(path) ? '../' : '../../';
     /** @param {any} l */
     const labelOf = (l) => (typeof l === 'string' ? l : l[lang]);
     // Same-document section links ([[#anchor]]) resolve their display text to
@@ -329,15 +336,15 @@ function remarkGlossary({ glossary }) {
             const def = entry.def ? labelOf(entry.def) : undefined;
             // A def-only term (no page) links to its entry on the glossary page.
             let url = entry.stack
-              ? `../../stack/${entry.stack}/`
+              ? `${up}stack/${entry.stack}/`
               : entry.concept
-                ? `../../concept/${entry.concept}/`
+                ? `${up}concept/${entry.concept}/`
                 : entry.article
-                  ? `../../article/${entry.article}/`
+                  ? `${up}article/${entry.article}/`
                   : entry.href
                     ? entry.href
                     : def
-                      ? `../../glossary/#${id}`
+                      ? `${up}glossary/#${id}`
                       : null;
             if (!url)
               throw new Error(
