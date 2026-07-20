@@ -1,3 +1,5 @@
+import type { SectionKey } from 'stack-site-builder';
+
 /**
  * The playground's identity, consumed by the theme via the `@aas-data/site`
  * alias. UI string overrides use the same keys as the theme's src/i18n/ui.ts.
@@ -25,9 +27,7 @@ export const site = {
    *  section loses both its routes and its header-nav item. Here the playground
    *  drops `slides` as a demo; remove this or set `true` to bring it back.
    *  Forwarded to the theme integration in astro.config for route skipping. */
-  sections: { slides: false } as Partial<
-    Record<'concepts' | 'articles' | 'samples' | 'slides' | 'glossary', boolean>
-  >,
+  sections: { slides: false } satisfies Partial<Record<SectionKey, boolean>>,
   /** Per-locale overrides for the theme's UI strings; empty = theme defaults.
    *  A locale beyond the theme's en/ko (add it to `locales` above) supplies its
    *  whole string table here; any key it omits falls back to the default locale.

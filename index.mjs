@@ -63,6 +63,7 @@ function sectionOf(file) {
   if (file.startsWith('sample/')) return 'samples';
   if (file.startsWith('slides/')) return 'slides';
   if (file === 'glossary.astro') return 'glossary';
+  if (file === '[page].astro') return 'pages';
   return null;
 }
 

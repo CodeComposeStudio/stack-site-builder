@@ -91,6 +91,7 @@ const allNavItems: {
   ...navPages.map((p) => ({
     href: getRelativeLocaleUrl(lang, `${pageSlugOf(p)}/`),
     label: p.data.navLabel ?? p.data.title,
+    section: 'pages' as SectionKey,
     svg: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
   })),
   {

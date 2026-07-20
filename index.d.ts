@@ -1,7 +1,8 @@
 import type { AstroIntegration } from 'astro';
 
-/** Optional content sections that a site can turn off. */
-export type SectionKey = 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary';
+/** Optional content sections that a site can turn off. `pages` is the
+ *  standalone-pages collection (About/소개, …). */
+export type SectionKey = 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary' | 'pages';
 
 export interface AasThemeOptions {
   /** The site's glossary (`src/data/glossary.mjs`) — `[[wikilink]]` targets. */

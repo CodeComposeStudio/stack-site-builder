@@ -65,19 +65,23 @@ No theme files change — adding a locale is entirely site config and content.
 
 ## Sections
 
-The core catalog (home, tool detail, categories, tags, vendors) and standalone
-`pages` are always on. Five sections are opt-out — **concepts, articles,
-samples, slides, glossary** — so a site can ship only what it needs. Turning one
-off removes both its routes and its header-nav item.
+The core catalog (home, tool detail, categories, tags, vendors) is always on.
+The rest are opt-out — **concepts, articles, samples, slides, glossary** and the
+standalone **pages** collection (About/소개, …) — so a site can ship only what it
+needs. Turning one off removes both its routes and its header-nav item. (`pages`
+also has finer control: each page's `nav` / `draft` frontmatter, or simply not
+authoring it.)
 
 Declare the toggles once in `src/data/site.ts` and forward them to the theme in
-astro.config (which needs them to skip route injection):
+astro.config (which needs them to skip route injection). Import `SectionKey` from
+the theme so `satisfies` lists the valid keys as you type:
 
 ```ts
 // src/data/site.ts
+import type { SectionKey } from 'stack-site-builder';
 export const site = {
   /* … */
-  sections: { slides: false }, // omit a key or set true to keep it
+  sections: { slides: false } satisfies Partial<Record<SectionKey, boolean>>,
 };
 ```
 

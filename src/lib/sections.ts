@@ -2,14 +2,18 @@ import { site } from '@aas-data/site';
 
 /**
  * Optional content sections a site can turn off. The core catalog (home, stack
- * detail, categories, tags, vendors) and standalone `pages` are always on; these
- * five are opt-out. Disabling one removes both its routes and its header-nav item
- * (routes are skipped in the integration, the nav link in BaseLayout).
+ * detail, categories, tags, vendors) is always on; these are opt-out. Disabling
+ * one removes both its routes and its header-nav item (routes are skipped in the
+ * integration, the nav link in BaseLayout).
+ *
+ * `pages` is the standalone-pages collection (About/소개, contact, …); turning it
+ * off drops every page and its nav item at once — finer control is per-page via
+ * the `nav` / `draft` frontmatter, or by not authoring the page.
  *
  * A site sets overrides in `src/data/site.ts` (`sections`), which astro.config
  * also forwards to the theme integration for route filtering. Omitted = enabled.
  */
-export type SectionKey = 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary';
+export type SectionKey = 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary' | 'pages';
 
 const DEFAULTS: Record<SectionKey, boolean> = {
   concepts: true,
@@ -17,6 +21,7 @@ const DEFAULTS: Record<SectionKey, boolean> = {
   samples: true,
   slides: true,
   glossary: true,
+  pages: true,
 };
 
 /** Whether each optional section is enabled, after applying the site's overrides. */

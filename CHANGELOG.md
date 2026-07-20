@@ -15,12 +15,14 @@ here is a plain version bump they pull in.
 
 ### Added
 
-- **Optional sections** — a site can turn off any of the five secondary
-  sections (concepts, articles, samples, slides, glossary); the core catalog and
-  standalone `pages` stay on. Disabling one removes both its routes and its
-  header-nav item. Declare `sections` in `src/data/site.ts` (hides the nav item)
-  and forward it to `aasTheme({ sections })` in astro.config (skips the routes).
-  The playground drops `slides` to demonstrate.
+- **Optional sections** — a site can turn off any of the secondary sections
+  (concepts, articles, samples, slides, glossary, and the standalone `pages`
+  collection); the core catalog stays on. Disabling one removes both its routes
+  and its header-nav item. Declare `sections` in `src/data/site.ts` (hides the
+  nav item) and forward it to `aasTheme({ sections })` in astro.config (skips the
+  routes); the key type (`SectionKey`) is exported from the theme, so
+  `satisfies Partial<Record<SectionKey, boolean>>` gives autocomplete of the
+  valid keys. The playground drops `slides` to demonstrate.
 
 ## [1.12.0] - 2026-07-20
 
