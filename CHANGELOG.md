@@ -11,6 +11,39 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.12.0] - 2026-07-20
+
+Locales are now **site-configurable**. The theme was wired to exactly two
+languages (English at the root, Korean under `/ko/`, plus a hand-written `ko/`
+copy of every route); a consuming site could not add a third. Now the theme
+reads the locales from the site's own astro.config `i18n` and renders every
+route for each of them from one source, so a site adds a language (e.g.
+Japanese) by editing its config and data — no theme changes, no per-locale route
+files. Existing en/ko sites are unaffected: the same URLs build, and the theme
+still defaults to en/ko when a site declares nothing.
+
+### Added
+
+- **Site-configurable locales** — the header language switcher, route
+  generation, date formatting, wikilink resolution and sitemap hreflang all
+  derive from the site's configured locales. A site declares them in
+  astro.config `i18n` (routing) and, optionally, `site.locales` in
+  `src/data/site.ts` (display name + date format per locale); it supplies each
+  extra locale's UI strings via `site.ui.<code>`, with any missing key falling
+  back to the default locale. The playground ships a third locale (`ja`) to
+  demonstrate the path.
+
+### Changed
+
+- **One route tree instead of a per-locale mirror** — the hand-maintained
+  `src/pages/ko/` copy of every page is gone; all pages now live once under
+  `src/pages/[...lang]/` and enumerate the site's locales in `getStaticPaths`.
+  This is internal to the theme, but it is what makes adding a locale free.
+- **`Lang` is now `string`** (was the `'en' | 'ko'` union) since locales are no
+  longer fixed at build time. Locale-keyed maps (`pricingLabels`, category
+  labels, …) resolve through helpers that fall back to the default locale rather
+  than assuming a key exists.
+
 ## [1.11.0] - 2026-07-20
 
 The center of this release is **standalone pages**: a site can now add a
@@ -74,5 +107,6 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.12.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/CodeCompose7/stack-site-builder/releases/tag/v1.10.0

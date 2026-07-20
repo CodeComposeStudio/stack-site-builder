@@ -34,7 +34,7 @@ export const collections = defineAasCollections({ categoryMap });
 
 | Where | What |
 | --- | --- |
-| `src/data/site.ts` | Site identity: name, repo URL, per-locale UI string overrides |
+| `src/data/site.ts` | Site identity: name, repo URL, the `locales` it ships, per-locale UI string overrides |
 | `src/data/categories.ts` | The tool-catalog category tree (validated against content) |
 | `src/data/concept-categories.ts` · `article-categories.ts` | Taxonomies for concepts / articles |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
@@ -44,3 +44,21 @@ export const collections = defineAasCollections({ categoryMap });
 
 The theme reaches the site's data through the `@aas-data/*` alias (set up by
 the integration), so everything above is swappable per site.
+
+## Locales
+
+The theme defaults to English (at the root) and Korean (under `/ko/`), but the
+locale set is the site's to choose — it renders every route for each configured
+locale from one source. To add a language (say Japanese):
+
+1. List it in astro.config `i18n.locales` (this drives routing):
+   `i18n: { locales: ['en', 'ko', 'ja'], defaultLocale: 'en', routing: { prefixDefaultLocale: false } }`.
+   The first/`defaultLocale` is served at the root; the others under `/<code>/`.
+2. Add it to `locales` in `src/data/site.ts` — `{ code, label, dateLocale? }` —
+   so it appears (named) in the language switcher and formats dates correctly.
+3. Supply its UI strings in `src/data/site.ts` under `site.ui.<code>`; any key
+   you omit falls back to the default locale. Add the `<code>` translations to
+   your content (`src/content/<collection>/<code>/…`), glossary and category
+   labels the same way you did for the built-in locales.
+
+No theme files change — adding a locale is entirely site config and content.

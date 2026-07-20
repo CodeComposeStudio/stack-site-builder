@@ -21,14 +21,13 @@ import tailwindcss from '@tailwindcss/vite';
 import { aasMarkdown } from './markdown.mjs';
 import { localSamples } from './dev/local-samples.mjs';
 
-// Every page the theme provides, as `src/pages/`-relative entrypoints. The
-// same tree is served at `/` (en) and under `/ko/` (physical mirrors, matching
-// prefixDefaultLocale: false).
+// Every page the theme provides, relative to the `src/pages/[...lang]/` tree.
+// Each is injected once at `/[...lang]/…`; its getStaticPaths enumerates the
+// site's locales, emitting the default at the root and others under `/<code>/`.
 const PAGES = [
   'index.astro',
   // Standalone top-level pages (the `pages` collection), e.g. an About/소개
-  // page. A single dynamic route per locale renders every entry at `/<slug>/`;
-  // static routes above (glossary, etc.) still win over it by specificity.
+  // page. A single dynamic route per locale renders every entry at `/<slug>/`.
   '[page].astro',
   'article/index.astro',
   'article/[...id].astro',
@@ -47,12 +46,12 @@ const PAGES = [
   'vendors/[vendor].astro',
 ];
 
-/** `article/[...id].astro` → `/article/[...id]`, `index.astro` → `/` */
-/** @param {string} file @param {string} prefix */
-function patternOf(file, prefix) {
+/** `[...lang]/article/[...id].astro` → `/[...lang]/article/[...id]`,
+ *  `[...lang]/index.astro` → `/[...lang]` */
+/** @param {string} file */
+function patternOf(file) {
   const p = file.replace(/\.astro$/, '').replace(/\/?index$/, '');
-  const full = `/${prefix}${p}`.replace(/\/$/, '');
-  return full || '/';
+  return `/${p}`.replace(/\/$/, '') || '/';
 }
 
 /**
@@ -67,22 +66,42 @@ export default function aasTheme({ glossary }) {
     name: 'stack-site-builder',
     hooks: {
       'astro:config:setup': ({ config, injectRoute, updateConfig }) => {
-        for (const prefix of ['', 'ko/']) {
-          for (const file of PAGES) {
-            const entry = prefix === '' ? file : `ko/${file}`;
-            injectRoute({
-              pattern: patternOf(file, prefix),
-              entrypoint: `stack-site-builder/pages/${entry}`,
-            });
-          }
+        // Locales the site configured (astro.config `i18n`). Everything locale
+        // aware derives from here — route injection, wikilink detection, and the
+        // sitemap hreflang — so a site adds a language by editing its config, not
+        // the theme. `locales` entries may be strings or `{ path }` objects.
+        const rawLocales = config.i18n?.locales ?? ['en'];
+        const locales = rawLocales.map((l) => (typeof l === 'string' ? l : l.path));
+        const defaultLocale = config.i18n?.defaultLocale ?? locales[0];
+
+        // A single physical page tree under `[...lang]/` serves every locale: the
+        // default at the root, each other under `/<code>/`. Each page's
+        // getStaticPaths enumerates the locales, so adding one needs no new files.
+        for (const file of PAGES) {
+          injectRoute({
+            pattern: patternOf(`[...lang]/${file}`),
+            entrypoint: `stack-site-builder/pages/[...lang]/${file}`,
+          });
         }
 
         updateConfig({
-          markdown: aasMarkdown({ glossary }),
+          markdown: aasMarkdown({ glossary, locales, defaultLocale }),
 
           // Bind the dev server to 0.0.0.0 so it's reachable from a browser on
           // the host (outside the Docker container).
           server: { host: true },
+
+          // hreflang alternates so search engines pair each page with its twin in
+          // the other locales. Built from the site's configured locales (added
+          // here rather than in the returned array, where `config` isn't known).
+          integrations: [
+            sitemap({
+              i18n: {
+                defaultLocale,
+                locales: Object.fromEntries(locales.map((l) => [l, l])),
+              },
+            }),
+          ],
 
           vite: {
             plugins: [tailwindcss(), localSamples()],
@@ -113,16 +132,7 @@ export default function aasTheme({ glossary }) {
     },
   };
 
-  return [
-    core,
-    mdx(),
-    // i18n option emits hreflang alternates so search engines associate each
-    // page with its twin in the other locale (/stack/x/ ↔ /ko/stack/x/).
-    sitemap({
-      i18n: {
-        defaultLocale: 'en',
-        locales: { en: 'en', ko: 'ko' },
-      },
-    }),
-  ];
+  // The sitemap integration is added from the core hook's updateConfig (above),
+  // where the site's configured locales are known.
+  return [core, mdx()];
 }

@@ -7,7 +7,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import { getStacks, slugOf, type StackEntry } from '../lib/stacks';
 import { categoryMap } from '@aas-data/categories';
 import ToolAvatar from './ToolAvatar.astro';
-import type { Lang } from '../i18n/ui';
+import { defaultLang, type Lang } from '../i18n/ui';
 
 interface Props {
   slugs: string[] | string;
@@ -21,7 +21,7 @@ const list = Array.isArray(slugs)
       .map((s) => s.trim())
       .filter(Boolean);
 
-const lang: Lang = Astro.currentLocale === 'ko' ? 'ko' : 'en';
+const lang: Lang = (Astro.currentLocale ?? defaultLang) as Lang;
 const stacks = await getStacks(lang);
 const bySlug = new Map(stacks.map((s) => [slugOf(s), s]));
 const tools = list.map((s) => bySlug.get(s)).filter(Boolean) as StackEntry[];

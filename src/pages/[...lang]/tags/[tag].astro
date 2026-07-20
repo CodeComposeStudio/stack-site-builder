@@ -1,0 +1,24 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import TagIndex from '../../../components/TagIndex.astro';
+import { getAllTags } from '../../../lib/stacks';
+import { allLocales, langParam } from '../../../lib/locales';
+
+export const getStaticPaths = (async () => {
+  const paths: Awaited<ReturnType<GetStaticPaths>> = [];
+  for (const lang of allLocales) {
+    for (const tag of await getAllTags(lang)) {
+      paths.push({ params: { lang: langParam(lang), tag }, props: { lang, tag } });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { lang, tag } = Astro.props;
+---
+
+<BaseLayout title={`#${tag} — ${site.name}`} lang={lang} path={`tags/${tag}/`}>
+  <TagIndex lang={lang} tag={tag} />
+</BaseLayout>

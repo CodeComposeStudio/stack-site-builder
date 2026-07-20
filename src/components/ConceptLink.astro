@@ -7,7 +7,7 @@
 // from the current page (concepts are served under /<lang>/...).
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { getConcepts, conceptSlugOf, type ConceptEntry } from '../lib/concepts';
-import { useTranslations, type Lang } from '../i18n/ui';
+import { useTranslations, defaultLang, type Lang } from '../i18n/ui';
 import { inlineMd } from '../lib/inline-md';
 
 interface Props {
@@ -15,7 +15,7 @@ interface Props {
 }
 
 const { slug } = Astro.props;
-const lang: Lang = Astro.currentLocale === 'ko' ? 'ko' : 'en';
+const lang: Lang = (Astro.currentLocale ?? defaultLang) as Lang;
 const t = useTranslations(lang);
 const concepts = await getConcepts(lang);
 const target = concepts.find((c) => conceptSlugOf(c) === slug) as ConceptEntry | undefined;

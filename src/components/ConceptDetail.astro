@@ -5,7 +5,7 @@ import { getArticles, articleSlugOf, type ArticleEntry } from '../lib/articles';
 import { getConcepts, conceptSlugOf, conceptToolSlugs, type ConceptEntry } from '../lib/concepts';
 import { inlineMd } from '../lib/inline-md';
 import { Image } from 'astro:assets';
-import { useTranslations, type Lang } from '../i18n/ui';
+import { useTranslations, dateLocaleOf, type Lang } from '../i18n/ui';
 import MermaidLoader from './MermaidLoader.astro';
 import TocRail from './TocRail.astro';
 import Breadcrumb from './Breadcrumb.astro';
@@ -41,7 +41,7 @@ const relatedConcepts = data.related
   .filter(Boolean) as ConceptEntry[];
 
 const fmtDate = (d: Date) =>
-  new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+  new Intl.DateTimeFormat(dateLocaleOf(lang), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { pricingLabels, useTranslations, type Lang } from '../i18n/ui';
+import { pricingLabel, useTranslations, type Lang } from '../i18n/ui';
 import { getRepoStats, formatStars, stalenessOf } from '../lib/github';
 import { pricingTags, COMPLETELY_FREE } from '../lib/pricing';
 import { isImageRef, resolveImageUrl } from '../lib/assets';
@@ -155,7 +155,7 @@ const searchText = `${name} ${description} ${tags.join(' ')}`.toLowerCase();
       pricingTags(pricing).map((p) => (
         <span
           data-pricing-tag={p}
-          title={pricingLabels[lang][p] ?? p}
+          title={pricingLabel(lang, p)}
           class:list={[p === COMPLETELY_FREE ? 'aas-free' : 'aas-pricing', 'rounded-lg px-2.5 py-1']}
         >
           {p === 'open-source' && (
@@ -175,7 +175,7 @@ const searchText = `${name} ${description} ${tags.join(' ')}`.toLowerCase();
               <polyline points="8 6 2 12 8 18" />
             </svg>
           )}
-          <span data-chip-label>{pricingLabels[lang][p] ?? p}</span>
+          <span data-chip-label>{pricingLabel(lang, p)}</span>
         </span>
       ))
     }

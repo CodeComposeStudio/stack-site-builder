@@ -9,18 +9,20 @@ export type { Category } from 'stack-site-builder/lib/category-tree';
 const categories: Category[] = [
   {
     id: 'demo-tools',
-    label: { en: 'Demo Tools', ko: '데모 도구' },
+    label: { en: 'Demo Tools', ko: '데모 도구', ja: 'デモツール' },
     description: {
       en: 'Sample entries that exercise the catalog features',
       ko: '카탈로그 기능을 확인하는 샘플 항목',
+      ja: 'カタログ機能を確認するサンプル項目',
     },
     children: [
       {
         id: 'demo-pipelines',
-        label: { en: 'Pipelines', ko: '파이프라인' },
+        label: { en: 'Pipelines', ko: '파이프라인', ja: 'パイプライン' },
         description: {
           en: 'Workflow engines and node editors',
           ko: '워크플로 엔진과 노드 에디터',
+          ja: 'ワークフローエンジンとノードエディタ',
         },
       },
     ],

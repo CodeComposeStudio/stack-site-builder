@@ -1,5 +1,5 @@
 ---
-import { useTranslations, type Lang } from '../i18n/ui';
+import { useTranslations, dateLocaleOf, type Lang } from '../i18n/ui';
 import type { RenderedProject } from '../lib/project';
 import ChevronDown from './ChevronDown.astro';
 import ProjectFileList from './ProjectFileList.astro';
@@ -32,7 +32,7 @@ function splitReadme(html?: string): { titleInner?: string; body?: string } {
 function formatDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return iso;
-  return new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+  return new Intl.DateTimeFormat(dateLocaleOf(lang), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

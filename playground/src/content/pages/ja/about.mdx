@@ -1,0 +1,38 @@
+---
+title: 紹介
+navLabel: 紹介
+description: stack-site-builder プレイグラウンドと、このサイトを作る人についての簡単な紹介です。
+image: ../../../assets/about-hero.png
+imageAlt: stack-site-builder の紹介
+order: 0
+---
+
+import { Image } from 'astro:assets';
+import collections from '../../../assets/about-collections.png';
+
+こんにちは。このサイトは [**stack-site-builder**](https://github.com/CodeCompose7/stack-site-builder)
+テーマで作った「awesome スタック」カタログです。ツールを集め、各ツールの詳細ページと
+コンセプト・記事・スライドを一か所にまとめます。
+
+この **紹介** ページは一覧を持たない独立ページで、ヘッダーナビゲーションに一つの
+項目として表示されます。コンセプト・記事・サンプルと同じ、一つのトップレベル
+セクションというわけです。
+
+## このサイトが扱うもの
+
+コンテンツはカタログ項目(stacks)、記事(articles)、コンセプト(concepts)、
+プレゼンテーションスライド(slides)に分かれます。さらに、この紹介のように一覧を
+持たず単独で成り立つページ(pages)を加えられます。
+
+<Image
+  src={collections}
+  alt="stacks · articles · concepts · slides コレクション"
+  class="rounded-xl border border-[var(--aas-border)]"
+/>
+
+## 作っている人
+
+[[diffusion|拡散]] のような用語はウィキリンクで用語集につながり、すべてのページは
+英語・韓国語・日本語(en/ko/ja)に対応します。
+
+ご質問があればいつでもご連絡ください。

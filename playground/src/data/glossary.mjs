@@ -10,10 +10,11 @@ export const glossary = {
     stack: 'comfyui',
   },
   diffusion: {
-    label: { ko: '디퓨전 모델', en: 'Diffusion model' },
+    label: { ko: '디퓨전 모델', en: 'Diffusion model', ja: '拡散モデル' },
     def: {
       ko: '노이즈에서 이미지를 점진적으로 복원하도록 학습된 생성 모델.',
       en: 'A generative model trained to gradually denoise toward an image.',
+      ja: 'ノイズから画像を段階的に復元するよう学習された生成モデル。',
     },
   },
 };

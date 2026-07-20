@@ -236,7 +236,10 @@ function remarkSlideDirectives() {
 // target="_blank" from rehype-external-links downstream. An unknown term throws,
 // failing the build so a typo can't silently degrade to plain text. Code spans
 // and fenced blocks are untouched (mdast `inlineCode`/`code` carry no children).
-function remarkGlossary({ glossary }) {
+function remarkGlossary({ glossary, locales = ['en', 'ko'], defaultLocale = 'en' }) {
+  // Non-default locales carry a `/<code>/` segment in their content path; the
+  // default locale has none. Match the path against them to pick the locale.
+  const prefixed = locales.filter((l) => l !== defaultLocale);
   const RE = /\[\[\s*([^\]|]+?)\s*(?:\|\s*([^\]]+?)\s*)?\]\]/g;
   /** @param {string} s */
   const norm = (s) => s.trim().toLowerCase().replace(/\s+/g, '-');
@@ -263,7 +266,7 @@ function remarkGlossary({ glossary }) {
   /** @param {any} tree @param {any} file */
   return (tree, file) => {
     const path = (file && (file.path || (file.history && file.history[0]))) || '';
-    const lang = /[/\\]ko[/\\]/.test(path) ? 'ko' : 'en';
+    const lang = prefixed.find((l) => new RegExp(`[/\\\\]${l}[/\\\\]`).test(path)) ?? defaultLocale;
     // How far the relative wikilink targets below must climb to reach the locale
     // root. The collection detail routes sit two deep within their locale
     // (/ko/stack/<slug>/), but a standalone `pages` entry is only one deep
@@ -380,17 +383,19 @@ function remarkGlossary({ glossary }) {
 
 /**
  * The full markdown config for `defineConfig({ markdown })`.
- * @param {{ glossary: Record<string, any> }} opts — the site's glossary
- *   (wikilink targets); pass `{}` for a site without wikilinks.
+ * @param {{ glossary: Record<string, any>, locales?: string[], defaultLocale?: string }} opts
+ *   `glossary` — the site's wikilink targets (pass `{}` for none). `locales` /
+ *   `defaultLocale` come from the site's astro.config `i18n` so wikilink locale
+ *   detection matches whatever locales the site ships (defaults to en/ko).
  */
-export function aasMarkdown({ glossary }) {
+export function aasMarkdown({ glossary, locales = ['en', 'ko'], defaultLocale = 'en' }) {
   return {
     remarkPlugins: [
       remarkHeadingIds,
       remarkMermaid,
       remarkDirective,
       remarkSlideDirectives,
-      [remarkGlossary, { glossary }],
+      [remarkGlossary, { glossary, locales, defaultLocale }],
     ],
     rehypePlugins: [
       rehypeSlug,
