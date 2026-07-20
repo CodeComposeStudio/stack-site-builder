@@ -1,0 +1,24 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageDetail from '../../components/PageDetail.astro';
+import { getPages, pageSlugOf } from '../../lib/pages';
+
+export const getStaticPaths = (async () => {
+  const entries = await getPages('ko');
+  return entries.map((entry) => ({ params: { page: pageSlugOf(entry) }, props: { entry } }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const slug = pageSlugOf(entry);
+---
+
+<BaseLayout
+  title={`${entry.data.title} — ${site.name}`}
+  description={entry.data.description}
+  lang="ko"
+  path={`${slug}/`}
+>
+  <PageDetail entry={entry} lang="ko" />
+</BaseLayout>

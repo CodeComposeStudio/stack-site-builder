@@ -224,5 +224,33 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
     }),
   });
 
-  return { stacks, articles, concepts, slides };
+  /**
+   * The `pages` collection holds standalone top-level pages — an About/소개, a
+   * contact page, terms, etc. Unlike the other collections there's no index or
+   * taxonomy: each entry renders on its own at the site root (`/<slug>/`), and
+   * (when `nav` is set) shows up as its own item in the header navigation. This
+   * is how a site adds a first-class section that is just one page.
+   *
+   * Locale-partitioned like the rest: `pages/en/about.mdx`, `pages/ko/about.mdx`.
+   */
+  const pages = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/pages' }),
+    schema: ({ image }) =>
+      z.object({
+        title: z.string(),
+        description: z.string().optional(),
+        image: image().optional(), // hero image (optimized; relative to the file)
+        imageAlt: z.string().optional(),
+        // Header-nav placement. `nav` toggles the link; `navLabel` overrides the
+        // link's accessible label (defaults to `title`); `order` sorts the page
+        // links among themselves (lower first). A page with `nav: false` still
+        // renders at its URL but isn't linked from the header.
+        nav: z.boolean().default(true),
+        navLabel: z.string().optional(),
+        order: z.number().default(0),
+        draft: z.boolean().default(false),
+      }),
+  });
+
+  return { stacks, articles, concepts, slides, pages };
 }

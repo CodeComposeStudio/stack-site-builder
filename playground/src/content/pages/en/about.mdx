@@ -1,0 +1,39 @@
+---
+title: About
+navLabel: About
+description: A short introduction to the stack-site-builder playground and the person behind this site.
+image: ../../../assets/about-hero.png
+imageAlt: About stack-site-builder
+order: 0
+---
+
+import { Image } from 'astro:assets';
+import collections from '../../../assets/about-collections.png';
+
+Hi. This site is an "awesome stack" catalog built with the
+[**stack-site-builder**](https://github.com/CodeCompose7/stack-site-builder)
+theme. It collects tools and keeps their detail pages, concepts, articles and
+slides in one place.
+
+This **About** page has no listing of its own — it renders as a single page and
+shows up as one item in the header navigation, a top-level section just like
+concepts, articles or samples.
+
+## What this site covers
+
+Content is split into catalog entries (stacks), articles, concepts and
+presentation slides. On top of those you can add standalone pages (like this
+one) that stand on their own with no index.
+
+<Image
+  src={collections}
+  alt="The stacks · articles · concepts · slides collections"
+  class="rounded-xl border border-[var(--aas-border)]"
+/>
+
+## The person behind it
+
+Terms like [[diffusion]] link to the glossary as wikilinks, and every page ships
+in both English and Korean (en/ko).
+
+Feel free to reach out any time.

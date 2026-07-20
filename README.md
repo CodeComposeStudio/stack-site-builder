@@ -39,6 +39,7 @@ export const collections = defineAasCollections({ categoryMap });
 | `src/data/concept-categories.ts` · `article-categories.ts` | Taxonomies for concepts / articles |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
 | `src/content/{stacks,concepts,articles,slides}/` | The content, one MDX file per locale |
+| `src/content/pages/` | Standalone top-level pages (e.g. an About/소개), rendered at `/<slug>/` and optionally linked in the header nav |
 | `public/` · `samples/` | Logos/favicons and runnable sample projects |
 
 The theme reaches the site's data through the `@aas-data/*` alias (set up by

@@ -26,6 +26,10 @@ import { localSamples } from './dev/local-samples.mjs';
 // prefixDefaultLocale: false).
 const PAGES = [
   'index.astro',
+  // Standalone top-level pages (the `pages` collection), e.g. an About/소개
+  // page. A single dynamic route per locale renders every entry at `/<slug>/`;
+  // static routes above (glossary, etc.) still win over it by specificity.
+  '[page].astro',
   'article/index.astro',
   'article/[...id].astro',
   'article/category/[id].astro',
