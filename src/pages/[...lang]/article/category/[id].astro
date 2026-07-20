@@ -1,0 +1,25 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import BlogIndex from '../../../../components/BlogIndex.astro';
+import { articleTree } from '@aas-data/article-categories';
+import { allLocales, langParam } from '../../../../lib/locales';
+
+export const getStaticPaths = (() => {
+  const paths: Awaited<ReturnType<GetStaticPaths>> = [];
+  for (const lang of allLocales) {
+    for (const id of articleTree.allIds) {
+      paths.push({ params: { lang: langParam(lang), id }, props: { lang, id } });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { lang, id } = Astro.props as { lang: string; id: string };
+const node = articleTree.map.get(id)!;
+---
+
+<BaseLayout title={`${node.label[lang]} — ${site.name}`} lang={lang} path={`article/category/${id}/`}>
+  <BlogIndex lang={lang} categoryId={id} />
+</BaseLayout>

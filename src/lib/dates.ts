@@ -1,4 +1,4 @@
-import type { Lang } from '../i18n/ui';
+import { dateLocaleOf, type Lang } from '../i18n/ui';
 
 /**
  * Human-facing date in the reader's locale (e.g. "June 28, 2026" / "2026년 6월
@@ -7,7 +7,7 @@ import type { Lang } from '../i18n/ui';
  * attribute on the surrounding `<time>` for machines.
  */
 export function formatDate(d: Date, lang: Lang): string {
-  return new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+  return new Intl.DateTimeFormat(dateLocaleOf(lang), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

@@ -96,7 +96,7 @@ const navItems: {
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} data-copy-label={t('code.copy')} data-copied-label={t('code.copied')}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -271,9 +271,8 @@ const navItems: {
       // (.aas-code). The button is pinned to a non-scrolling host so it stays in
       // place on long, horizontally-scrolling code.
       (function mountCopyButtons() {
-        const koLang = document.documentElement.lang === 'ko';
-        const LABEL = koLang ? '코드 복사' : 'Copy code';
-        const DONE = koLang ? '복사됨' : 'Copied';
+        const LABEL = document.documentElement.dataset.copyLabel || 'Copy code';
+        const DONE = document.documentElement.dataset.copiedLabel || 'Copied';
         const COPY_ICON =
           '<svg class="aas-ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
         const CHECK_ICON =

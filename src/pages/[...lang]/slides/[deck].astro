@@ -1,0 +1,22 @@
+---
+import type { GetStaticPaths } from 'astro';
+import DeckView from '../../../components/DeckView.astro';
+import { getDecks, deckSlugOf } from '../../../lib/slides';
+import { allLocales, langParam } from '../../../lib/locales';
+
+export const getStaticPaths = (async () => {
+  const paths: Awaited<ReturnType<GetStaticPaths>> = [];
+  for (const lang of allLocales) {
+    // Decks are language-agnostic (flat), but each locale gets its own route so
+    // the deck's chrome (back links, labels) renders in that language.
+    for (const entry of await getDecks(lang)) {
+      paths.push({ params: { lang: langParam(lang), deck: deckSlugOf(entry) }, props: { lang, entry } });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { lang, entry } = Astro.props;
+---
+
+<DeckView entry={entry} lang={lang} />
