@@ -21,6 +21,13 @@ export const site = {
     { code: 'ko', label: '한국어', dateLocale: 'ko-KR' },
     { code: 'ja', label: '日本語', dateLocale: 'ja-JP' },
   ] as { code: string; label: string; dateLocale?: string }[],
+  /** Optional content sections to turn off (all on by default). A disabled
+   *  section loses both its routes and its header-nav item. Here the playground
+   *  drops `slides` as a demo; remove this or set `true` to bring it back.
+   *  Forwarded to the theme integration in astro.config for route skipping. */
+  sections: { slides: false } as Partial<
+    Record<'concepts' | 'articles' | 'samples' | 'slides' | 'glossary', boolean>
+  >,
   /** Per-locale overrides for the theme's UI strings; empty = theme defaults.
    *  A locale beyond the theme's en/ko (add it to `locales` above) supplies its
    *  whole string table here; any key it omits falls back to the default locale.

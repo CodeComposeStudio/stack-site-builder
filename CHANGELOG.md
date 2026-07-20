@@ -11,6 +11,17 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [Unreleased]
+
+### Added
+
+- **Optional sections** — a site can turn off any of the five secondary
+  sections (concepts, articles, samples, slides, glossary); the core catalog and
+  standalone `pages` stay on. Disabling one removes both its routes and its
+  header-nav item. Declare `sections` in `src/data/site.ts` (hides the nav item)
+  and forward it to `aasTheme({ sections })` in astro.config (skips the routes).
+  The playground drops `slides` to demonstrate.
+
 ## [1.12.0] - 2026-07-20
 
 Locales are now **site-configurable**. The theme was wired to exactly two
@@ -107,6 +118,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[Unreleased]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.12.0...HEAD
 [1.12.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.10.0...v1.11.0
 [1.10.0]: https://github.com/CodeCompose7/stack-site-builder/releases/tag/v1.10.0

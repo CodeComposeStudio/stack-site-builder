@@ -34,7 +34,7 @@ export const collections = defineAasCollections({ categoryMap });
 
 | Where | What |
 | --- | --- |
-| `src/data/site.ts` | Site identity: name, repo URL, the `locales` it ships, per-locale UI string overrides |
+| `src/data/site.ts` | Site identity: name, repo URL, the `locales` it ships, optional `sections` toggles, per-locale UI string overrides |
 | `src/data/categories.ts` | The tool-catalog category tree (validated against content) |
 | `src/data/concept-categories.ts` · `article-categories.ts` | Taxonomies for concepts / articles |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
@@ -62,3 +62,27 @@ locale from one source. To add a language (say Japanese):
    labels the same way you did for the built-in locales.
 
 No theme files change — adding a locale is entirely site config and content.
+
+## Sections
+
+The core catalog (home, tool detail, categories, tags, vendors) and standalone
+`pages` are always on. Five sections are opt-out — **concepts, articles,
+samples, slides, glossary** — so a site can ship only what it needs. Turning one
+off removes both its routes and its header-nav item.
+
+Declare the toggles once in `src/data/site.ts` and forward them to the theme in
+astro.config (which needs them to skip route injection):
+
+```ts
+// src/data/site.ts
+export const site = {
+  /* … */
+  sections: { slides: false }, // omit a key or set true to keep it
+};
+```
+
+```js
+// astro.config.mjs
+import { site } from './src/data/site';
+integrations: [aasTheme({ glossary, sections: site.sections })];
+```

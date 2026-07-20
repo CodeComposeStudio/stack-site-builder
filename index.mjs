@@ -54,13 +54,28 @@ function patternOf(file) {
   return `/${p}`.replace(/\/$/, '') || '/';
 }
 
+// Which optional section each page belongs to (null = always-on core route).
+// Mirrors SectionKey in src/lib/sections.ts.
+/** @param {string} file @returns {string | null} */
+function sectionOf(file) {
+  if (file.startsWith('concept/')) return 'concepts';
+  if (file.startsWith('article/')) return 'articles';
+  if (file.startsWith('sample/')) return 'samples';
+  if (file.startsWith('slides/')) return 'slides';
+  if (file === 'glossary.astro') return 'glossary';
+  return null;
+}
+
 /**
  * @param {object} opts
  * @param {Record<string, any>} opts.glossary — the site's glossary
  *   (`src/data/glossary.mjs`), used by `[[wikilink]]` resolution.
+ * @param {Partial<Record<string, boolean>>} [opts.sections] — optional-section
+ *   toggles (`{ slides: false }`); a disabled section's routes are not injected.
+ *   Keep it in sync with `src/data/site.ts` `sections` (which hides the nav item).
  * @returns {import('astro').AstroIntegration[]}
  */
-export default function aasTheme({ glossary }) {
+export default function aasTheme({ glossary, sections = {} }) {
   /** @type {import('astro').AstroIntegration} */
   const core = {
     name: 'stack-site-builder',
@@ -77,7 +92,10 @@ export default function aasTheme({ glossary }) {
         // A single physical page tree under `[...lang]/` serves every locale: the
         // default at the root, each other under `/<code>/`. Each page's
         // getStaticPaths enumerates the locales, so adding one needs no new files.
+        // Skip a page whose optional section the site turned off (`{ slides: false }`).
         for (const file of PAGES) {
+          const section = sectionOf(file);
+          if (section && sections[section] === false) continue;
           injectRoute({
             pattern: patternOf(`[...lang]/${file}`),
             entrypoint: `stack-site-builder/pages/[...lang]/${file}`,
