@@ -10,7 +10,7 @@ import ChevronDown from './ChevronDown.astro';
 import { listProjects } from '../lib/project';
 import { getStacks, slugOf } from '../lib/stacks';
 import { getArticles } from '../lib/articles';
-import { useTranslations, type Lang } from '../i18n/ui';
+import { useTranslations, dateLocaleOf, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
@@ -76,7 +76,7 @@ const scopeOptions = [
 function formatDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return iso;
-  return new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+  return new Intl.DateTimeFormat(dateLocaleOf(lang), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',

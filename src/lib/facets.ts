@@ -1,5 +1,5 @@
 import { pricingTags } from './pricing';
-import { pricingLabels, licenseLabel, useTranslations, type Lang } from '../i18n/ui';
+import { pricingLabel, licenseLabel, useTranslations, type Lang } from '../i18n/ui';
 import type { StackEntry } from './stacks';
 
 export interface FacetOption {
@@ -39,7 +39,7 @@ export function deriveFacets(entries: StackEntry[], lang: Lang): Facet[] {
       label: t('detail.pricing'),
       options: pricingOrder
         .filter((p) => usedPricing.has(p))
-        .map((p) => ({ value: p, label: pricingLabels[lang][p] ?? p })),
+        .map((p) => ({ value: p, label: pricingLabel(lang, p) })),
     },
     {
       key: 'license',

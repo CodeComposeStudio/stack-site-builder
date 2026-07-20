@@ -6,6 +6,7 @@ import { useTranslations, languages, type Lang } from '../i18n/ui';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import BackToTop from '../components/BackToTop.astro';
+import { getNavPages, pageSlugOf } from '../lib/pages';
 
 interface Props {
   title: string;
@@ -32,10 +33,70 @@ const localeHomes = Object.fromEntries(
   (Object.keys(languages) as Lang[]).map((c) => [c, getRelativeLocaleUrl(c, '')]),
 );
 const isDefaultHome = path === '' && lang === 'en';
+
+// Standalone pages (the `pages` collection) that opt into a header-nav link,
+// e.g. an About/소개 page. Rendered as their own nav items alongside the
+// built-in sections; the accessible label comes from the page's own frontmatter.
+const navPages = await getNavPages(lang);
+
+// The header sections, as data — rendered twice from one source so the two
+// layouts never drift: an icon-only row (≥sm) and a labelled dropdown menu
+// (<sm, so a phone header stays to a few controls instead of a long icon run).
+// `svg` is the icon's inner markup (drawn into a shared <svg> shell below).
+const navItems: {
+  href: string;
+  label: string;
+  svg: string;
+  external?: boolean;
+  keepFilters?: boolean;
+}[] = [
+  {
+    href: `${home}#categories`,
+    label: t('nav.browse'),
+    keepFilters: true,
+    svg: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+  },
+  {
+    href: getRelativeLocaleUrl(lang, 'concept/'),
+    label: t('nav.concepts'),
+    svg: '<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/>',
+  },
+  {
+    href: getRelativeLocaleUrl(lang, 'article/'),
+    label: t('nav.blog'),
+    svg: '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  },
+  {
+    href: getRelativeLocaleUrl(lang, 'sample/'),
+    label: t('nav.samples'),
+    svg: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
+  },
+  {
+    href: getRelativeLocaleUrl(lang, 'slides/'),
+    label: t('nav.slides'),
+    svg: '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/><path d="M12 12v9"/>',
+  },
+  {
+    href: getRelativeLocaleUrl(lang, 'glossary/'),
+    label: t('nav.glossary'),
+    svg: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
+  },
+  ...navPages.map((p) => ({
+    href: getRelativeLocaleUrl(lang, `${pageSlugOf(p)}/`),
+    label: p.data.navLabel ?? p.data.title,
+    svg: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  })),
+  {
+    href: site.repoUrl,
+    label: 'GitHub',
+    external: true,
+    svg: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C4 2 3 2 3 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 2 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+  },
+];
 ---
 
 <!doctype html>
-<html lang={lang}>
+<html lang={lang} data-copy-label={t('code.copy')} data-copied-label={t('code.copied')}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -107,65 +168,66 @@ const isDefaultHome = path === '' && lang === 'en';
           {/* Below 600px only the bolt remains, so the narrow header never truncates the wordmark. */}
           <span class="hidden truncate min-[600px]:inline">{site.name}</span>
         </a>
-        {/* Nav links are icon-only at every width (labels live in aria-label). */}
+        {/* Section links are icon-only (labels live in aria-label). On phones
+            (<sm) they collapse into the labelled dropdown menu below, so the
+            header stays to a few controls; from sm up the full icon row shows. */}
         <nav class="flex shrink-0 items-center gap-3 text-sm text-[var(--aas-muted)] sm:gap-4">
-          <a
-            href={`${home}#categories`}
-            data-keep-filters
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label={t('nav.browse')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
-          </a>
-          <a
-            href={getRelativeLocaleUrl(lang, 'concept/')}
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label={t('nav.concepts')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
-          </a>
-          <a
-            href={getRelativeLocaleUrl(lang, 'article/')}
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label={t('nav.blog')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-          </a>
-          <a
-            href={getRelativeLocaleUrl(lang, 'sample/')}
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label={t('nav.samples')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
-          </a>
-          <a
-            href={getRelativeLocaleUrl(lang, 'slides/')}
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label={t('nav.slides')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/><path d="M12 12v9"/></svg>
-          </a>
-          <a
-            href={getRelativeLocaleUrl(lang, 'glossary/')}
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label={t('nav.glossary')}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
-          </a>
-          <a
-            href={site.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="flex items-center no-underline hover:text-[var(--aas-text)]"
-            aria-label="GitHub"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C4 2 3 2 3 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 2 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
-          </a>
+          <div class="hidden items-center gap-3 sm:flex sm:gap-4">
+            {
+              navItems.map((item) => (
+                <a
+                  href={item.href}
+                  class="flex items-center no-underline hover:text-[var(--aas-text)]"
+                  aria-label={item.label}
+                  {...(item.keepFilters ? { 'data-keep-filters': true } : {})}
+                  {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" set:html={item.svg} />
+                </a>
+              ))
+            }
+          </div>
           <ThemeToggle lang={lang} />
           <LanguageSwitcher lang={lang} path={path} />
+          <details class="aas-menu relative sm:hidden">
+            <summary
+              class="flex cursor-pointer list-none items-center rounded-lg border border-[var(--aas-border)] px-2.5 py-1 text-[var(--aas-text)] select-none"
+              aria-label={t('nav.menu')}
+              title={t('nav.menu')}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></svg>
+            </summary>
+            <ul
+              class="absolute right-0 z-20 mt-1 min-w-[11rem] overflow-hidden rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-1 shadow-lg"
+            >
+              {
+                navItems.map((item) => (
+                  <li>
+                    <a
+                      href={item.href}
+                      class="flex items-center gap-2.5 px-3 py-2 whitespace-nowrap text-[var(--aas-text)] no-underline hover:bg-[var(--aas-bg)]"
+                      {...(item.keepFilters ? { 'data-keep-filters': true } : {})}
+                      {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="shrink-0 text-[var(--aas-muted)]" set:html={item.svg} />
+                      <span>{item.label}</span>
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </details>
         </nav>
       </div>
     </header>
+
+    <style>
+      /* Hide the default <details> disclosure triangle on the mobile menu
+         (Safari needs the -webkit rule even with list-style: none). */
+      .aas-menu > summary::-webkit-details-marker {
+        display: none;
+      }
+    </style>
 
     <main class:list={['mx-auto px-5 py-10', container]}>
       <slot />
@@ -209,9 +271,8 @@ const isDefaultHome = path === '' && lang === 'en';
       // (.aas-code). The button is pinned to a non-scrolling host so it stays in
       // place on long, horizontally-scrolling code.
       (function mountCopyButtons() {
-        const koLang = document.documentElement.lang === 'ko';
-        const LABEL = koLang ? '코드 복사' : 'Copy code';
-        const DONE = koLang ? '복사됨' : 'Copied';
+        const LABEL = document.documentElement.dataset.copyLabel || 'Copy code';
+        const DONE = document.documentElement.dataset.copiedLabel || 'Copied';
         const COPY_ICON =
           '<svg class="aas-ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="13" height="13" x="9" y="9" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
         const CHECK_ICON =

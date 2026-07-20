@@ -1,0 +1,58 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import StackDetail from '../../../components/StackDetail.astro';
+import { getStacks, getStackAliases, slugOf, type StackEntry } from '../../../lib/stacks';
+import { allLocales, langParam } from '../../../lib/locales';
+
+export const getStaticPaths = (async () => {
+  const paths: Awaited<ReturnType<GetStaticPaths>> = [];
+  for (const lang of allLocales) {
+    const p = langParam(lang);
+    for (const entry of await getStacks(lang)) {
+      paths.push({ params: { lang: p, id: slugOf(entry) }, props: { lang, entry, redirectTo: null } });
+    }
+    // Former-name aliases (e.g. /stack/roo-code/ → /stack/roomote/).
+    for (const { alias, target } of await getStackAliases(lang)) {
+      paths.push({ params: { lang: p, id: alias }, props: { lang, entry: null, redirectTo: target } });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { lang, entry, redirectTo } = Astro.props as {
+  lang: string;
+  entry: StackEntry | null;
+  redirectTo: string | null;
+};
+const target = redirectTo ? getRelativeLocaleUrl(lang, `stack/${redirectTo}/`) : null;
+---
+
+{
+  target ? (
+    <html lang={lang}>
+      <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="refresh" content={`0; url=${target}`} />
+        <link rel="canonical" href={target} />
+        <meta name="robots" content="noindex" />
+        <title>Redirecting…</title>
+        <script is:inline set:html={`location.replace(${JSON.stringify(target)})`} />
+      </head>
+      <body>
+        Redirecting to <a href={target}>{target}</a>…
+      </body>
+    </html>
+  ) : (
+    <BaseLayout
+      title={`${entry!.data.name} — ${site.name}`}
+      description={entry!.data.description}
+      lang={lang}
+      path={`stack/${slugOf(entry!)}/`}
+    >
+      <StackDetail entry={entry!} lang={lang} />
+    </BaseLayout>
+  )
+}

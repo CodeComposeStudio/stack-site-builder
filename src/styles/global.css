@@ -560,6 +560,13 @@ summary {
   line-height: 1.7;
   color: var(--aas-text);
 }
+/* An in-body image never exceeds its column. Astro's <Image> emits intrinsic
+   width/height attributes, so without this an image wider than the viewport
+   (e.g. a 1000px screenshot on a phone) forces horizontal page scroll. */
+.prose :where(img) {
+  max-width: 100%;
+  height: auto;
+}
 .prose :where(ul) {
   list-style: disc;
   padding-left: 1.25rem;

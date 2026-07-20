@@ -1,5 +1,5 @@
 ---
-import { pricingLabels, licenseLabel, useTranslations, type Lang } from '../i18n/ui';
+import { pricingLabel, licenseLabel, useTranslations, type Lang } from '../i18n/ui';
 import { formatStars, type Staleness } from '../lib/github';
 import { pricingTags, COMPLETELY_FREE } from '../lib/pricing';
 import StarIcon from './StarIcon.astro';
@@ -81,7 +81,7 @@ const chip = 'aas-chip rounded-lg px-2.5 py-1';
       {language && <span class={chip}>{language}</span>}
       {pricingTags(pricing).map((p) => (
         <span class:list={[p === COMPLETELY_FREE ? 'aas-free' : 'aas-pricing', 'rounded-lg px-2.5 py-1']}>
-          {pricingLabels[lang][p] ?? p}
+          {pricingLabel(lang, p)}
         </span>
       ))}
       {license && (

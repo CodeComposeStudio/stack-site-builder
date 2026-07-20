@@ -8,14 +8,48 @@
  */
 import { site } from '@aas-data/site';
 
-export const languages = {
-  en: 'English',
-  ko: '한국어',
-} as const;
+/** One locale the site ships. `code` matches the astro.config `i18n` locale and
+ *  the content folder (`stacks/<code>/…`); `label` names it in the switcher;
+ *  `dateLocale` is the BCP-47 tag for date formatting (defaults to `code`). */
+export interface LocaleDef {
+  code: string;
+  label: string;
+  dateLocale?: string;
+}
 
-export type Lang = keyof typeof languages;
+// The theme ships English + Korean. A consuming site overrides this list via
+// `site.locales` to rename them, reorder them, or add its own (e.g. `ja`). The
+// list is authoritative and ordered: it drives the language switcher, and its
+// FIRST entry is the default locale (must match astro.config `i18n.defaultLocale`).
+const themeLocales: LocaleDef[] = [
+  { code: 'en', label: 'English', dateLocale: 'en-US' },
+  { code: 'ko', label: '한국어', dateLocale: 'ko-KR' },
+];
+// Read defensively: a site that hasn't opted into custom locales simply has no
+// `locales` field, and should keep the theme's en/ko default (not a type error).
+const siteLocales = (site as { locales?: LocaleDef[] }).locales;
+const localeList: LocaleDef[] =
+  Array.isArray(siteLocales) && siteLocales.length ? siteLocales : themeLocales;
 
-export const defaultLang: Lang = 'en';
+/** Display names keyed by code — the language switcher iterates this. */
+export const languages: Record<string, string> = Object.fromEntries(
+  localeList.map((l) => [l.code, l.label]),
+);
+
+// Locales are site-configurable, so `Lang` can't be a fixed union of codes.
+export type Lang = string;
+
+export const defaultLang: Lang = localeList[0].code;
+
+/** BCP-47 tag for `Intl` date/number formatting in `lang` (falls back to the
+ *  bare code, then the default locale). */
+export function dateLocaleOf(lang: Lang): string {
+  return (
+    localeList.find((l) => l.code === lang)?.dateLocale ??
+    localeList.find((l) => l.code === defaultLang)?.dateLocale ??
+    lang
+  );
+}
 
 /** UI chrome strings, keyed by a dotted id. */
 export const ui = {
@@ -29,6 +63,10 @@ export const ui = {
     'nav.slides': 'Slides',
     'nav.backToTop': 'Back to top',
     'nav.glossary': 'Glossary',
+    'nav.language': 'Language',
+    'nav.menu': 'Menu',
+    'code.copy': 'Copy code',
+    'code.copied': 'Copied',
     'slides.title': 'Slides',
     'slides.tagline': 'Concept decks — the same ideas as the concept pages, in slide form.',
     'slides.deck': 'Deck',
@@ -167,6 +205,10 @@ export const ui = {
     'nav.slides': '슬라이드',
     'nav.backToTop': '맨 위로',
     'nav.glossary': '용어집',
+    'nav.language': '언어',
+    'nav.menu': '메뉴',
+    'code.copy': '코드 복사',
+    'code.copied': '복사됨',
     'slides.title': '슬라이드',
     'slides.tagline': '개념 덱 — 개념 페이지와 같은 내용을 슬라이드로 옮겼습니다.',
     'slides.deck': '덱',
@@ -299,18 +341,33 @@ export const ui = {
 export type UIKey = keyof (typeof ui)['en'];
 
 /**
- * Returns a `t(key)` translator bound to the given language. A site can
- * override any string (taglines, headings…) via `site.ui.<lang>` in its
- * `src/data/site.ts` — overrides win over the theme defaults here.
+ * Returns a `t(key)` translator bound to the given language. Lookup order:
+ * the site's override for this locale, the theme string for this locale, then
+ * the same two for the default locale, then the key itself. The default-locale
+ * fallback is what lets a site add a locale (e.g. `ja`) and supply only some
+ * strings via `site.ui.ja` — the rest degrade to the default locale instead of
+ * throwing on a locale the theme doesn't ship.
  */
 export function useTranslations(lang: Lang) {
   return function t(key: UIKey): string {
-    return site.ui?.[lang]?.[key] ?? ui[lang][key] ?? ui[defaultLang][key];
+    return (
+      site.ui?.[lang]?.[key] ??
+      (ui as Record<string, Partial<Record<UIKey, string>>>)[lang]?.[key] ??
+      site.ui?.[defaultLang]?.[key] ??
+      (ui as Record<string, Partial<Record<UIKey, string>>>)[defaultLang]?.[key] ??
+      key
+    );
   };
 }
 
+/** Localized label for a `pricing` enum value, falling back to the default
+ *  locale then the raw value (so a site-added locale never crashes). */
+export function pricingLabel(lang: Lang, value: string): string {
+  return pricingLabels[lang]?.[value] ?? pricingLabels[defaultLang]?.[value] ?? value;
+}
+
 /** Human labels for the `pricing` frontmatter enum, per locale. */
-export const pricingLabels: Record<Lang, Record<string, string>> = {
+export const pricingLabels: Record<string, Record<string, string>> = {
   en: {
     'completely-free': 'Completely free',
     'open-source': 'Open source',
@@ -328,10 +385,10 @@ export const pricingLabels: Record<Lang, Record<string, string>> = {
 };
 
 /** Descriptive (non-name) licenses get localized; real license names pass through. */
-const licenseLabels: Record<Lang, Record<string, string>> = {
+const licenseLabels: Record<string, Record<string, string>> = {
   en: { proprietary: 'Proprietary' },
   ko: { proprietary: '독점' },
 };
 export function licenseLabel(lang: Lang, value: string): string {
-  return licenseLabels[lang][value] ?? value;
+  return licenseLabels[lang]?.[value] ?? licenseLabels[defaultLang]?.[value] ?? value;
 }

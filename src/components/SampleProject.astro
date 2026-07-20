@@ -7,21 +7,21 @@
 // on the linked sample page instead of being embedded in the article.
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { listProjects } from '../lib/project';
-import { useTranslations, type Lang } from '../i18n/ui';
+import { useTranslations, dateLocaleOf, defaultLang, type Lang } from '../i18n/ui';
 
 interface Props {
   folder: string;
 }
 
 const { folder } = Astro.props;
-const lang: Lang = Astro.currentLocale === 'ko' ? 'ko' : 'en';
+const lang: Lang = (Astro.currentLocale ?? defaultLang) as Lang;
 const t = useTranslations(lang);
 const target = listProjects(lang).find((p) => p.folder === folder);
 
 function formatDate(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
   if (!y || !m || !d) return iso;
-  return new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+  return new Intl.DateTimeFormat(dateLocaleOf(lang), {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
