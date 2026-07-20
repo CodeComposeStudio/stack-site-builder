@@ -1,0 +1,25 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CategoryIndex from '../../components/CategoryIndex.astro';
+import { allCategoryIds, categoryMap } from '@aas-data/categories';
+import { getStacksByCategory } from '../../lib/stacks';
+
+export const getStaticPaths = (async () => {
+  const paths = [];
+  for (const id of allCategoryIds) {
+    // Skip nodes with no tools in their subtree (no empty pages).
+    if ((await getStacksByCategory('en', id)).length === 0) continue;
+    paths.push({ params: { id }, props: { id } });
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { id } = Astro.props;
+const node = categoryMap.get(id)!;
+---
+
+<BaseLayout title={`${node.label.en} — ${site.name}`} lang="en" path={`categories/${id}/`}>
+  <CategoryIndex lang="en" id={id} />
+</BaseLayout>

@@ -1,0 +1,182 @@
+---
+import ChevronDown from './ChevronDown.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+// Sort + pagination control for the concept & article indexes and their
+// category pages. Sorting re-orders every [data-sortgrid] on the page; if a
+// single [data-paginate] grid is present (the flat list on a leaf category
+// page) it is also paginated via ?page=, with the page links rendered into the
+// [data-pager] element. Both pieces mirror their state into the URL the way the
+// stacks catalog does, and degrade to "show everything" without JS.
+//
+// The default is `recent`, which matches the server render (both indexes
+// pre-sort by date, ConceptIndex.astro:25-29 included).
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const options = [
+  { key: 'recent', label: t('sort.recent') },
+  { key: 'alpha', label: t('sort.alpha') },
+];
+const summaryClass =
+  'flex items-center gap-1.5 rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1.5 text-sm text-[var(--aas-text)]';
+const menuClass =
+  'absolute right-0 z-10 mt-1 min-w-[12rem] overflow-y-auto rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] p-1 shadow-lg';
+---
+
+<div class="flex justify-end" data-listcontrols data-default={options[0].key}>
+  <details class="aas-dd">
+    <summary class={summaryClass}>
+      <span class="text-[var(--aas-muted)]">{t('sort.label')}:</span>
+      <span data-sort-label>{options[0].label}</span>
+      <ChevronDown class="text-[var(--aas-muted)]" />
+    </summary>
+    <ul class={menuClass}>
+      {
+        options.map((o, i) => (
+          <li>
+            <button
+              type="button"
+              data-sort={o.key}
+              aria-current={i === 0 ? 'true' : 'false'}
+              class="flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-[var(--aas-tint)] aria-[current=true]:font-semibold aria-[current=true]:text-[var(--aas-accent)]"
+            >
+              {o.label}
+              <span data-check aria-hidden="true" class="opacity-0">
+                ✓
+              </span>
+            </button>
+          </li>
+        ))
+      }
+    </ul>
+  </details>
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-listcontrols]');
+  if (bar) {
+    const fallback = bar.dataset.default ?? 'recent';
+    const buttons = Array.from(bar.querySelectorAll<HTMLButtonElement>('[data-sort]'));
+    const labelEl = bar.querySelector<HTMLElement>('[data-sort-label]');
+    const sortGrids = Array.from(document.querySelectorAll<HTMLElement>('[data-sortgrid]'));
+    // Stable snapshot of each grid's cards — the source list every sort starts from.
+    const original = new Map(sortGrids.map((g) => [g, Array.from(g.children) as HTMLElement[]]));
+
+    const pageGrid = document.querySelector<HTMLElement>('[data-paginate]');
+    const pager = document.querySelector<HTMLElement>('[data-pager]');
+    const pageSize = Number(pageGrid?.dataset.pageSize ?? '0') || 0;
+
+    let curSort = fallback;
+    let curPage = 1;
+
+    const byName = (a: HTMLElement, b: HTMLElement) =>
+      (a.dataset.name ?? '').localeCompare(b.dataset.name ?? '');
+    const comparator = (sort: string) =>
+      sort === 'alpha'
+        ? byName
+        : (a: HTMLElement, b: HTMLElement) =>
+            (b.dataset.date ?? '').localeCompare(a.dataset.date ?? '') || byName(a, b);
+
+    function applySort(sort: string) {
+      curSort = sort;
+      for (const grid of sortGrids) {
+        const cards = original.get(grid) ?? [];
+        const ordered = [...cards].sort(comparator(sort));
+        ordered.forEach((c) => grid.appendChild(c));
+      }
+      for (const b of buttons) {
+        const on = b.dataset.sort === sort;
+        b.setAttribute('aria-current', String(on));
+        b.querySelector<HTMLElement>('[data-check]')?.classList.toggle('opacity-0', !on);
+        if (on && labelEl) labelEl.textContent = b.textContent?.replace('✓', '').trim() ?? '';
+      }
+    }
+
+    function pageButton(label: string, page: number | null, opts: { current?: boolean; disabled?: boolean } = {}) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = label;
+      if (page) b.dataset.page = String(page);
+      b.disabled = !!opts.disabled;
+      b.setAttribute('aria-current', opts.current ? 'page' : 'false');
+      b.className =
+        'min-w-9 rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1.5 text-sm text-[var(--aas-text)] hover:bg-[var(--aas-tint)] disabled:pointer-events-none disabled:opacity-40 aria-[current=page]:border-[var(--aas-accent)] aria-[current=page]:font-semibold aria-[current=page]:text-[var(--aas-accent)]';
+      return b;
+    }
+
+    function renderPager(pages: number) {
+      if (!pager) return;
+      pager.replaceChildren();
+      if (pages <= 1) return;
+      // Page numbers shown in fixed groups of SIZE; the arrows jump a whole
+      // group (‹ → last page of the previous group, › → first of the next), so
+      // long lists are quick to traverse rather than clicking one page at a time.
+      const SIZE = 5;
+      const start = Math.floor((curPage - 1) / SIZE) * SIZE + 1;
+      const end = Math.min(pages, start + SIZE - 1);
+      pager.appendChild(pageButton('«', 1, { disabled: curPage === 1 }));
+      pager.appendChild(pageButton('‹', start - 1, { disabled: start === 1 }));
+      for (let i = start; i <= end; i++) pager.appendChild(pageButton(String(i), i, { current: i === curPage }));
+      // Pad a short last group to five slots with invisible placeholders so
+      // the arrows sit in the same spot on every page.
+      for (let i = end + 1; i < start + SIZE; i++) {
+        const ghost = pageButton('0', null, { disabled: true });
+        ghost.classList.add('invisible');
+        pager.appendChild(ghost);
+      }
+      pager.appendChild(pageButton('›', end + 1, { disabled: end >= pages }));
+      pager.appendChild(pageButton('»', pages, { disabled: curPage === pages }));
+    }
+
+    function applyPage(page: number) {
+      if (!pageGrid || pageSize <= 0) return;
+      const cards = Array.from(pageGrid.children) as HTMLElement[];
+      const pages = Math.max(1, Math.ceil(cards.length / pageSize));
+      curPage = Math.min(Math.max(1, page), pages);
+      const start = (curPage - 1) * pageSize;
+      cards.forEach((c, i) => {
+        c.style.display = i >= start && i < start + pageSize ? '' : 'none';
+      });
+      renderPager(pages);
+    }
+
+    function sync() {
+      const url = new URL(location.href);
+      if (curSort === fallback) url.searchParams.delete('sort');
+      else url.searchParams.set('sort', curSort);
+      if (curPage === 1) url.searchParams.delete('page');
+      else url.searchParams.set('page', String(curPage));
+      history.replaceState(null, '', url);
+    }
+
+    for (const b of buttons) {
+      b.addEventListener('click', () => {
+        applySort(b.dataset.sort ?? fallback);
+        applyPage(1);
+        sync();
+        b.closest('details')?.removeAttribute('open');
+      });
+    }
+
+    if (pager) {
+      pager.addEventListener('click', (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-page]');
+        if (!b || b.disabled) return;
+        applyPage(Number(b.dataset.page));
+        sync();
+        window.scrollTo({ top: 0 });
+      });
+    }
+
+    const params = new URLSearchParams(location.search);
+    const known = new Set(buttons.map((b) => b.dataset.sort));
+    const wantSort = params.get('sort');
+    const wantPage = Number(params.get('page'));
+    applySort(wantSort && known.has(wantSort) ? wantSort : fallback);
+    applyPage(Number.isFinite(wantPage) && wantPage > 0 ? wantPage : 1);
+  }
+</script>

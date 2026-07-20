@@ -1,0 +1,106 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import ChevronDown from './ChevronDown.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const options = [
+  { value: 'system', label: t('theme.system') },
+  { value: 'light', label: t('theme.light') },
+  { value: 'dark', label: t('theme.dark') },
+];
+---
+
+<details class="aas-theme">
+  <summary
+    class="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-[var(--aas-border)] px-2.5 py-1 text-[var(--aas-text)] select-none"
+    aria-label={t('theme.label')}
+    title={t('theme.label')}
+  >
+    <span data-theme-icon aria-hidden="true">☀</span>
+    <ChevronDown class="text-[var(--aas-muted)]" />
+  </summary>
+  <ul
+    class="absolute right-0 z-10 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-1 shadow-lg"
+  >
+    {
+      options.map((o) => (
+        <li>
+          <button
+            type="button"
+            data-theme-option={o.value}
+            aria-pressed="false"
+            class="flex w-full items-center justify-between px-3 py-1.5 text-left text-[var(--aas-muted)] hover:bg-[var(--aas-bg)] aria-pressed:font-semibold aria-pressed:text-[var(--aas-text)]"
+          >
+            {o.label}
+            <span data-check aria-hidden="true" class="opacity-0">
+              ✓
+            </span>
+          </button>
+        </li>
+      ))
+    }
+  </ul>
+</details>
+
+<style>
+  .aas-theme {
+    position: relative;
+  }
+  .aas-theme > summary::-webkit-details-marker {
+    display: none;
+  }
+  .aas-theme [data-theme-option][aria-pressed='true'] [data-check] {
+    opacity: 1;
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    var root = document.documentElement;
+    var KEY = 'theme';
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function getPref() {
+      try {
+        return localStorage.getItem(KEY) || 'system';
+      } catch (e) {
+        return 'system';
+      }
+    }
+    function resolve(pref) {
+      return pref === 'dark' || (pref === 'system' && mq.matches) ? 'dark' : 'light';
+    }
+    function apply(pref) {
+      root.dataset.theme = resolve(pref);
+      document.querySelectorAll('[data-theme-option]').forEach(function (el) {
+        el.setAttribute('aria-pressed', el.dataset.themeOption === pref ? 'true' : 'false');
+      });
+      document.querySelectorAll('[data-theme-icon]').forEach(function (el) {
+        el.textContent = root.dataset.theme === 'dark' ? '☾' : '☀';
+      });
+    }
+
+    document.querySelectorAll('[data-theme-option]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var pref = el.dataset.themeOption;
+        try {
+          localStorage.setItem(KEY, pref);
+        } catch (e) {}
+        apply(pref);
+        var d = el.closest('details');
+        if (d) d.open = false;
+      });
+    });
+    mq.addEventListener('change', function () {
+      if (getPref() === 'system') apply('system');
+    });
+
+    apply(getPref());
+  })();
+</script>

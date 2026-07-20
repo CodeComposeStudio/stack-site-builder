@@ -1,0 +1,141 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import ChevronDown from './ChevronDown.astro';
+import type { RenderedSample } from '../lib/samples';
+
+interface Props {
+  samples: RenderedSample[];
+  lang: Lang;
+}
+
+const { samples, lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<div class="aas-samples" data-samples>
+  <div class="aas-sample-picker flex items-center gap-2 text-sm text-[var(--aas-muted)]">
+    {t('sample.example')}
+    <details class="aas-vdd" data-samples-dd>
+      <summary
+        class="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1.5 text-[var(--aas-text)] select-none"
+      >
+        <span data-sample-current>{samples[0]?.version}</span>
+        <ChevronDown class="text-[var(--aas-muted)]" />
+      </summary>
+      <ul
+        class="absolute left-0 z-10 mt-1 min-w-[13rem] overflow-hidden rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-1 shadow-lg"
+      >
+        {
+          samples.map((s, i) => (
+            <li>
+              <button
+                type="button"
+                data-sample-option={i}
+                data-sample-version={s.version}
+                aria-current={i === 0 ? 'true' : 'false'}
+                class="flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-[var(--aas-muted)] hover:bg-[var(--aas-tint)] aria-[current=true]:font-semibold aria-[current=true]:text-[var(--aas-text)]"
+              >
+                {s.version}
+                <span data-check aria-hidden="true" class="opacity-0">
+                  ✓
+                </span>
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </details>
+  </div>
+
+  <div class="mt-4 space-y-4">
+    {
+      samples.map((s, i) => (
+        <div data-sample-panel={i} class:list={[i === 0 ? '' : 'hidden']}>
+          {s.descHtml && <div class="prose mb-4 max-w-none" set:html={s.descHtml} />}
+          {s.diagram && (
+            <figure class="mb-4">
+              <figcaption class="mb-1 text-xs tracking-wide text-[var(--aas-muted)] uppercase">
+                {t('sample.diagram')}
+              </figcaption>
+              <div class="aas-diagram">
+                <pre class="mermaid">{s.diagram}</pre>
+              </div>
+            </figure>
+          )}
+          <div class="aas-code overflow-x-auto rounded-lg border border-[var(--aas-border)]" set:html={s.codeHtml} />
+          {s.note && <p class="mt-2 text-sm text-[var(--aas-muted)]">{s.note}</p>}
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .aas-vdd {
+    position: relative;
+  }
+  .aas-vdd > summary::-webkit-details-marker {
+    display: none;
+  }
+  .aas-vdd [data-sample-option][aria-current='true'] [data-check] {
+    opacity: 1;
+  }
+  /* Shiki emits its own background; pad it and keep corners rounded. */
+  .aas-code :global(pre.shiki) {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-samples]').forEach((root) => {
+    const dd = root.querySelector<HTMLDetailsElement>('[data-samples-dd]');
+    const current = root.querySelector<HTMLElement>('[data-sample-current]');
+    const options = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sample-option]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-sample-panel]'));
+
+    // The selected example lives in ?v=. The default (index 0) drops the param
+    // so there's one canonical URL per view — mirroring how DetailTabs drops
+    // ?tab for the default Overview tab.
+    const V_PARAM = 'v';
+    function writeV(index: string) {
+      const url = new URL(location.href);
+      if (index === '0') url.searchParams.delete(V_PARAM);
+      else url.searchParams.set(V_PARAM, index);
+      history.replaceState(null, '', url.pathname + url.search + url.hash);
+    }
+
+    function apply(index: string, write: boolean) {
+      panels.forEach((p) => p.classList.toggle('hidden', p.dataset.samplePanel !== index));
+      options.forEach((o) =>
+        o.setAttribute('aria-current', String(o.dataset.sampleOption === index)),
+      );
+      const opt = options.find((o) => o.dataset.sampleOption === index);
+      if (current && opt) current.textContent = opt.dataset.sampleVersion ?? '';
+      dd?.removeAttribute('open');
+      (window as unknown as { __aasRenderMermaid?: () => void }).__aasRenderMermaid?.();
+      document.dispatchEvent(new CustomEvent('aas:sample', { detail: { index: Number(index) } }));
+      if (write) writeV(index);
+    }
+
+    options.forEach((o) => o.addEventListener('click', () => apply(o.dataset.sampleOption!, true)));
+
+    // External request (e.g. a #s<n>-... deep link from DetailTabs).
+    document.addEventListener('aas:select-sample', (e) =>
+      apply(String((e as CustomEvent<{ index: number }>).detail.index), true),
+    );
+
+    // Restore the version from ?v= on load.
+    const v = new URLSearchParams(location.search).get(V_PARAM);
+    if (v && options.some((o) => o.dataset.sampleOption === v)) apply(v, false);
+
+    // Reflect the current version when the code tab becomes active (0 → drop ?v).
+    document.addEventListener('aas:tabchange', (e) => {
+      if ((e as CustomEvent<{ id: string }>).detail.id !== 'code') return;
+      const cur = options.find((o) => o.getAttribute('aria-current') === 'true');
+      if (cur) writeV(cur.dataset.sampleOption!);
+    });
+  });
+</script>

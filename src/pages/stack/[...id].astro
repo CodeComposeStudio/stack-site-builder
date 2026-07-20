@@ -1,0 +1,51 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StackDetail from '../../components/StackDetail.astro';
+import { getStacks, getStackAliases, slugOf, type StackEntry } from '../../lib/stacks';
+
+export const getStaticPaths = (async () => {
+  const entries = await getStacks('en');
+  const paths: Awaited<ReturnType<GetStaticPaths>> = entries.map((entry) => ({
+    params: { id: slugOf(entry) },
+    props: { entry, redirectTo: null },
+  }));
+  // Former-name aliases (e.g. /stack/roo-code/ → /stack/roomote/).
+  for (const { alias, target } of await getStackAliases('en')) {
+    paths.push({ params: { id: alias }, props: { entry: null, redirectTo: target } });
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { entry, redirectTo } = Astro.props as { entry: StackEntry | null; redirectTo: string | null };
+const target = redirectTo ? getRelativeLocaleUrl('en', `stack/${redirectTo}/`) : null;
+---
+
+{
+  target ? (
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="refresh" content={`0; url=${target}`} />
+        <link rel="canonical" href={target} />
+        <meta name="robots" content="noindex" />
+        <title>Redirecting…</title>
+        <script is:inline set:html={`location.replace(${JSON.stringify(target)})`} />
+      </head>
+      <body>
+        Redirecting to <a href={target}>{target}</a>…
+      </body>
+    </html>
+  ) : (
+    <BaseLayout
+      title={`${entry!.data.name} — ${site.name}`}
+      description={entry!.data.description}
+      lang="en"
+      path={`stack/${slugOf(entry!)}/`}
+    >
+      <StackDetail entry={entry!} lang="en" />
+    </BaseLayout>
+  )
+}

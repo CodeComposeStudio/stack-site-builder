@@ -1,0 +1,431 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import type { RenderedProject } from '../lib/project';
+import ChevronDown from './ChevronDown.astro';
+import ProjectFileList from './ProjectFileList.astro';
+import ProjectRelatedTools, { type RelatedTool } from './ProjectRelatedTools.astro';
+
+interface Props {
+  lang: Lang;
+  projects: RenderedProject[];
+  // Related tools per example folder; rendered inline below 2xl (in the rail at 2xl+).
+  related: Map<string, RelatedTool[]>;
+  // Embedded in an article body, where the page's TOC rail (≥1200px) already
+  // surfaces the files + related tools. Drop the inline sidebar at ≥1200px so it
+  // isn't shown twice; below that (no rail) the inline sidebar stays.
+  embedded?: boolean;
+}
+
+const { lang, projects, related, embedded = false } = Astro.props;
+const t = useTranslations(lang);
+
+// Split the rendered README into its leading <h1> inner content (used as a
+// clickable header) and the body (collapsible under it).
+function splitReadme(html?: string): { titleInner?: string; body?: string } {
+  if (!html) return {};
+  const m = html.match(/^\s*<h1[^>]*>([\s\S]*?)<\/h1>([\s\S]*)$/);
+  return m ? { titleInner: m[1], body: m[2] } : { body: html };
+}
+
+// Format a YYYY-MM-DD date in the locale's own style (ko: 2026년 6월 28일,
+// en: June 28, 2026). Parsed in UTC so the day never shifts at build time.
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+---
+
+<div data-projects>
+  {/* Example selector — shown even for a single project, so its name and date
+      are always visible at the top of the tab. */}
+  {
+    projects.length > 0 && (
+      <div class="aas-sample-picker flex items-center gap-2 text-sm text-[var(--aas-muted)]">
+        {t('project.example')}
+        <details class="aas-vdd" data-project-dd>
+          <summary class="flex cursor-pointer list-none items-center gap-2 rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1.5 text-[var(--aas-text)] select-none">
+            <span data-project-current>{projects[0].name}</span>
+            <ChevronDown class="text-[var(--aas-muted)]" />
+          </summary>
+          <ul class="absolute left-0 z-10 mt-1 min-w-[14rem] overflow-hidden rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-1 shadow-lg">
+            {projects.map((p, i) => (
+              <li>
+                <button
+                  type="button"
+                  data-project-option={i}
+                  data-project-folder={p.folder}
+                  data-project-name={p.name}
+                  aria-current={i === 0 ? 'true' : 'false'}
+                  class="group flex w-full items-center justify-between gap-2 px-3 py-1.5 text-left text-[var(--aas-muted)] hover:bg-[var(--aas-tint)] aria-[current=true]:text-[var(--aas-text)]"
+                >
+                  <span class="min-w-0">
+                    <span class="block truncate group-aria-[current=true]:font-semibold">{p.name}</span>
+                    <span class="block text-xs text-[var(--aas-muted)]">{formatDate(p.date)}</span>
+                  </span>
+                  <span data-check aria-hidden="true" class="shrink-0 opacity-0">
+                    ✓
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      </div>
+    )
+  }
+
+  {
+    projects.map((p, pi) => {
+      const readme = splitReadme(p.readmeHtml);
+      return (
+      <div data-project-panel={pi} data-project-folder={p.folder} class:list={[pi === 0 ? '' : 'hidden', 'mt-4']}>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <p class="text-sm text-[var(--aas-muted)]">{t('project.intro')}</p>
+          <div class="flex flex-col items-end gap-2">
+            <a
+              href={p.folderUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="aas-lift inline-flex items-center gap-1.5 rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1.5 text-sm text-[var(--aas-text)] no-underline"
+            >
+              {t('project.viewOnGitHubPre')}
+              <code class="rounded bg-[var(--aas-tint)] px-1.5 py-0.5 text-xs">samples/{p.folder}</code>
+              {t('project.viewOnGitHubPost')}
+              <span class="text-[var(--aas-muted)]">&nearr;</span>
+            </a>
+            {/* Dev only: browse the checked-out folder through the dev server —
+                the GitHub link 404s until the branch is pushed. Absent in builds. */}
+            {import.meta.env.DEV && (
+              <a
+                href={`${import.meta.env.BASE_URL.replace(/\/$/, '')}/local-samples/${p.folder}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="aas-lift inline-flex items-center gap-1.5 rounded-lg border border-dashed border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1.5 text-sm text-[var(--aas-text)] no-underline"
+              >
+                {t('project.viewLocallyPre')}
+                <code class="rounded bg-[var(--aas-tint)] px-1.5 py-0.5 text-xs">samples/{p.folder}</code>
+                {t('project.viewLocallyPost')}
+                <span class="text-[var(--aas-muted)]">&nearr;</span>
+              </a>
+            )}
+          </div>
+        </div>
+
+        {readme.titleInner && (
+          <div class="mt-5" data-readme>
+            <p class="text-sm text-[var(--aas-muted)]">{formatDate(p.date)}</p>
+            <span
+              class="mt-1 block text-2xl font-bold tracking-tight text-[var(--aas-text)]"
+              set:html={readme.titleInner}
+            />
+            <button
+              type="button"
+              data-readme-toggle
+              aria-expanded="true"
+              class="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm text-[var(--aas-muted)] hover:bg-[var(--aas-tint)] hover:text-[var(--aas-text)]"
+            >
+              <ChevronDown class="aas-readme-chevron transition-transform" />
+              <span data-readme-label-expand>{t('project.readmeExpand')}</span>
+              <span data-readme-label-collapse>{t('project.readmeCollapse')}</span>
+            </button>
+            {readme.body && (
+              <Fragment>
+                <div class="prose mt-3 max-w-none" data-readme-body set:html={readme.body} />
+                {/* Second collapse control at the end of a long README. Hidden when
+                    collapsed (the top button handles expanding), so there's never
+                    two "expand" buttons. */}
+                <button
+                  type="button"
+                  data-readme-toggle
+                  data-readme-bottom
+                  aria-expanded="true"
+                  class="mt-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-sm text-[var(--aas-muted)] hover:bg-[var(--aas-tint)] hover:text-[var(--aas-text)]"
+                >
+                  <ChevronDown class="rotate-180" />
+                  {t('project.readmeCollapse')}
+                </button>
+              </Fragment>
+            )}
+          </div>
+        )}
+
+        {p.files.length > 0 && (
+          <div
+            class:list={[
+              'mt-6 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:items-start lg:gap-4',
+              embedded ? 'aas-embed-proj' : '2xl:block',
+            ]}
+          >
+            {/* Sidebar — related tools + file tree, inline below 2xl; on 2xl+
+                both move to the right rail (rendered in StackDetail) since this
+                inline column is hidden here. */}
+            <div class:list={['space-y-5', embedded ? 'aas-embed-sidebar' : '2xl:hidden']}>
+              <ProjectRelatedTools lang={lang} tools={related.get(p.folder) ?? []} />
+              <ProjectFileList lang={lang} folder={p.folder} files={p.files} />
+            </div>
+
+            {/* Selected file content */}
+            <div class="mt-4 min-w-0 lg:mt-0">
+              {p.files.map((f, fi) => (
+                <div data-file-panel={fi} data-file-path={f.path} class:list={['scroll-mt-6', fi === 0 ? '' : 'hidden']}>
+                  <figure class="overflow-hidden rounded-xl border border-[var(--aas-border)]">
+                    <figcaption class="border-b border-[var(--aas-border)] bg-[var(--aas-panel)] px-3.5 py-2 font-mono text-xs text-[var(--aas-muted)]">
+                      {f.path}
+                    </figcaption>
+                    <div class="aas-projfile overflow-x-auto" set:html={f.html} />
+                  </figure>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+      );
+    })
+  }
+
+  {/* Pre-paint: collapse the README before paint if the saved preference says so. */}
+  <script is:inline>
+    (function () {
+      try {
+        if (localStorage.getItem('aas:readme-collapsed') !== '1') return;
+        document.currentScript.parentElement.querySelectorAll('[data-readme]').forEach(function (r) {
+          r.querySelectorAll('[data-readme-toggle]').forEach(function (btn) {
+            btn.setAttribute('aria-expanded', 'false');
+          });
+          var body = r.querySelector('[data-readme-body]');
+          if (body) body.hidden = true;
+        });
+      } catch (e) {}
+    })();
+  </script>
+
+  {/* Pre-paint: restore the selected example/file from the URL with inline
+      display styles (applied before the stylesheet and the module script run),
+      so the chosen file shows immediately instead of flashing the first one.
+      The module script below clears these once it takes over. */}
+  <script is:inline>
+    (function () {
+      var root = document.currentScript.parentElement;
+      var params = new URLSearchParams(location.search);
+      var ex = params.get('ex');
+      var file = params.get('file');
+      if (!ex && !file) return;
+
+      var panels = Array.prototype.slice.call(root.querySelectorAll('[data-project-panel]'));
+      var active = null;
+      if (ex) {
+        panels.forEach(function (p) {
+          if (p.dataset.projectFolder === ex) active = p;
+        });
+        if (active && panels.length > 1) {
+          panels.forEach(function (p) {
+            p.style.display = p === active ? 'block' : 'none';
+          });
+          var current = root.querySelector('[data-project-current]');
+          root.querySelectorAll('[data-project-option]').forEach(function (o) {
+            var on = o.dataset.projectFolder === ex;
+            o.setAttribute('aria-current', String(on));
+            if (on && current) current.textContent = o.dataset.projectName || '';
+          });
+        }
+      }
+      if (!active) active = panels[0];
+      if (!file || !active) return;
+
+      var fpanels = Array.prototype.slice.call(active.querySelectorAll('[data-file-panel]'));
+      if (!fpanels.some((fp) => fp.dataset.filePath === file)) return;
+      fpanels.forEach(function (fp) {
+        fp.style.display = fp.dataset.filePath === file ? 'block' : 'none';
+      });
+      // Match every copy of this project's file buttons — the inline list AND
+      // the fixed right rail (≥2xl) — like the module script does, so the rail
+      // doesn't flash the default (first-file) highlight before it syncs.
+      document.querySelectorAll('[data-file][data-file-folder="' + active.dataset.projectFolder + '"]').forEach(function (b) {
+        b.setAttribute('aria-current', String(b.dataset.filePath === file));
+      });
+    })();
+  </script>
+</div>
+
+<style>
+  .aas-vdd {
+    position: relative;
+  }
+  .aas-vdd > summary::-webkit-details-marker {
+    display: none;
+  }
+  .aas-vdd [data-project-option][aria-current='true'] [data-check] {
+    opacity: 1;
+  }
+  .aas-projfile :global(pre.shiki) {
+    margin: 0;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+  }
+  /* README toggle: rotate the chevron and swap the label by state. */
+  [data-readme-toggle][aria-expanded='false'] .aas-readme-chevron {
+    transform: rotate(-90deg);
+  }
+  [data-readme-toggle][aria-expanded='true'] [data-readme-label-expand],
+  [data-readme-toggle][aria-expanded='false'] [data-readme-label-collapse] {
+    display: none;
+  }
+  /* The bottom collapse button only exists while expanded, so a collapsed README
+     never shows two "expand" controls. */
+  [data-readme-bottom][aria-expanded='false'] {
+    display: none;
+  }
+</style>
+
+<script>
+  // The active tab lives in the URL #hash (see DetailTabs); the selected example
+  // and file live in query params so a refresh restores the exact view.
+  const PARAM_EX = 'ex'; // sample project folder, e.g. "langgraph_1"
+  const PARAM_FILE = 'file'; // file path within the project, e.g. "app.py"
+
+  document.querySelectorAll<HTMLElement>('[data-projects]').forEach((root) => {
+    const projDD = root.querySelector<HTMLDetailsElement>('[data-project-dd]');
+    const projCurrent = root.querySelector<HTMLElement>('[data-project-current]');
+    const projOptions = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-project-option]'));
+    const projPanels = Array.from(root.querySelectorAll<HTMLElement>('[data-project-panel]'));
+    const multi = projPanels.length > 1;
+
+    // Update the query params while leaving the path and #hash (tab) untouched.
+    function writeUrl(folder: string | null, file: string | null) {
+      const url = new URL(location.href);
+      if (multi && folder) url.searchParams.set(PARAM_EX, folder);
+      else url.searchParams.delete(PARAM_EX);
+      if (file) url.searchParams.set(PARAM_FILE, file);
+      else url.searchParams.delete(PARAM_FILE);
+      history.replaceState(null, '', url);
+    }
+
+    // File buttons exist in two places: inline next to the code (narrow screens)
+    // and in the fixed right rail (≥2xl). Both carry data-file-folder, so we
+    // match them document-wide by folder and keep their state in sync.
+    function fileButtonsFor(folder: string) {
+      return Array.from(
+        document.querySelectorAll<HTMLButtonElement>(`[data-file][data-file-folder="${folder}"]`),
+      );
+    }
+
+    function selectFile(panel: HTMLElement, file: string | null, write: boolean) {
+      const folder = panel.dataset.projectFolder ?? '';
+      const filePanels = Array.from(panel.querySelectorAll<HTMLElement>('[data-file-panel]'));
+      if (!filePanels.length) return;
+      const fileBtns = fileButtonsFor(folder);
+      const btn = fileBtns.find((b) => b.dataset.filePath === file);
+      const sel = btn?.dataset.filePath ?? filePanels[0].dataset.filePath ?? null;
+      filePanels.forEach((fp) => {
+        fp.style.removeProperty('display'); // clear the pre-paint inline style
+        fp.classList.toggle('hidden', fp.dataset.filePath !== sel);
+      });
+      fileBtns.forEach((b) => b.setAttribute('aria-current', String(b.dataset.filePath === sel)));
+      if (write) writeUrl(folder || null, sel);
+    }
+
+    function selectProject(folder: string | null, write: boolean) {
+      const panel = projPanels.find((p) => p.dataset.projectFolder === folder) ?? projPanels[0];
+      if (!panel) return;
+      const opt = projOptions.find((o) => o.dataset.projectFolder === panel.dataset.projectFolder);
+      projPanels.forEach((p) => {
+        p.style.removeProperty('display'); // clear the pre-paint inline style
+        p.classList.toggle('hidden', p !== panel);
+      });
+      projOptions.forEach((o) => o.setAttribute('aria-current', String(o === opt)));
+      if (projCurrent && opt) projCurrent.textContent = opt.dataset.projectName ?? '';
+      projDD?.removeAttribute('open');
+      // Let the rail swap its related-tools block to match the example.
+      document.dispatchEvent(
+        new CustomEvent('aas:project', { detail: { folder: panel.dataset.projectFolder } }),
+      );
+      // Switching examples resets to that example's first file.
+      selectFile(panel, null, write);
+    }
+
+    projOptions.forEach((opt) =>
+      opt.addEventListener('click', () => selectProject(opt.dataset.projectFolder ?? null, true)),
+    );
+
+    // Bring the selected file's code into view. The file list (especially the
+    // right rail) sits far above the code on a long README, so a click there
+    // would otherwise look like nothing happened.
+    function scrollToFile(panel: HTMLElement) {
+      const visible = panel.querySelector<HTMLElement>('[data-file-panel]:not(.hidden)');
+      visible?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    projPanels.forEach((panel) =>
+      fileButtonsFor(panel.dataset.projectFolder ?? '').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          selectFile(panel, btn.dataset.filePath ?? null, true);
+          scrollToFile(panel);
+        }),
+      ),
+    );
+
+    // Restore the selection from the URL on load (without rewriting it).
+    const params = new URLSearchParams(location.search);
+    if (multi && params.get(PARAM_EX)) selectProject(params.get(PARAM_EX), false);
+    const active = projPanels.find((p) => !p.classList.contains('hidden')) ?? projPanels[0];
+    if (active && params.get(PARAM_FILE)) selectFile(active, params.get(PARAM_FILE), false);
+
+    // Reflect the current example/file in the URL whenever the impl tab becomes
+    // active, so even a default (un-clicked) impl view is shareable/restorable.
+    // DetailTabs broadcasts the initial tab on a microtask, so this also fires
+    // when impl is the landing tab.
+    function reflectSelection() {
+      const panel = projPanels.find((p) => !p.classList.contains('hidden')) ?? projPanels[0];
+      const folder = panel?.dataset.projectFolder ?? null;
+      const file =
+        fileButtonsFor(folder ?? '').find((b) => b.getAttribute('aria-current') === 'true')?.dataset
+          .filePath ?? null;
+      writeUrl(folder, file);
+    }
+    document.addEventListener('aas:tabchange', (e) => {
+      if ((e as CustomEvent<{ id: string }>).detail.id === 'impl') reflectSelection();
+    });
+  });
+</script>
+
+<script>
+  // Collapsible README, remembered in localStorage (one preference for all
+  // implementation samples). The inline pre-paint above applies it before paint;
+  // this binds the toggle and keeps every README in sync.
+  const README_KEY = 'aas:readme-collapsed';
+  const isReadmeCollapsed = () => {
+    try {
+      return localStorage.getItem(README_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+  function applyReadme(collapsed: boolean) {
+    document.querySelectorAll<HTMLElement>('[data-readme]').forEach((r) => {
+      r.querySelectorAll<HTMLButtonElement>('[data-readme-toggle]').forEach((btn) =>
+        btn.setAttribute('aria-expanded', String(!collapsed)),
+      );
+      const body = r.querySelector<HTMLElement>('[data-readme-body]');
+      if (body) body.hidden = collapsed;
+    });
+  }
+  applyReadme(isReadmeCollapsed());
+  document.querySelectorAll<HTMLButtonElement>('[data-readme-toggle]').forEach((btn) =>
+    btn.addEventListener('click', () => {
+      const collapsed = !isReadmeCollapsed();
+      try {
+        localStorage.setItem(README_KEY, collapsed ? '1' : '0');
+      } catch {
+        /* private mode — best effort */
+      }
+      applyReadme(collapsed);
+    }),
+  );
+</script>

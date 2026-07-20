@@ -1,0 +1,17 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import ConceptIndex from '../../../../components/ConceptIndex.astro';
+import { conceptTree } from '@aas-data/concept-categories';
+
+export const getStaticPaths = (() =>
+  conceptTree.allIds.map((id) => ({ params: { id }, props: { id } }))) satisfies GetStaticPaths;
+
+const { id } = Astro.props as { id: string };
+const node = conceptTree.map.get(id)!;
+---
+
+<BaseLayout title={`${node.label.ko} — ${site.name}`} lang="ko" path={`concept/category/${id}/`}>
+  <ConceptIndex lang="ko" categoryId={id} />
+</BaseLayout>

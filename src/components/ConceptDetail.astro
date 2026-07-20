@@ -1,0 +1,102 @@
+---
+import { render } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getArticles, articleSlugOf, type ArticleEntry } from '../lib/articles';
+import { getConcepts, conceptSlugOf, conceptToolSlugs, type ConceptEntry } from '../lib/concepts';
+import { inlineMd } from '../lib/inline-md';
+import { Image } from 'astro:assets';
+import { useTranslations, type Lang } from '../i18n/ui';
+import MermaidLoader from './MermaidLoader.astro';
+import TocRail from './TocRail.astro';
+import Breadcrumb from './Breadcrumb.astro';
+import { conceptTree, conceptCatOf } from '@aas-data/concept-categories';
+import RelatedTools from './RelatedTools.astro';
+import RelatedConcepts from './RelatedConcepts.astro';
+import RelatedArticles from './RelatedArticles.astro';
+
+interface Props {
+  entry: ConceptEntry;
+  lang: Lang;
+}
+
+const { entry, lang } = Astro.props;
+const t = useTranslations(lang);
+const { Content, headings } = await render(entry);
+const data = entry.data;
+const tocItems = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const bodyHasMermaid = (entry.body ?? '').includes('```mermaid');
+
+// Related sections (cards), like a stack detail page: the tools this concept
+// uses (flattened from its role groups), sibling concepts, and linked writing.
+const articles = await getArticles(lang);
+const articleBySlug = new Map(articles.map((a) => [articleSlugOf(a), a]));
+const relatedArticles = data.articles
+  .map((sl) => articleBySlug.get(sl))
+  .filter(Boolean) as ArticleEntry[];
+
+const concepts = await getConcepts(lang);
+const conceptBySlug = new Map(concepts.map((c) => [conceptSlugOf(c), c]));
+const relatedConcepts = data.related
+  .map((sl) => conceptBySlug.get(sl))
+  .filter(Boolean) as ConceptEntry[];
+
+const fmtDate = (d: Date) =>
+  new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(d);
+
+// Breadcrumb: All concepts › category › subcategory… (each segment linked).
+const crumbs = [
+  { label: t('concept.backToConcepts'), href: getRelativeLocaleUrl(lang, 'concept/') },
+  ...conceptTree.pathOf(conceptCatOf(data.category)).map((c) => ({
+    label: c.label[lang],
+    href: getRelativeLocaleUrl(lang, `concept/category/${c.id}/`),
+  })),
+];
+---
+
+<Breadcrumb segments={crumbs} />
+
+<header class="mt-4 pb-6">
+  <h1 class="text-3xl font-bold tracking-tight">{data.title}</h1>
+  {
+    (data.version || data.updated) && (
+      <p class="mt-1 text-sm text-[var(--aas-muted)]">
+        {data.version && <span>{t('meta.docVersion')} {data.version}</span>}
+        {data.version && data.updated && <span> · </span>}
+        {data.updated && (
+          <span>
+            {t('concept.updated')} {fmtDate(data.updated)}
+          </span>
+        )}
+      </p>
+    )
+  }
+  <p class="mt-2 aas-md text-lg whitespace-pre-line text-[var(--aas-muted)]" set:html={inlineMd(data.description)} />
+  {
+    data.image && (
+      <Image
+        src={data.image}
+        alt={data.imageAlt ?? data.title}
+        class="mt-5 aspect-[2/1] w-full rounded-2xl border border-[var(--aas-border)] object-cover"
+      />
+    )
+  }
+</header>
+
+<RelatedConcepts lang={lang} concepts={relatedConcepts} />
+
+<div class="mt-8 flex items-start gap-8">
+  <article class="prose max-w-none aas-reading min-w-0 flex-1">
+    <Content />
+  </article>
+  <TocRail lang={lang} items={tocItems} />
+</div>
+
+<RelatedTools lang={lang} slugs={conceptToolSlugs(entry)} />
+<RelatedArticles lang={lang} articles={relatedArticles} />
+
+{bodyHasMermaid && <MermaidLoader />}

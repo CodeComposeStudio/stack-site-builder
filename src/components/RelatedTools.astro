@@ -1,0 +1,55 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getStacks, slugOf } from '../lib/stacks';
+import { categoryMap } from '@aas-data/categories';
+import { useTranslations, type Lang } from '../i18n/ui';
+import ToolAvatar from './ToolAvatar.astro';
+import CollapsibleGrid from './CollapsibleGrid.astro';
+
+interface Props {
+  lang: Lang;
+  slugs: string[];
+}
+
+const { lang, slugs } = Astro.props;
+const t = useTranslations(lang);
+
+const stacks = await getStacks(lang);
+const bySlug = new Map(stacks.map((s) => [slugOf(s), s]));
+const related = slugs.map((s) => bySlug.get(s)).filter(Boolean) as NonNullable<
+  ReturnType<typeof bySlug.get>
+>[];
+---
+
+{
+  related.length > 0 && (
+    <section class="mt-8">
+      <h2 class="text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('detail.relatedTools')}
+      </h2>
+      <CollapsibleGrid lang={lang} count={related.length}>
+        {related.map((e) => (
+          <a
+            href={getRelativeLocaleUrl(lang, `stack/${slugOf(e)}/`)}
+            class="aas-lift flex items-center gap-3 rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-3 no-underline"
+          >
+            <ToolAvatar name={e.data.name} logo={e.data.logo} logoDark={e.data.logoDark} category={e.data.category} size={36} />
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="truncate font-semibold text-[var(--aas-text)]">{e.data.name}</span>
+                {e.data.deprecated && (
+                  <span class="aas-deprecated shrink-0 rounded px-1.5 py-0.5 text-[0.65rem]">
+                    {t('meta.deprecated')}
+                  </span>
+                )}
+              </div>
+              <div class="truncate text-xs text-[var(--aas-muted)]">
+                {categoryMap.get(e.data.category)?.label[lang]}
+              </div>
+            </div>
+          </a>
+        ))}
+      </CollapsibleGrid>
+    </section>
+  )
+}

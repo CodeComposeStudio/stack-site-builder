@@ -1,0 +1,74 @@
+---
+// A self-contained fixed right-rail table of contents (with scroll-spy and a
+// back-to-top button) for single-column detail pages — concepts and articles.
+// (StackDetail has its own tab-aware rail.)
+import Toc from './Toc.astro';
+import ProjectRelatedTools, { type RelatedTool } from './ProjectRelatedTools.astro';
+import ProjectFileList from './ProjectFileList.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Item {
+  slug: string;
+  text: string;
+  depth: number;
+}
+interface Props {
+  lang: Lang;
+  items: Item[];
+  // Optional: when an article embeds a runnable sample, surface its related
+  // tools + file list here, mirroring a stack's implementation rail. The file
+  // buttons wire to the body's <SampleProject/> viewer (matched by folder).
+  relatedTools?: RelatedTool[];
+  projectFiles?: { folder: string; files: { path: string }[] };
+}
+
+const { lang, items, relatedTools = [], projectFiles } = Astro.props;
+const t = useTranslations(lang);
+const hasContent = items.length > 0 || relatedTools.length > 0 || Boolean(projectFiles);
+---
+
+{
+  hasContent && (
+    <aside class="aas-toc-rail" data-toc-rail>
+      <div class="aas-toc-scroll">
+        {items.length > 0 && <Toc items={items} title={t('toc.onThisPage')} />}
+        {relatedTools.length > 0 && (
+          <div class="mt-5">
+            <ProjectRelatedTools lang={lang} tools={relatedTools} />
+          </div>
+        )}
+        {projectFiles && (
+          <div class="mt-5">
+            <ProjectFileList lang={lang} folder={projectFiles.folder} files={projectFiles.files} />
+          </div>
+        )}
+      </div>
+      <div class="aas-toc-foot">
+        <button type="button" class="aas-toc-top" data-back-to-top>
+          ↑ {t('top.label')}
+        </button>
+        <button
+          type="button"
+          class="aas-toc-allbtn"
+          data-toggle-all
+          data-collapse={t('toc.collapseAll')}
+          data-expand={t('toc.expandAll')}
+          hidden
+        >
+          {t('toc.collapseAll')}
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+<script>
+  import { startScrollSpy, initBackToTop, initReveals } from '../lib/toc-rail-client';
+
+  const rail = document.querySelector<HTMLElement>('[data-toc-rail]');
+  if (rail) {
+    startScrollSpy(rail);
+    initBackToTop(rail);
+    initReveals(rail);
+  }
+</script>

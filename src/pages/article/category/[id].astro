@@ -1,0 +1,17 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BlogIndex from '../../../components/BlogIndex.astro';
+import { articleTree } from '@aas-data/article-categories';
+
+export const getStaticPaths = (() =>
+  articleTree.allIds.map((id) => ({ params: { id }, props: { id } }))) satisfies GetStaticPaths;
+
+const { id } = Astro.props as { id: string };
+const node = articleTree.map.get(id)!;
+---
+
+<BaseLayout title={`${node.label.en} — ${site.name}`} lang="en" path={`article/category/${id}/`}>
+  <BlogIndex lang="en" categoryId={id} />
+</BaseLayout>

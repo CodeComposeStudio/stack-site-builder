@@ -1,0 +1,18 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TagIndex from '../../components/TagIndex.astro';
+import { getAllTags } from '../../lib/stacks';
+
+export const getStaticPaths = (async () => {
+  const tags = await getAllTags('en');
+  return tags.map((tag) => ({ params: { tag }, props: { tag } }));
+}) satisfies GetStaticPaths;
+
+const { tag } = Astro.props;
+---
+
+<BaseLayout title={`#${tag} — ${site.name}`} lang="en" path={`tags/${tag}/`}>
+  <TagIndex lang="en" tag={tag} />
+</BaseLayout>

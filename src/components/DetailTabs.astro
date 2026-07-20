@@ -1,0 +1,219 @@
+---
+interface Props {
+  overviewLabel: string;
+  pricingLabel?: string;
+  codeLabel?: string;
+  implLabel?: string;
+}
+
+const { overviewLabel, pricingLabel, codeLabel, implLabel } = Astro.props;
+const tabClass =
+  'aas-tab cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-[var(--aas-muted)] hover:text-[var(--aas-text)]';
+---
+
+<div data-tabs>
+  <div role="tablist" class="inline-flex gap-1 rounded-xl bg-[var(--aas-tint)] p-1">
+    <button type="button" role="tab" id="tab-overview" aria-controls="panel-overview" data-tab="overview" class={tabClass} aria-selected="true">
+      {overviewLabel}
+    </button>
+    {
+      pricingLabel && (
+        <button type="button" role="tab" id="tab-pricing" aria-controls="panel-pricing" data-tab="pricing" class={tabClass} aria-selected="false">
+          {pricingLabel}
+        </button>
+      )
+    }
+    {
+      codeLabel && (
+        <button type="button" role="tab" id="tab-code" aria-controls="panel-code" data-tab="code" class={tabClass} aria-selected="false">
+          {codeLabel}
+        </button>
+      )
+    }
+    {
+      implLabel && (
+        <button type="button" role="tab" id="tab-impl" aria-controls="panel-impl" data-tab="impl" class={tabClass} aria-selected="false">
+          {implLabel}
+        </button>
+      )
+    }
+  </div>
+
+  <div role="tabpanel" id="panel-overview" aria-labelledby="tab-overview" data-panel="overview" class="mt-6">
+    <slot name="overview" />
+  </div>
+  {
+    pricingLabel && (
+      <div role="tabpanel" id="panel-pricing" aria-labelledby="tab-pricing" data-panel="pricing" class="mt-6 hidden">
+        <slot name="pricing" />
+      </div>
+    )
+  }
+  {
+    codeLabel && (
+      <div role="tabpanel" id="panel-code" aria-labelledby="tab-code" data-panel="code" class="mt-6 hidden">
+        <slot name="code" />
+      </div>
+    )
+  }
+  {
+    implLabel && (
+      <div role="tabpanel" id="panel-impl" aria-labelledby="tab-impl" data-panel="impl" class="mt-6 hidden">
+        <slot name="impl" />
+      </div>
+    )
+  }
+
+  {/* Pre-paint: pick the tab from ?tab= (or a legacy hash / the tab-owned
+      params) using inline display styles, which apply before the stylesheet
+      loads (so it works in dev too). */}
+  <script is:inline>
+    (function () {
+      var root = document.currentScript.parentElement;
+      var hash = decodeURIComponent(location.hash.slice(1));
+      var params = new URLSearchParams(location.search);
+      var has = function (id) {
+        var found = false;
+        root.querySelectorAll('[data-tab]').forEach(function (t) {
+          if (t.dataset.tab === id) found = true;
+        });
+        return found;
+      };
+
+      var target = null;
+      var pt = params.get('tab');
+      if (pt && has(pt)) target = pt;
+      if (!target && hash && hash !== 'overview') {
+        if (has(hash)) target = hash; // legacy #<tabid>
+        if (!target) {
+          root.querySelectorAll('[data-panel]').forEach(function (p) {
+            if (target) return;
+            try {
+              var esc = window.CSS && CSS.escape ? CSS.escape(hash) : hash;
+              if (p.querySelector('#' + esc)) target = p.dataset.panel;
+            } catch (e) {}
+          });
+        }
+      }
+      if (!target) {
+        // Tabs own their params: ?ex/?file → impl, ?v → code.
+        if ((params.has('ex') || params.has('file')) && has('impl')) target = 'impl';
+        else if (params.has('v') && has('code')) target = 'code';
+      }
+      if (!target || target === 'overview') return;
+      root.querySelectorAll('[data-panel]').forEach(function (p) {
+        p.style.display = p.dataset.panel === target ? 'block' : 'none';
+      });
+      root.querySelectorAll('[data-tab]').forEach(function (t) {
+        t.setAttribute('aria-selected', String(t.dataset.tab === target));
+      });
+    })();
+  </script>
+</div>
+
+<style>
+  .aas-tab[aria-selected='true'] {
+    background: var(--aas-panel);
+    color: var(--aas-text);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+</style>
+
+<script>
+  // The selected tab lives in ?tab=; each tab also owns its own params, listed
+  // here so switching tabs can drop the others' (e.g. impl's ?ex/?file must not
+  // linger on the code tab). The hash is only ever a scroll anchor.
+  const TAB_PARAM = 'tab';
+  const OWNED: Record<string, string[]> = { code: ['v'], impl: ['ex', 'file'] };
+
+  function stripForeign(url: URL, id: string) {
+    for (const [tab, ps] of Object.entries(OWNED))
+      if (tab !== id) ps.forEach((p) => url.searchParams.delete(p));
+  }
+
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
+    const tabIds = tabs.map((t) => t.dataset.tab);
+
+    function applyTab(id: string) {
+      tabs.forEach((t) => t.setAttribute('aria-selected', String(t.dataset.tab === id)));
+      panels.forEach((p) => {
+        p.style.removeProperty('display'); // clear the pre-paint inline style
+        p.classList.toggle('hidden', p.dataset.panel !== id);
+      });
+      // Defer the broadcast to a microtask so child components (ProjectViewer,
+      // CodeSamples) have registered their listeners and can reflect their own
+      // params into the URL — even for the initial tab.
+      queueMicrotask(() => {
+        document.dispatchEvent(new CustomEvent('aas:tabchange', { detail: { id } }));
+        (window as unknown as { __aasRenderMermaid?: () => void }).__aasRenderMermaid?.();
+      });
+    }
+
+    // Clicking a tab: set ?tab=, drop other tabs' params, drop the scroll hash.
+    tabs.forEach((tab) =>
+      tab.addEventListener('click', () => {
+        const id = tab.dataset.tab!;
+        const url = new URL(location.href);
+        if (id === 'overview') url.searchParams.delete(TAB_PARAM);
+        else url.searchParams.set(TAB_PARAM, id);
+        stripForeign(url, id);
+        history.replaceState(null, '', url.pathname + url.search);
+        applyTab(id);
+      }),
+    );
+
+    // Resolve the initial tab: ?tab=, then a legacy #<tabid> / #<anchor>, then
+    // the tab-owned params (?ex/?file → impl, ?v → code). Else → Overview.
+    const raw = decodeURIComponent(location.hash.slice(1));
+    const params = new URLSearchParams(location.search);
+    let initial = 'overview';
+    const paramTab = params.get(TAB_PARAM);
+    if (paramTab && tabIds.includes(paramTab)) {
+      initial = paramTab;
+    } else if (tabIds.includes(raw)) {
+      initial = raw;
+    } else if (raw) {
+      for (const p of panels) {
+        const esc = window.CSS && CSS.escape ? CSS.escape(raw) : raw;
+        try {
+          if (p.querySelector('#' + esc)) {
+            initial = p.dataset.panel!;
+            break;
+          }
+        } catch {
+          /* invalid selector — ignore */
+        }
+      }
+    }
+    if (initial === 'overview') {
+      if ((params.has('ex') || params.has('file')) && tabIds.includes('impl')) initial = 'impl';
+      else if (params.has('v') && tabIds.includes('code')) initial = 'code';
+    }
+
+    applyTab(initial);
+
+    // Normalize the URL to the ?tab= form (drop a legacy tab-only hash, strip
+    // params owned by other tabs) without adding a history entry.
+    {
+      const url = new URL(location.href);
+      if (initial === 'overview') url.searchParams.delete(TAB_PARAM);
+      else url.searchParams.set(TAB_PARAM, initial);
+      stripForeign(url, initial);
+      if (tabIds.includes(raw)) url.hash = ''; // hash was just the tab id
+      const next = url.pathname + url.search + url.hash;
+      if (next !== location.pathname + location.search + location.hash)
+        history.replaceState(null, '', next);
+    }
+
+    // Deep-link scroll: select the sample for a #s<n>- hash (unless ?v= already
+    // chose one) and scroll the section into view.
+    if (raw && !tabIds.includes(raw)) {
+      const m = raw.match(/^s(\d+)-/);
+      if (m && !params.has('v'))
+        document.dispatchEvent(new CustomEvent('aas:select-sample', { detail: { index: Number(m[1]) } }));
+      document.getElementById(raw)?.scrollIntoView();
+    }
+  });
+</script>

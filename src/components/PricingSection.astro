@@ -1,0 +1,100 @@
+---
+// A "Pricing" tab body: a short intro (`note`) above an optional plan / price /
+// note table, with the source and the as-of date below. Driven by the
+// frontmatter pricing fields.
+//
+// The freshness chip (aging 6m+, stale 1y+) is computed client-side against the
+// visitor's *current* date — not the build date — so a long-lived static build
+// still flags stale prices. The chip ships hidden and is revealed by the script.
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Tier {
+  plan: string;
+  price: string;
+  note?: string;
+}
+interface Props {
+  lang: Lang;
+  note?: string;
+  tiers?: Tier[];
+  source?: string;
+  checkedAt?: string;
+}
+const { lang, note, tiers = [], source, checkedAt } = Astro.props;
+const t = useTranslations(lang);
+const hasTable = tiers.length > 0;
+---
+
+{
+  (note || hasTable) && (
+    <Fragment>
+      <h2 id="pricing">
+        <a class="aas-anchor" href="#pricing" aria-label="Copy link to section" />
+        {t('detail.pricing')}
+      </h2>
+      {note && <p>{note}</p>}
+      {hasTable && (
+        <table>
+          <thead>
+            <tr>
+              <th>{t('detail.plan')}</th>
+              <th>{t('detail.price')}</th>
+              <th>{t('detail.notes')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tiers.map((tier) => (
+              <tr>
+                <td>{tier.plan}</td>
+                <td>{tier.price}</td>
+                <td>{tier.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {(source || checkedAt) && (
+        <p class="text-sm text-[var(--aas-muted)]">
+          {source && (
+            <a href={source} target="_blank" rel="noopener noreferrer">
+              {t('detail.source')} &nearr;
+            </a>
+          )}
+          {checkedAt && (
+            <Fragment>
+              {source ? ' · ' : ''}
+              {`${t('detail.asOf')} ${checkedAt}`}
+              <span
+                data-pricing-freshness
+                data-checked={checkedAt}
+                data-aging-label={t('pricing.aging')}
+                data-aging-hint={t('pricing.agingHint')}
+                data-stale-label={t('pricing.stale')}
+                data-stale-hint={t('pricing.staleHint')}
+                class="ml-2 hidden rounded-md px-2 py-0.5 align-middle text-xs font-medium"
+              />
+            </Fragment>
+          )}
+        </p>
+      )}
+    </Fragment>
+  )
+}
+
+<script>
+  // Flag prices that haven't been re-checked recently, relative to the viewer's
+  // current date (so a stale static build still warns). Mirrors stalenessOf().
+  const SIX_MONTHS = 182 * 24 * 60 * 60 * 1000;
+  const ONE_YEAR = 365 * 24 * 60 * 60 * 1000;
+  document.querySelectorAll<HTMLElement>('[data-pricing-freshness]').forEach((el) => {
+    const ts = Date.parse(el.dataset.checked || '');
+    if (Number.isNaN(ts)) return;
+    const age = Date.now() - ts;
+    const kind = age > ONE_YEAR ? 'stale' : age > SIX_MONTHS ? 'aging' : null;
+    if (!kind) return;
+    el.textContent = kind === 'stale' ? el.dataset.staleLabel! : el.dataset.agingLabel!;
+    el.title = kind === 'stale' ? el.dataset.staleHint! : el.dataset.agingHint!;
+    el.classList.add(kind === 'stale' ? 'aas-stale' : 'aas-aging');
+    el.classList.remove('hidden');
+  });
+</script>

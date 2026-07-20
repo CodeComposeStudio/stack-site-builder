@@ -1,0 +1,50 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  count: number; // total number of cards in the slot
+}
+
+// Show the first 6 cards (3 rows × 2 cols); collapse the rest behind a toggle.
+// The 6-item cutoff is enforced in CSS (:nth-child(n+7)); keep them in sync.
+const LIMIT = 6;
+const { lang, count } = Astro.props;
+const t = useTranslations(lang);
+const extra = count - LIMIT;
+---
+
+<div class="mt-3" data-collapse-grid={extra > 0 ? '' : undefined}>
+  <div class="grid gap-3 sm:grid-cols-2" data-collapse-items>
+    <slot />
+  </div>
+  {
+    extra > 0 && (
+      <button
+        type="button"
+        data-collapse-toggle
+        class="mt-3 text-xs font-medium text-[var(--aas-accent)]"
+      >
+        <span data-more>{t('collapse.more').replace('{n}', String(extra))}</span>
+        <span data-less hidden>
+          {t('collapse.less')}
+        </span>
+      </button>
+    )
+  }
+</div>
+
+<script>
+  // Delegated toggle: reveal/hide the cards beyond the CSS cutoff. One listener
+  // covers every CollapsibleGrid on the page (the script is bundled once).
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement | null;
+    const btn = target?.closest?.('[data-collapse-toggle]');
+    if (!btn) return;
+    const wrap = btn.closest('[data-collapse-grid]');
+    if (!wrap) return;
+    const expanded = wrap.toggleAttribute('data-expanded');
+    btn.querySelector('[data-more]')?.toggleAttribute('hidden', expanded);
+    btn.querySelector('[data-less]')?.toggleAttribute('hidden', !expanded);
+  });
+</script>

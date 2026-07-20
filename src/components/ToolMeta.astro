@@ -1,0 +1,95 @@
+---
+import { pricingLabels, licenseLabel, useTranslations, type Lang } from '../i18n/ui';
+import { formatStars, type Staleness } from '../lib/github';
+import { pricingTags, COMPLETELY_FREE } from '../lib/pricing';
+import StarIcon from './StarIcon.astro';
+
+interface Props {
+  lang: Lang;
+  pricing: string[];
+  license?: string;
+  language?: string;
+  stars?: number | null;
+  version?: string | null;
+  released?: string | null; // YYYY-MM-DD of the latest release
+  deprecated?: boolean;
+  staleness?: Staleness; // 'stale' (1y+, stronger) or 'aging' (6m+, milder) warning
+  class?: string;
+}
+
+const {
+  lang,
+  pricing,
+  license,
+  language,
+  stars,
+  version,
+  released,
+  deprecated,
+  staleness,
+  class: className,
+} = Astro.props;
+const t = useTranslations(lang);
+// "Maintenance only" and the staleness warning are independent signals and may
+// both apply (e.g. a superseded tool whose repo also went quiet).
+const showStale = staleness === 'stale';
+const showAging = staleness === 'aging';
+const hasAny =
+  deprecated ||
+  showStale ||
+  showAging ||
+  pricing.length > 0 ||
+  license ||
+  language ||
+  typeof stars === 'number' ||
+  version ||
+  released;
+
+// Filled "surface" chips with a faint outline; a touch taller for presence.
+const chip = 'aas-chip rounded-lg px-2.5 py-1';
+---
+
+{
+  hasAny && (
+    <div class:list={['flex flex-wrap items-center gap-1.5 text-xs', className]}>
+      {deprecated && (
+        <span class="aas-deprecated rounded-lg px-2.5 py-1 font-medium">{t('meta.deprecated')}</span>
+      )}
+      {showStale && (
+        <span title={t('meta.staleHint')} class="aas-stale rounded-lg px-2.5 py-1 font-medium">
+          {t('meta.stale')}
+        </span>
+      )}
+      {showAging && (
+        <span title={t('meta.agingHint')} class="aas-aging rounded-lg px-2.5 py-1 font-medium">
+          {t('meta.aging')}
+        </span>
+      )}
+      {typeof stars === 'number' && (
+        <span class:list={['inline-flex items-center gap-1', chip]}>
+          <StarIcon class="text-[var(--aas-text)]" />
+          {formatStars(stars)}
+        </span>
+      )}
+      {version && <span class:list={['font-mono', chip]}>{version}</span>}
+      {released && (
+        <span title={t('meta.released')} class:list={['inline-flex items-center gap-1', chip]}>
+          <span aria-hidden="true">↻</span>
+          {released}
+        </span>
+      )}
+      {language && <span class={chip}>{language}</span>}
+      {pricingTags(pricing).map((p) => (
+        <span class:list={[p === COMPLETELY_FREE ? 'aas-free' : 'aas-pricing', 'rounded-lg px-2.5 py-1']}>
+          {pricingLabels[lang][p] ?? p}
+        </span>
+      ))}
+      {license && (
+        <span class:list={['inline-flex items-center gap-1', chip]}>
+          <span aria-hidden="true">⚖</span>
+          {licenseLabel(lang, license)}
+        </span>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,2350 @@
+@import "tailwindcss";
+
+/* This stylesheet ships inside the stack-site-builder package. Tailwind
+   only auto-scans the consuming site's own sources, so point it at the
+   theme's sources too — relative to this file, i.e. packages/stack-site-builder/src. */
+@source "../";
+
+/* MaruBuri (Naver) — a Korean serif that also covers Latin. Used for the
+   concept/article reading body (a Medium-style serif column). Remote woff2,
+   font-display: swap so text shows immediately in the fallback serif. */
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-ExtraLight.woff2) format('woff2');
+  font-weight: 200;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Light.woff2) format('woff2');
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Regular.woff2) format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-SemiBold.woff2) format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'MaruBuri';
+  src: url(https://hangeul.pstatic.net/hangeul_static/webfont/MaruBuri/MaruBuri-Bold.woff2) format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* Pretendard — the site's default gothic (sans) for Korean + Latin. */
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Thin.woff2') format('woff2');
+  font-weight: 100;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraLight.woff2') format('woff2');
+  font-weight: 200;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* Light is the default; `data-theme="dark"` (set by the inline script in
+   BaseLayout) switches to dark. The @media block covers no-JS users whose
+   system prefers dark before any explicit choice is stored. */
+:root {
+  color-scheme: light;
+  --aas-bg: #fafafa;
+  --aas-panel: #fdfdfd;
+  --aas-border: #f4f4f4;
+  --aas-text: #2b2b31;
+  --aas-muted: #76767e;
+  --aas-accent: #5f63c4;
+  --aas-shadow: 0 8px 24px -10px rgb(20 20 40 / 0.22);
+  /* Interactive-surface tint (hover/active). Text-derived so it has real
+     contrast on any background even when --aas-panel is near-white. Defined
+     once; the var(--aas-text) inside resolves per theme. */
+  --aas-tint: color-mix(in srgb, var(--aas-text) 7%, transparent);
+  /* Default gothic (sans) stack — Pretendard first, system fallbacks after.
+     Applied site-wide via the `body` rule below; the concept/article reading
+     body opts into MaruBuri serif. */
+  --aas-sans: 'Pretendard', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Mermaid cluster ("zone") highlight colours. `defaultzone` is the accent
+     nudged toward teal (a calm blue); `aaszone` is a warm amber that stands out
+     as the emphasized region (e.g. the harness we're describing). */
+  --aas-diagram-zone: color-mix(in srgb, var(--aas-accent) 65%, #2dd4bf);
+  --aas-diagram-zone-warm: #f59e0b;
+  /* Diagram role colours: the model, the evaluator/checker, the tracing store,
+     and the reference it checks against (a source DB or an execution env). */
+  --aas-role-model: #3b82f6;
+  --aas-role-eval: #22c55e;
+  --aas-role-trace: #f59e0b;
+  --aas-role-source: #14b8a6;
+  --aas-role-tool: #8b5cf6;
+  --aas-role-guard: #f43f5e;
+  /* "You are here" highlight — orange, used to spotlight one node when a
+     section walks through a single piece of a larger diagram. */
+  --aas-role-focus: #f97316;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --aas-bg: #0c0d11;
+  --aas-panel: #1a1b21;
+  --aas-border: #25262e;
+  --aas-text: #e2e3e8;
+  --aas-muted: #989aa4;
+  --aas-accent: #9398f0;
+  --aas-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --aas-bg: #0c0d11;
+    --aas-panel: #1a1b21;
+    --aas-border: #25262e;
+    --aas-text: #e2e3e8;
+    --aas-muted: #989aa4;
+    --aas-accent: #9398f0;
+  }
+}
+
+html {
+  /* No global smooth scroll: it makes the browser animate scroll *restoration*
+     on back/forward, which is disorienting when returning to the list. The
+     deliberate smooth scrolls (back-to-top, file selector) pass behavior:
+     'smooth' explicitly in JS, so they still animate. */
+  background: var(--aas-bg);
+  color: var(--aas-text);
+}
+
+/* Neutral chip surface — a subtle tint that reads on any background (page or
+   the panel-colored cards), so no outline is needed. */
+.aas-chip {
+  background: color-mix(in srgb, var(--aas-text) 5%, transparent);
+  color: var(--aas-muted);
+}
+/* Deprecated / maintenance-only badge — amber warning surface. */
+.aas-deprecated {
+  background: color-mix(in srgb, #d97706 16%, transparent);
+  color: #b45309;
+}
+:root[data-theme='dark'] .aas-deprecated {
+  color: #fbbf24;
+}
+/* "No updates in 1+ year" — same amber warning weight as deprecated. */
+.aas-stale {
+  background: color-mix(in srgb, #d97706 16%, transparent);
+  color: #b45309;
+}
+:root[data-theme='dark'] .aas-stale {
+  color: #fbbf24;
+}
+/* "No updates in 6+ months" — a milder, lower-contrast caution (softer yellow). */
+.aas-aging {
+  background: color-mix(in srgb, #ca8a04 12%, transparent);
+  color: #a16207;
+}
+:root[data-theme='dark'] .aas-aging {
+  color: #facc15;
+}
+/* Pricing chip: a soft accent-tinted surface with a faint accent outline. */
+.aas-pricing {
+  background: color-mix(in srgb, var(--aas-accent) 13%, transparent);
+  color: var(--aas-accent);
+}
+/* "Completely free" pricing chip — a positive green to stand out from paid tiers. */
+.aas-free {
+  background: color-mix(in srgb, #16a34a 15%, transparent);
+  color: #15803d;
+}
+:root[data-theme='dark'] .aas-free {
+  color: #4ade80;
+}
+/* Theme-aware logos: show only the variant matching the active theme
+   (ToolAvatar emits both when a logoDark is set). */
+.aas-logo-dark {
+  display: none;
+}
+:root[data-theme='dark'] .aas-logo-light {
+  display: none;
+}
+:root[data-theme='dark'] .aas-logo-dark {
+  display: revert;
+}
+
+/* Subtle "lift + shadow" on hover for cards and button-like elements. Gated to
+   devices with real hover, so the effect never "sticks" after a tap on touch. */
+.aas-lift {
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    border-color 0.16s ease;
+}
+@media (hover: hover) {
+  .aas-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--aas-shadow);
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .aas-lift:hover {
+    transform: none;
+  }
+}
+
+/* Floating "back to top" button: only below the TOC-rail breakpoint (the rail
+   handles navigation on wide screens), and only once scrolled down a bit
+   (`data-visible`, toggled in BackToTop.astro). */
+.aas-totop {
+  display: none;
+}
+@media (max-width: 1199.98px) {
+  .aas-totop[data-visible] {
+    display: flex;
+  }
+}
+
+/* Right-rail TOC: an in-flow sticky column beside the content, shown once the
+   viewport is wide enough to hold both (≥1200px). Below that it hides and the
+   content spans the full column. A flex column so a long TOC scrolls internally
+   while the back-to-top button stays pinned at the bottom. */
+.aas-toc-rail {
+  display: none;
+}
+@media (min-width: 1200px) {
+  .aas-toc-rail {
+    display: flex;
+    flex-direction: column;
+    /* Sit on the LEFT of the content (source order stays content-first for a11y;
+       order pulls the rail visually ahead). */
+    order: -1;
+    position: sticky;
+    top: 7rem;
+    align-self: flex-start;
+    flex: none;
+    width: 13rem;
+    max-height: calc(100vh - 9rem);
+  }
+  /* Embedded article sample: at the TOC-rail breakpoint the rail already lists
+     the files + related tools, so drop the in-body sidebar and let the code pane
+     span full width. Below 1200px (no rail) the inline sidebar stays. */
+  .aas-embed-proj {
+    display: block;
+  }
+  .aas-embed-sidebar {
+    display: none;
+  }
+}
+.aas-toc-scroll {
+  min-height: 0; /* allow this flex child to shrink so it can scroll */
+  overflow-y: auto;
+}
+.aas-toc-rail a[aria-current='true'] {
+  background: var(--aas-tint);
+  color: var(--aas-text);
+}
+
+/* "Back to top" pinned at the bottom of the TOC rail (surface row, no divider). */
+/* Pinned foot of the TOC rail: back-to-top on the left, collapse/expand-all on
+   the right. */
+.aas-toc-foot {
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.aas-toc-top {
+  padding: 0.4rem 0.625rem;
+  border-radius: 0.375rem;
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--aas-muted);
+  background: none;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
+}
+.aas-toc-allbtn {
+  flex-shrink: 0;
+  padding: 0.4rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.72rem;
+  color: var(--aas-muted);
+  background: none;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
+}
+.aas-toc-top:hover,
+.aas-toc-allbtn:hover {
+  background: var(--aas-tint);
+  color: var(--aas-text);
+}
+
+/* Medium-style reading body: a larger MaruBuri serif column for the concept,
+   article, and stack prose (anything tagged .aas-reading). Headings stay sans
+   for contrast, inline tool cards stay sans, and code stays monospace — only
+   the running text becomes serif. Concept/article/stack share the same width
+   and the .aas-toc-rail TOC, so there is no separate doc layout. */
+.aas-reading.aas-reading {
+  font-family: 'MaruBuri', ui-serif, Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.85;
+}
+.aas-reading.aas-reading :where(p, ul, ol, blockquote, td, th) {
+  line-height: 1.85;
+}
+.aas-reading.aas-reading :where(h2) {
+  font-size: 1.7rem;
+}
+.aas-reading.aas-reading :where(h3) {
+  font-size: 1.35rem;
+}
+.aas-reading.aas-reading :where(h1, h2, h3, h4, h5, h6),
+.aas-reading.aas-reading :where(table),
+.aas-reading.aas-reading a.aas-lift,
+.aas-reading.aas-reading .aas-sample-picker {
+  font-family: var(--aas-sans);
+}
+.aas-reading.aas-reading :where(code, pre, kbd, samp) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+/* Korean line breaking: wrap at word (eojeol) boundaries — i.e. at spaces —
+   instead of between arbitrary characters, so a word like "처음부터" never
+   splits mid-word across two lines. `word-break` inherits, so setting it on the
+   reading column and the description covers all their descendants. Scoped to
+   Korean pages via <html lang="ko">; Latin scripts already wrap on spaces. */
+html[lang='ko'] .aas-reading,
+html[lang='ko'] .aas-md,
+html[lang='ko'] h1 {
+  word-break: keep-all;
+}
+/* Doc tables: a touch larger, centered (shrink-to-content), roomier cells, and
+   a full-row hover highlight. `fit-content` + `margin-inline: auto` centers the
+   table block while `max-width`/overflow (from the base .prose rule) keep it
+   scrollable if it ever outgrows the column. */
+.aas-reading.aas-reading :where(table) {
+  display: table;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  font-size: 1.05rem;
+  /* Rounded outer corners need separated borders + clipping (border-collapse
+     can't round). The table draws the outer frame; cells draw the inner grid. */
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+.aas-reading.aas-reading :where(th, td) {
+  padding: 0.7rem 1.25rem;
+  border: 0;
+  border-right: 1px solid var(--aas-border);
+  border-bottom: 1px solid var(--aas-border);
+}
+.aas-reading.aas-reading :where(tr > :last-child) {
+  border-right: 0;
+}
+.aas-reading.aas-reading :where(tr:last-child > *) {
+  border-bottom: 0;
+}
+.aas-reading.aas-reading :where(tbody tr) {
+  transition: background-color 0.15s;
+}
+.aas-reading.aas-reading tbody tr:hover {
+  background: var(--aas-tint);
+}
+
+/* "#" copy-link anchor prepended to headings (h2/h3). Faint by default, fully
+   shown on hover/focus. `a.aas-anchor` outranks `.prose :where(a)` so it keeps
+   no underline / muted color. Click copies the section URL (see BaseLayout). */
+a.aas-anchor {
+  position: relative;
+  margin-right: 0.4rem;
+  font-weight: 400;
+  color: var(--aas-muted);
+  text-decoration: none;
+  opacity: 0.25;
+  transition:
+    opacity 0.15s,
+    color 0.15s;
+}
+/* The "#" count mirrors the heading depth: h2 → #, h3 → ##, h4 → ###. */
+:where(h2) > a.aas-anchor::before {
+  content: '#';
+}
+:where(h3) > a.aas-anchor::before {
+  content: '##';
+}
+:where(h4) > a.aas-anchor::before {
+  content: '###';
+}
+:where(h2, h3, h4):hover > a.aas-anchor,
+a.aas-anchor:hover,
+a.aas-anchor:focus {
+  opacity: 1;
+  color: var(--aas-accent);
+}
+a.aas-anchor.copied {
+  opacity: 1;
+}
+a.aas-anchor.copied::after {
+  content: 'Copied';
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 0.3rem;
+  padding: 0.05rem 0.4rem;
+  white-space: nowrap;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--aas-accent);
+  border: 1px solid var(--aas-border);
+  border-radius: 0.3rem;
+  background: var(--aas-panel);
+}
+
+body {
+  font-family: var(--aas-sans);
+}
+
+/* Tailwind v4 no longer sets a pointer cursor on buttons; restore it (and for
+   <summary>, used by the custom dropdowns). */
+button:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+/* Make the `hidden` attribute win over display:flex/grid (used by the homepage
+   search/filter to hide cards and sections). */
+[hidden] {
+  display: none !important;
+}
+
+/* Generic <details> dropdown used by the homepage filter/sort controls. */
+.aas-dd {
+  position: relative;
+}
+.aas-dd > summary {
+  list-style: none;
+}
+.aas-dd > summary::-webkit-details-marker {
+  display: none;
+}
+.aas-dd [data-sort][aria-current='true'] [data-check] {
+  opacity: 1;
+}
+
+/* Custom checkbox (filter facets). */
+.aas-check {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  border: 1.5px solid var(--aas-border);
+  border-radius: 0.35rem;
+  background: var(--aas-panel);
+  cursor: pointer;
+  transition:
+    background-color 0.12s,
+    border-color 0.12s;
+}
+.aas-check:hover {
+  border-color: var(--aas-accent);
+}
+.aas-check:checked {
+  background: var(--aas-accent);
+  border-color: var(--aas-accent);
+}
+.aas-check::after {
+  content: '';
+  position: absolute;
+  left: 0.34rem;
+  top: 0.14rem;
+  width: 0.3rem;
+  height: 0.55rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 0.12s;
+}
+.aas-check:checked::after {
+  transform: rotate(45deg) scale(1);
+}
+
+/* Readable defaults for rendered Markdown bodies. */
+.prose :where(h1) {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 1.5rem 0 0.75rem;
+  scroll-margin-top: 1.5rem;
+}
+.prose :where(h1):first-child {
+  margin-top: 0;
+}
+.prose :where(h2) {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 2rem 0 0.75rem;
+  scroll-margin-top: 1.5rem; /* so TOC anchor jumps don't clip the heading */
+}
+.prose :where(h3) {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+  scroll-margin-top: 1.5rem;
+}
+.prose :where(h4) {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+  scroll-margin-top: 1.5rem;
+}
+.prose :where(p, ul, ol) {
+  margin: 0.75rem 0;
+  line-height: 1.7;
+  color: var(--aas-text);
+}
+.prose :where(ul) {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.prose :where(ol) {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.prose :where(a) {
+  color: var(--aas-accent);
+  text-decoration: none;
+}
+.prose :where(a):hover {
+  text-decoration: underline;
+}
+/* Inline code chips in running prose. Chips inside card-style UI links
+   (a.aas-lift — e.g. the project viewer's GitHub button) style themselves
+   with utilities and must not pick this up. */
+.prose :where(code):not(pre code, .aas-lift code) {
+  background: var(--aas-panel);
+  border: 1px solid var(--aas-border);
+  border-radius: 0.3rem;
+  padding: 0.1rem 0.35rem;
+  font-size: 0.85em;
+}
+/* Tiny inline Markdown (`code`/bold/italic) rendered into description fields
+   shown outside .prose — detail headers, cards, and related-item links. */
+.aas-md code {
+  font-family: var(--aas-mono, ui-monospace, monospace);
+  background: var(--aas-panel);
+  border: 1px solid var(--aas-border);
+  border-radius: 0.3rem;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.85em;
+}
+/* Code blocks — but not Mermaid diagrams, which carry their own background. */
+.prose :where(pre:not(.mermaid)) {
+  background: #0e1117 !important;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.6rem;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+/* Hybrid wrapping: soft-wrap shell commands and example output (which are
+   prose-like and run long on mobile) while leaving real source code blocks
+   horizontally scrollable so their indentation/alignment stays intact. The
+   data-lang attribute is set by src/lib/project.ts when rendering READMEs. */
+.prose :where(pre[data-lang='bash'], pre[data-lang='sh'], pre[data-lang='shell'], pre[data-lang='console'], pre[data-lang='text']) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Copy-to-clipboard button mounted on code blocks (see BaseLayout script).
+   The host is a non-scrolling wrapper so the button stays pinned top-right
+   instead of scrolling away with long code. */
+.aas-copyhost {
+  position: relative;
+}
+.aas-copy-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--aas-panel) 80%, transparent);
+  color: var(--aas-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.aas-copyhost:hover .aas-copy-btn,
+.aas-copy-btn:focus-visible {
+  opacity: 1;
+}
+/* Touch devices have no hover — keep the button discoverable. */
+@media (hover: none) {
+  .aas-copy-btn {
+    opacity: 0.65;
+  }
+}
+.aas-copy-btn:hover {
+  color: var(--aas-text);
+  border-color: var(--aas-text);
+}
+.aas-copy-btn.copied {
+  color: #16a34a;
+  border-color: #16a34a;
+  opacity: 1;
+}
+.aas-copy-btn svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+.aas-copy-btn .aas-ico-check {
+  display: none;
+}
+.aas-copy-btn.copied .aas-ico-copy {
+  display: none;
+}
+.aas-copy-btn.copied .aas-ico-check {
+  display: inline;
+}
+
+/* Mermaid diagram container. The styled wrapper is a div we own, so the
+   border/radius survive Mermaid replacing the inner <pre> with an <svg>. */
+.aas-diagram {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: transparent;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.6rem;
+  overflow: hidden;
+}
+.aas-diagram .mermaid {
+  margin: 0;
+  background: transparent;
+  text-align: center;
+  line-height: 0; /* avoid extra space from the raw source before render */
+}
+/* Mermaid renders a block <svg>; center it horizontally. */
+.aas-diagram .mermaid svg {
+  display: block;
+  margin-inline: auto;
+}
+
+/* Mermaid theme: rounded corners + soft pastel fills, derived from the site
+   accent so it adapts to light/dark. `!important` overrides Mermaid's own
+   id-scoped <style> block. Applies wherever a diagram renders (prose + samples). */
+.mermaid g.node rect,
+.mermaid g.node polygon {
+  rx: 12px;
+  ry: 12px;
+}
+.mermaid g.node rect,
+.mermaid g.node polygon,
+.mermaid g.node path {
+  fill: color-mix(in srgb, var(--aas-accent) 9%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-accent) 45%, transparent) !important;
+  stroke-width: 1.5px !important;
+}
+/* Role-coloured nodes — opt in per diagram with `class <node> role…`. The model,
+   the evaluator/checker, and the tracing store each read as a distinct colour. */
+.mermaid g.node.roleModel :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-model) 14%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-model) 55%, transparent) !important;
+}
+.mermaid g.node.roleEval :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-eval) 15%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-eval) 55%, transparent) !important;
+}
+.mermaid g.node.roleTrace :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-trace) 15%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-trace) 55%, transparent) !important;
+}
+.mermaid g.node.roleSource :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-source) 15%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-source) 55%, transparent) !important;
+}
+.mermaid g.node.roleTool :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-tool) 14%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-tool) 55%, transparent) !important;
+}
+.mermaid g.node.roleGuard :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-guard) 14%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-guard) 55%, transparent) !important;
+}
+/* Spotlight (orange) — stronger fill/stroke than the role tints so the node the
+   surrounding prose is explaining pops out. Declared last so it wins over a
+   node's ordinary role class. */
+.mermaid g.node.roleFocus :is(rect, polygon, path) {
+  fill: color-mix(in srgb, var(--aas-role-focus) 22%, var(--aas-panel)) !important;
+  stroke: color-mix(in srgb, var(--aas-role-focus) 75%, transparent) !important;
+  stroke-width: 1.5px !important;
+}
+.mermaid g.cluster rect {
+  rx: 18px;
+  ry: 18px;
+  /* Default zone colour — a calm blue for any cluster (overrides Mermaid's
+     transparent clusterBkg). A subgraph opts into another zone per-diagram via
+     `class <id> <zone>`. */
+  fill: color-mix(in srgb, var(--aas-diagram-zone) 13%, transparent) !important;
+  stroke: color-mix(in srgb, var(--aas-diagram-zone) 42%, transparent) !important;
+  stroke-width: 1.5px !important;
+}
+/* Emphasized region — warm amber. Opt in with `class <id> aaszone` (e.g. the
+   harness we're describing). */
+.mermaid g.cluster.aaszone rect {
+  fill: color-mix(in srgb, var(--aas-diagram-zone-warm) 14%, transparent) !important;
+  stroke: color-mix(in srgb, var(--aas-diagram-zone-warm) 48%, transparent) !important;
+}
+
+
+/* Markdown tables — without these, columns collapse together. */
+.prose :where(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 0.92rem;
+  display: block;
+  overflow-x: auto;
+}
+.prose :where(th, td) {
+  border: 1px solid var(--aas-border);
+  padding: 0.55rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+}
+.prose :where(thead th) {
+  background: var(--aas-panel);
+  font-weight: 600;
+}
+.prose :where(tbody tr:nth-child(even)) {
+  background: color-mix(in srgb, var(--aas-panel) 45%, transparent);
+}
+
+/* ── Listing density: gallery (compact mini-cards) ───────────────────────────
+   Toggled by [data-view='gallery'] on <html> (persisted in localStorage). A
+   denser grid plus a stripped-down card — logo, name, stars, pricing, and a
+   short clamped description; the meta row and keyword tags are hidden. */
+:root[data-view='gallery'] [data-grid] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+@media (min-width: 640px) {
+  :root[data-view='gallery'] [data-grid] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1024px) {
+  :root[data-view='gallery'] [data-grid] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+/* A taller, refined portrait tile: an enlarged, blurred copy of the logo as an
+   ambient backdrop behind the header, then a short description and the stars +
+   open-source chip below. */
+:root[data-view='gallery'] [data-tool] {
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem;
+  /* radius / overflow / isolation come from the base card (rounded-3xl). */
+}
+:root[data-view='gallery'] [data-card-head] {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+/* Give the name wrapper the full tile width so the h3's `truncate` can ellipsize
+   a long title instead of overflowing the card. */
+:root[data-view='gallery'] [data-card-head] > div {
+  width: 100%;
+}
+:root[data-view='gallery'] [data-card-head] h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  /* Up to two lines, ellipsised beyond (overrides the single-line truncate).
+     The title takes its natural height; the description fills what's left. */
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+:root[data-view='gallery'] [data-card-meta],
+:root[data-view='gallery'] [data-card-tags] {
+  display: none;
+}
+:root[data-view='gallery'] [data-card-desc] {
+  margin-top: 0.55rem;
+  /* Up to 3 lines, ellipsised; reserve 3 lines via `lh` so every card is the
+     same height. Using `lh` (not a fixed rem) keeps it correct if the font or
+     line-height changes — line-clamp always truncates at a line boundary. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.78rem;
+  line-height: 1.2rem;
+  min-height: 3lh;
+  /* Fade via colour, not opacity — opacity would create a stacking context and
+     lift the description above the card's full-card link overlay. */
+  color: color-mix(in srgb, var(--aas-muted) 78%, transparent);
+}
+/* Footer: stars + open-source chip, just spaced below the content. The chips
+   drop their borders for a soft, tinted-pill look in this view. */
+:root[data-view='gallery'] [data-card-foot] {
+  flex-direction: row;
+  align-items: center;
+  margin-top: 0.85rem;
+}
+:root[data-view='gallery'] [data-card-foot] > span {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--aas-text) 2%, transparent);
+}
+/* The open-source chip becomes an icon, pinned to the right edge; its text label
+   (which wraps awkwardly in a narrow tile) is swapped out. */
+.aas-oss-icon {
+  display: none;
+}
+:root[data-view='gallery'] [data-card-foot] [data-pricing-tag='open-source'] {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+}
+:root[data-view='gallery'] [data-card-foot] [data-pricing-tag='open-source'] [data-chip-label] {
+  display: none;
+}
+:root[data-view='gallery'] [data-card-foot] [data-pricing-tag='open-source'] .aas-oss-icon {
+  display: block;
+  color: var(--aas-text); /* match the star glyph, not the accent */
+}
+/* The blurred-logo backdrop. Shown on every card, kept at z-index:-1 (behind the
+   static content) so the name's full-card link overlay still covers it — a click
+   anywhere on the card navigates. Subtle by default; a touch stronger and taller
+   in the gallery view. */
+.aas-gallery-bg {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 50%;
+  z-index: -1;
+  background-position: center 35%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(24px) saturate(1.2);
+  transform: scale(1.6);
+  opacity: 0.09;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent);
+  mask-image: linear-gradient(to bottom, #000 45%, transparent);
+  animation: aas-bg-drift 22s ease-in-out infinite;
+}
+:root[data-view='gallery'] .aas-gallery-bg {
+  height: 60%;
+  opacity: 0.15;
+  filter: blur(22px) saturate(1.25);
+  -webkit-mask-image: linear-gradient(to bottom, #000 50%, transparent);
+  mask-image: linear-gradient(to bottom, #000 50%, transparent);
+}
+/* A gentle, slow drift so the backdrop feels alive without distracting. */
+@keyframes aas-bg-drift {
+  0%,
+  100% {
+    transform: scale(1.55) translate(-1.5%, -1%);
+  }
+  50% {
+    transform: scale(1.72) translate(1.5%, 1%);
+  }
+}
+/* Stagger neighbouring cards so they don't all drift in lockstep. */
+:root[data-view='gallery'] [data-tool]:nth-child(3n + 2) .aas-gallery-bg {
+  animation-delay: -7s;
+}
+:root[data-view='gallery'] [data-tool]:nth-child(3n + 3) .aas-gallery-bg {
+  animation-delay: -14s;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-view='gallery'] .aas-gallery-bg {
+    animation: none;
+  }
+}
+
+/* Density toggle buttons (standard / gallery). */
+.aas-viewbtn:hover {
+  color: var(--aas-text);
+}
+.aas-viewbtn[aria-current='true'] {
+  background: var(--aas-tint);
+  color: var(--aas-text);
+}
+
+/* Gallery: among the pricing chips, keep only the open-source badge. */
+:root[data-view='gallery'] [data-tool] [data-pricing-tag]:not([data-pricing-tag='open-source']) {
+  display: none;
+}
+
+/* Markdown horizontal rules — a light hairline, not the heavy UA default. */
+.prose :where(hr) {
+  border: 0;
+  border-top: 1px solid var(--aas-border);
+  margin: 1.75rem 0;
+}
+
+/* Collapsible <details> used in prose (e.g. "구체적인 예시" reveals). A soft
+   panel with a clickable summary; the disclosure marker stays. UI dropdowns
+   (.aas-vdd) and the file tree (.aas-tree-dir) — e.g. an article-embedded
+   project viewer — carry their own chrome and must not pick this up. */
+.prose :where(details):not(:where(.aas-vdd, .aas-tree-dir)) {
+  margin: 0.9rem 0;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.6rem;
+  background: var(--aas-panel);
+  padding: 0.1rem 0.95rem;
+}
+.prose :where(summary):not(:where(.aas-vdd, .aas-tree-dir) summary) {
+  cursor: pointer;
+  padding: 0.55rem 0;
+  font-weight: 600;
+  color: var(--aas-muted);
+}
+.prose :where(details[open]):not(:where(.aas-vdd, .aas-tree-dir)) {
+  padding-bottom: 0.55rem;
+}
+
+/* Card-style links rendered inside prose (e.g. a concept's inline <Tools/>
+   cards, the project viewer's GitHub button) must not pick up the prose link
+   accent color or the underline on hover. */
+.prose a.aas-lift,
+.prose a.aas-lift:hover {
+  color: var(--aas-text);
+  text-decoration: none;
+}
+
+/* Collapsible card grids (related tools / related concepts): show the first 6
+   cards, hide the rest until the toggle adds [data-expanded]. Keep the 6-item
+   cutoff in sync with LIMIT in CollapsibleGrid.astro. */
+[data-collapse-grid]:not([data-expanded]) [data-collapse-items] > *:nth-child(n + 7) {
+  display: none;
+}
+[data-collapse-toggle] {
+  cursor: pointer;
+}
+[data-collapse-toggle]:hover {
+  text-decoration: underline;
+}
+
+/* Hero card backdrop on the tool detail page: a large, blurred copy of the logo
+   as an ambient tint. Static and subtle (independent of the listing view
+   toggle, unlike .aas-gallery-bg). Sits behind the card content (z-index:-1
+   within the card's `isolate`). */
+.aas-hero-bg {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 60%;
+  z-index: -1;
+  background-position: center 28%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  filter: blur(44px) saturate(1.25);
+  transform: scale(1.6);
+  opacity: 0.1;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent);
+  mask-image: linear-gradient(to bottom, #000 40%, transparent);
+}
+
+/* Avoid a flash of unfiltered catalog: when arriving with a filter/sort in the
+   URL, a pre-paint inline script sets [data-prefilter] on <html>; that hides the
+   controls bar + result grids until FilterControls restores and applies the
+   state, then removes the marker to reveal the final view in one paint. The
+   marker is only ever set by JS, so no-JS users still see the content. */
+[data-prefilter] [data-controls],
+[data-prefilter] [data-section] {
+  visibility: hidden;
+}
+
+/* Tab bar and the sample/project viewer are UI chrome (file tree, selectors,
+   buttons) — keep them gothic even when they sit inside the reading (serif)
+   column. Setting font-family directly on these elements overrides the serif
+   they'd otherwise inherit from the surrounding .aas-reading wrapper. */
+[role='tablist'],
+[data-projects] {
+  font-family: var(--aas-sans);
+}
+/* …but the README *body* inside the viewer is running prose, not chrome, so in a
+   reading column give it the same serif as the article body. Its headings and
+   code keep the .aas-reading sans/mono rules — only the inherited gothic from
+   [data-projects] is undone for this text. */
+.aas-reading [data-readme-body] {
+  font-family: 'MaruBuri', ui-serif, Georgia, serif;
+}
+
+/* ==========================================================================
+   Slides / decks
+   Native presentation decks rendered at /slides/<name>/. A deck is a horizontal
+   scroll-snap track of full-viewport <section.aas-slide> panels (one per
+   <Slide> in the deck MDX). Content is plain MDX, so it reuses Shiki code
+   highlighting, the Mermaid loader, and the site's --aas-* theme (light/dark).
+   ========================================================================== */
+.aas-deck-body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--aas-bg);
+  color: var(--aas-text);
+  font-family: var(--aas-sans);
+  /* Content aspect ratio (width tracks ratio × height). Set via data-aspect. */
+  --aas-ratio: 1.7778; /* 16:9 */
+}
+.aas-deck-body[data-aspect='16:10'] {
+  --aas-ratio: 1.6;
+}
+.aas-deck-body[data-aspect='4:3'] {
+  --aas-ratio: 1.3333;
+}
+.aas-deck-body[data-aspect='fill'] {
+  --aas-ratio: 999;
+}
+
+.aas-deck {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  /* Programmatic slide changes are tweened in JS (DeckView), which sets
+     scrollLeft directly; keep scroll-behavior auto so it isn't double-animated.
+     The `transition` / reduced-motion signals are honored there too. */
+  scroll-behavior: auto;
+  scrollbar-width: none; /* the counter + progress bar are the position cue */
+}
+.aas-deck::-webkit-scrollbar {
+  display: none;
+}
+
+.aas-slide {
+  position: relative; /* anchor the bottom-right source line */
+  flex: 0 0 100%;
+  width: 100vw;
+  height: 100dvh;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  display: flex;
+  /* Pin content to the top so every slide's title sits at the same height (like
+     real slides). Cover / center slides opt back into vertical centering. */
+  align-items: flex-start;
+  justify-content: center;
+  padding: clamp(2.5rem, 8vh, 6rem) clamp(1.5rem, 4vw, 4rem);
+  overflow-y: auto; /* a slide taller than the viewport scrolls internally */
+}
+.aas-slide.cover,
+.aas-slide.center,
+.aas-slide.quote {
+  align-items: center;
+}
+
+.aas-slide-inner {
+  width: 100%;
+  /* Content width tracks the deck's aspect ratio (× height): 16:9/16:10/4:3 give
+     a proportioned, wider column; 'fill' (--aas-ratio 999) uses the full width. */
+  max-width: min(96rem, calc((100dvh - 11vh) * var(--aas-ratio, 1.7778)));
+  margin: 0 auto;
+  /* Wrap Korean/CJK at spaces (word boundaries), not mid-word. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Cover / closing slides: centered, roomier. Add class="cover" on the <Slide>. */
+.aas-slide.cover .aas-slide-inner,
+.aas-slide.center .aas-slide-inner {
+  text-align: center;
+}
+
+/* --- Slide typography (styles the plain MDX inside a slide) --------------- */
+/* The site adds a "#" copy-link anchor to headings; it's noise in a deck. */
+.aas-slide-inner .aas-anchor {
+  display: none;
+}
+.aas-slide-inner > :first-child {
+  margin-top: 0;
+}
+.aas-slide-inner > :last-child {
+  margin-bottom: 0;
+}
+.aas-slide-inner h1 {
+  font-size: clamp(2rem, 5.5vw, 3.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.6em;
+}
+.aas-slide-inner h2 {
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.7em;
+  color: var(--aas-accent);
+}
+/* A slide's leading heading is its title — style ### / #### the same as ## when
+   it opens the slide, so heading levels can express deck/TOC hierarchy without
+   shrinking the on-slide title. (Nested ### inside :::cols keep their small size.) */
+.aas-slide-inner > h3:first-child,
+.aas-slide-inner > h4:first-child {
+  font-size: clamp(1.9rem, 4.2vw, 3rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.7em;
+  color: var(--aas-accent);
+}
+
+/* Subtitle (`::sub[…]`): a small, muted line tucked under the slide title. */
+.aas-slide-inner .aas-subtitle {
+  margin: -0.3em 0 0.9em;
+  font-size: clamp(1.1rem, 2vw, 1.55rem);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--aas-muted);
+}
+.aas-slide.cover .aas-subtitle,
+.aas-slide.center .aas-subtitle {
+  margin-top: -0.2em;
+}
+.aas-slide-inner h3 {
+  font-size: clamp(1.3rem, 2.5vw, 1.85rem);
+  font-weight: 700;
+  margin: 1.2em 0 0.4em;
+}
+.aas-slide-inner p,
+.aas-slide-inner li {
+  font-size: clamp(1.2rem, 2vw, 1.65rem);
+  line-height: 1.55;
+}
+.aas-slide-inner p {
+  margin: 0 0 0.7em;
+  color: var(--aas-text);
+}
+.aas-slide-inner strong {
+  font-weight: 700;
+}
+.aas-slide-inner em {
+  color: var(--aas-muted);
+  font-style: normal;
+}
+/* Restore list markers (the site's CSS reset strips them). */
+.aas-slide-inner ul,
+.aas-slide-inner ol {
+  margin: 0.4em 0 0.8em;
+  padding-left: 1.5em;
+}
+.aas-slide-inner ul {
+  list-style: disc;
+}
+.aas-slide-inner ul ul {
+  list-style: circle;
+}
+.aas-slide-inner ol {
+  list-style: decimal;
+}
+.aas-slide-inner ol ol {
+  list-style: lower-alpha;
+}
+.aas-slide-inner li {
+  margin: 0.35em 0;
+  padding-left: 0.2em;
+}
+.aas-slide-inner li::marker {
+  color: var(--aas-accent);
+}
+.aas-slide-inner a {
+  color: var(--aas-accent);
+}
+.aas-slide-inner hr {
+  border: none;
+  border-top: 1px solid var(--aas-border);
+  margin: 1.2em 0;
+}
+/* Cover title: bigger, muted subtitle */
+.aas-slide.cover h1 {
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+}
+.aas-slide.cover p {
+  font-size: clamp(1.1rem, 2.4vw, 1.7rem);
+  color: var(--aas-muted);
+}
+
+/* Tables */
+.aas-slide-inner table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.9rem, 1.5vw, 1.25rem);
+  margin: 0.5em 0;
+}
+.aas-slide-inner th,
+.aas-slide-inner td {
+  text-align: left;
+  padding: 0.5em 0.9em;
+  border-bottom: 1px solid var(--aas-border);
+  vertical-align: top;
+}
+.aas-slide-inner th {
+  font-weight: 700;
+  color: var(--aas-muted);
+}
+
+/* Code (Shiki) + Mermaid inside slides */
+.aas-slide-inner pre {
+  border-radius: 0.9rem;
+  padding: 1.1em 1.3em;
+  overflow: auto;
+  font-size: clamp(0.95rem, 1.5vw, 1.3rem);
+  max-height: 62vh;
+}
+/* Code in a proper monospace stack (a visual theme may override --aas-code-font). */
+.aas-slide-inner pre:not(.mermaid),
+.aas-slide-inner pre:not(.mermaid) code,
+.aas-slide-inner :not(pre) > code {
+  font-family: var(
+    --aas-code-font,
+    ui-monospace,
+    'SF Mono',
+    'JetBrains Mono',
+    'Cascadia Code',
+    'Fira Code',
+    Menlo,
+    Consolas,
+    monospace
+  );
+}
+.aas-slide-inner :not(pre) > code {
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: 0.35rem;
+  background: var(--aas-tint);
+}
+/* Language badge on code blocks (Shiki sets data-language). The code box is
+   always dark, so a light, quiet label reads on any site theme. */
+.aas-slide-inner pre.astro-code {
+  position: relative;
+}
+.aas-slide-inner pre.astro-code[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.3em 0.7em;
+  font-family: var(--aas-code-font, ui-monospace, monospace);
+  font-size: 0.72em;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+}
+.aas-slide-inner pre.mermaid {
+  background: transparent;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+}
+.aas-slide-inner pre.mermaid svg {
+  /* Mermaid ships each svg with width="100%" + an inline max-width equal to the
+     diagram's natural width. Respect that (no !important) so it renders at its
+     true size — capped to the container by width:100%, never blown up past its
+     natural size. Forcing max-width here would upscale a small diagram (e.g. a
+     narrow vertical flowchart) to fill the column and balloon the labels. */
+  max-width: 100%;
+  max-height: 52vh;
+  height: auto;
+}
+
+/* Multi-column helper: <div class="cols"> in a slide splits into columns. */
+.aas-slide-inner .cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: clamp(1rem, 3vw, 2.5rem);
+  text-align: left;
+}
+
+/* --- Images in slides ---------------------------------------------------- */
+/* Full-bleed background (<Slide bg={img}>): cover-fit image + a dark scrim so
+   the centered text stays legible on any photo. */
+.aas-slide.has-bg {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+.aas-slide.has-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.aas-slide.has-bg .aas-slide-inner {
+  position: relative;
+  z-index: 1;
+}
+.aas-slide.has-bg .aas-slide-inner,
+.aas-slide.has-bg h1,
+.aas-slide.has-bg h2,
+.aas-slide.has-bg h3,
+.aas-slide.has-bg p {
+  color: #fff;
+}
+
+/* Media on top, text below. For an image, add class="aas-media-top"; a diagram
+   or code block just stacks above the text on its own (no class needed). */
+.aas-slide-inner .aas-media-top {
+  display: block;
+  width: 100%;
+  max-height: 55vh;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  margin: 0 0 1rem;
+}
+
+/* Media + text side by side. The media child can be an image, a diagram
+   (`pre.mermaid`), or a code block (`pre`). Order the media and the text block
+   as you want them to appear; pick the split ratio with a modifier class. */
+.aas-slide-inner .aas-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* r-50-50 (default) */
+  gap: clamp(1rem, 3vw, 2.5rem);
+  align-items: center;
+  text-align: left;
+}
+/* Let code / diagrams shrink to their column instead of blowing the grid out
+   (a <pre> with long lines otherwise refuses to go below its content width). */
+.aas-slide-inner .aas-split > * {
+  min-width: 0;
+}
+.aas-slide-inner .aas-split.r-30-70 {
+  grid-template-columns: 3fr 7fr;
+}
+.aas-slide-inner .aas-split.r-70-30 {
+  grid-template-columns: 7fr 3fr;
+}
+/* Image media. */
+.aas-slide-inner .aas-split img {
+  width: 100%;
+  max-height: 46vh;
+  object-fit: cover;
+  border-radius: 0.9rem;
+}
+/* Code / diagram media: drop the outer margin and cap the height so the column
+   stays inside the slide (code scrolls; the diagram scales down). */
+.aas-slide-inner .aas-split > pre {
+  width: 100%;
+  margin: 0;
+  max-height: 56vh;
+}
+.aas-slide-inner .aas-split > pre:not(.mermaid) {
+  font-size: clamp(0.85rem, 1.2vw, 1.15rem);
+}
+/* Text column of a split stays top-aligned (the media may center/stretch, but
+   the prose reads from the top) — for image, diagram, and code splits alike. */
+.aas-slide-inner .aas-split > div:not(.aas-diagram) {
+  align-self: start;
+}
+/* Media vertical alignment within the split (default: centered). Pair with
+   `tall` (below) so top / center / bottom are measured against a full-height
+   slide, not just the text column. Works for images, diagrams, and code.
+   (Images get wrapped in .aas-zoomable-img at runtime, so target that too.) */
+.aas-slide-inner .aas-split.img-top > :is(img, .aas-zoomable-img, pre) {
+  align-self: start;
+}
+.aas-slide-inner .aas-split.img-center > :is(img, .aas-zoomable-img, pre) {
+  align-self: center;
+}
+.aas-slide-inner .aas-split.img-bottom > :is(img, .aas-zoomable-img, pre) {
+  align-self: end;
+}
+/* Tall: the split fills the slide vertically, so image alignment is relative to
+   a vertically-filled slide (this is what "center" means). */
+.aas-slide-inner .aas-split.tall {
+  min-height: min(66vh, 42rem);
+}
+/* Fill mode: a tall image cropped to `cover`, filling the slide vertically.
+   Add `fill` to the split. */
+.aas-slide-inner .aas-split.fill > :is(img, .aas-zoomable-img) {
+  height: min(64vh, 42rem);
+  max-height: min(64vh, 42rem);
+  align-self: stretch;
+}
+.aas-slide-inner .aas-split.fill .aas-zoomable-img img {
+  height: 100%;
+  max-height: none;
+}
+.aas-slide-inner .aas-split > div > :first-child {
+  margin-top: 0;
+}
+
+/* --- Code / diagram slides fill the slide vertically --------------------- */
+/* A diagram (wrapped in .aas-diagram) or code block (a bare <pre>) — in a split
+   or stacked on its own — grows to fill the slide height instead of being
+   stranded at the top. Diagrams center in the filled box; code stays pinned to
+   the top. Images are untouched (they keep their own `tall` / `fill` above). */
+
+/* 1) The slide body becomes a full-height column whenever it holds a diagram or
+      code block (directly, or as one side of a split — but not an image split).
+      A slide marked `compact` opts out: the media keeps its natural size (padded)
+      and the text flows normally, leaving room for longer copy. */
+.aas-slide:not(.compact) .aas-slide-inner:has(> .aas-diagram),
+.aas-slide:not(.compact) .aas-slide-inner:has(> pre),
+.aas-slide:not(.compact) .aas-slide-inner:has(> .aas-split:not(.scroll) > .aas-diagram),
+.aas-slide:not(.compact) .aas-slide-inner:has(> .aas-split:not(.scroll) > pre) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+/* 2) The media region (a standalone diagram/pre, or the split holding one) takes
+      the leftover height; drop the height cap so flex-grow can actually fill. */
+.aas-slide:not(.compact) .aas-slide-inner > .aas-diagram,
+.aas-slide:not(.compact) .aas-slide-inner > pre,
+.aas-slide:not(.compact) .aas-slide-inner > .aas-split:not(.scroll):has(> .aas-diagram),
+.aas-slide:not(.compact) .aas-slide-inner > .aas-split:not(.scroll):has(> pre) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.aas-slide:not(.compact) .aas-slide-inner > pre {
+  max-height: none;
+}
+/* 3) In a split, the media cell stretches to the full height (the box fills);
+      the text column stays vertically centered (.aas-split align-items: center). */
+.aas-slide:not(.compact) .aas-slide-inner > .aas-split:not(.scroll):has(> .aas-diagram) > .aas-diagram,
+.aas-slide:not(.compact) .aas-slide-inner > .aas-split:not(.scroll):has(> pre) > pre {
+  align-self: stretch;
+  height: 100%;
+}
+.aas-slide:not(.compact) .aas-slide-inner > .aas-split:not(.scroll):has(> pre) > pre {
+  max-height: none;
+}
+/* 3a) Diagram: the bordered box becomes a centering column, so the rendered
+       diagram sits in the vertical middle of the filled box. (The diagram keeps
+       its natural size — see the svg rule, which no longer forces width:auto —
+       so filling the box no longer balloons the labels.) */
+.aas-slide-inner .aas-diagram {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+/* 3b) Code stays pinned to the top of its filled box — that's the default block
+       flow of a tall <pre>, so nothing extra is needed. */
+
+/* Scrollable diagram (`<div class="aas-split scroll">`): the diagram column is a
+   fixed-height scroll box (opted out of the fill rules above) and the diagram
+   fits the column width, so a tall/complex flowchart scrolls vertically next to
+   its explanation instead of shrinking to fit. Click the diagram to enlarge. */
+.aas-slide-inner .aas-split.scroll > .aas-diagram {
+  display: block;
+  align-self: start;
+  height: min(64vh, 34rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* The inner <pre.mermaid> otherwise caps itself at 62vh and scrolls on its own,
+   creating a nested scroll box; unclamp it so .aas-diagram is the sole scroller. */
+.aas-slide-inner .aas-split.scroll > .aas-diagram .mermaid {
+  display: block;
+  max-height: none;
+  overflow: visible;
+}
+.aas-slide-inner .aas-split.scroll > .aas-diagram svg {
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  height: auto;
+}
+/* Code in a scroll split: a fixed-height scroll box (opted out of the fill
+   rules), so a long listing scrolls next to its walkthrough steps. */
+.aas-slide-inner .aas-split.scroll > pre {
+  align-self: start;
+  height: min(60vh, 30rem);
+  max-height: min(60vh, 30rem);
+  overflow: auto;
+}
+
+/* Horizontally-scrolling diagram (`<Slide class="scroll-x">`, usually paired with
+   `compact`): a wide flowchart keeps its natural width and the box scrolls
+   sideways instead of squeezing every node to fit. */
+.aas-slide.scroll-x .aas-slide-inner .aas-diagram {
+  display: block;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+}
+.aas-slide.scroll-x .aas-slide-inner .aas-diagram .mermaid {
+  display: block;
+  max-height: none;
+  overflow: visible;
+}
+.aas-slide.scroll-x .aas-slide-inner .aas-diagram svg {
+  /* Mermaid keeps an inline `max-width: <natural>px`; a huge width is clamped by
+     it to the diagram's natural width, so a wide flowchart overflows and scrolls
+     (max-content mis-resolves to the container width here). */
+  width: 99999px;
+  max-height: none;
+  height: auto;
+}
+
+/* Generic scroll box (`<div class="aas-scrollbox">`): a bounded, scrollable frame
+   for any media — used for the image walkthrough, where a full-width image is
+   taller than the box and scrolls vertically. */
+.aas-slide-inner .aas-scrollbox {
+  max-height: min(46vh, 22rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.9rem;
+  margin: 0.3rem 0 1rem;
+}
+.aas-slide-inner .aas-scrollbox img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  border-radius: 0.9rem;
+}
+
+/* Code walkthrough line highlight: the active step's rows get a full-width band
+   (whole line, not just coloured text) and the others dim, so the eye lands on
+   the lines being explained. The code box is always dark (github theme). */
+.aas-slide-inner pre.astro-code .line {
+  transition:
+    opacity 0.25s ease,
+    background 0.2s ease;
+}
+.aas-slide-inner pre.astro-code .line.is-line-hl {
+  display: inline-block;
+  width: 100%;
+  background: color-mix(in srgb, var(--aas-accent) 34%, transparent);
+  box-shadow: inset 3px 0 0 var(--aas-accent);
+}
+.aas-slide-inner pre.astro-code.has-hl .line:not(.is-line-hl) {
+  opacity: 0.4;
+}
+
+/* --- Per-slide source / citation (bottom-right, ≤2 lines) ---------------- */
+.aas-slide-source {
+  position: absolute;
+  right: clamp(1.5rem, 4vw, 4rem);
+  bottom: clamp(0.9rem, 3vh, 2rem);
+  max-width: min(46%, 30rem);
+  margin: 0;
+  text-align: right;
+  font-size: clamp(0.68rem, 0.95vw, 0.82rem);
+  line-height: 1.35;
+  color: var(--aas-muted);
+  opacity: 0.8;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  pointer-events: none;
+}
+.aas-slide.has-bg .aas-slide-source {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+/* --- Zoom / lightbox: enlarge a diagram or image ------------------------- */
+/* The media becomes clickable; a small button sits in its top-right corner. */
+.aas-slide-inner .aas-zoomable {
+  position: relative;
+  cursor: zoom-in;
+}
+.aas-slide-inner .aas-zoomable-img {
+  display: block;
+  min-width: 0;
+}
+.aas-zoom-btn {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--aas-panel) 82%, transparent);
+  color: var(--aas-text);
+  cursor: zoom-in;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.aas-zoomable:hover .aas-zoom-btn,
+.aas-zoom-btn:focus-visible {
+  opacity: 0.9;
+}
+.aas-zoom-btn:hover {
+  opacity: 1;
+}
+/* The zoom button is a UI affordance — never in print/PDF. */
+@media print {
+  .aas-zoom-btn {
+    display: none;
+  }
+}
+/* Overlay. A dark scrim (regardless of site theme) so the enlarged media pops. */
+.aas-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 5vh, 4rem);
+  /* Match the deck: light backdrop in light mode, dark in dark mode (a diagram's
+     pastel nodes read the same as they do on the slide). Opaque so the slide
+     behind — its own diagram/text — doesn't ghost through under the enlarged one. */
+  background: var(--aas-bg);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: zoom-out;
+}
+.aas-zoom.is-open {
+  opacity: 1;
+}
+.aas-zoom[hidden] {
+  display: none;
+}
+/* A large stage. The media is sized by the script (svg) or fit (img); `margin:
+   auto` centres it when it's smaller than the stage and lets the stage scroll
+   when it's bigger — so a complex diagram can be panned. */
+.aas-zoom-stage {
+  width: 92vw;
+  height: 86vh;
+  overflow: auto;
+  overscroll-behavior: contain;
+  cursor: default;
+  /* Same text context as .aas-slide-inner, where Mermaid measured its labels.
+     Without keep-all, Korean labels re-wrap per syllable inside their measured
+     boxes and drift to the top-left of each node. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+/* Centres content that fits; grows with (and scrolls) content that doesn't. */
+.aas-zoom-fit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100%;
+  min-height: 100%;
+}
+/* Holds the transform-scaled diagram at its scaled size (so scroll/centre work). */
+.aas-zoom-scalebox {
+  flex: none;
+}
+.aas-zoom-stage svg {
+  max-width: none !important;
+  flex: none;
+  display: block;
+}
+.aas-zoom-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.6rem;
+}
+.aas-zoom-close {
+  position: fixed;
+  top: clamp(1rem, 3vh, 2rem);
+  right: clamp(1rem, 3vw, 2rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.7rem;
+  background: var(--aas-panel);
+  color: var(--aas-text);
+  cursor: pointer;
+}
+
+/* --- Overview grid (press `o`) ------------------------------------------- */
+.aas-ov {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  padding: clamp(1rem, 4vh, 3rem);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 260px);
+  justify-content: center;
+  align-content: start;
+  gap: clamp(0.8rem, 2vw, 1.6rem);
+  background: color-mix(in srgb, var(--aas-bg) 93%, #000);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.aas-ov.is-open {
+  opacity: 1;
+}
+.aas-ov[hidden] {
+  display: none;
+}
+.aas-ov-cell {
+  position: relative;
+  padding: 0;
+  border: 2px solid var(--aas-border);
+  border-radius: 0.6rem;
+  background: var(--aas-panel);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.aas-ov-cell:hover,
+.aas-ov-cell:focus-visible {
+  border-color: var(--aas-accent);
+}
+.aas-ov-cell.is-current {
+  border-color: var(--aas-accent);
+  box-shadow: 0 0 0 2px var(--aas-accent);
+}
+.aas-ov-thumb {
+  position: relative;
+  width: 260px;
+  overflow: hidden;
+  background: var(--aas-bg);
+  pointer-events: none;
+}
+.aas-ov-num {
+  position: absolute;
+  left: 0.4rem;
+  bottom: 0.4rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 0.4rem;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+/* Overview + lightbox are screen-only affordances. */
+@media print {
+  .aas-ov {
+    display: none !important;
+  }
+}
+
+/* Stack image + text on narrow screens (screen only — print keeps them side by
+   side regardless of the page width). */
+@media screen and (max-width: 48rem) {
+  .aas-slide-inner .aas-split,
+  .aas-slide-inner .aas-split.r-30-70,
+  .aas-slide-inner .aas-split.r-70-30 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Callout boxes (:::note / :::tip / :::warning / :::info) -------------- */
+.aas-slide-inner .aas-callout {
+  --cal: var(--aas-accent);
+  margin: 0.9em 0;
+  padding: 0.9em 1.2em;
+  border-left: 4px solid var(--cal);
+  border-radius: 0.6rem;
+  background: color-mix(in srgb, var(--cal) 12%, transparent);
+}
+.aas-slide-inner .aas-callout > :first-child {
+  margin-top: 0;
+}
+.aas-slide-inner .aas-callout > :last-child {
+  margin-bottom: 0;
+}
+.aas-slide-inner .aas-callout strong:first-child {
+  color: var(--cal);
+}
+/* Scoped to match the base rule's specificity so the colour actually wins. */
+.aas-slide-inner .aas-callout-tip {
+  --cal: #16a34a;
+}
+.aas-slide-inner .aas-callout-warning {
+  --cal: #d97706;
+}
+.aas-slide-inner .aas-callout-info {
+  --cal: #0284c7;
+}
+
+/* --- Stats / KPI (:::stats, cards split by ---) -------------------------- */
+.aas-slide-inner .aas-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: clamp(1rem, 3vw, 2rem);
+  margin: 1.1em 0;
+  text-align: center;
+}
+.aas-slide-inner .aas-stat {
+  padding: 1.2em 1em;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.9rem;
+  background: var(--aas-tint);
+}
+.aas-slide-inner .aas-stat > :first-child {
+  margin: 0 0 0.15em;
+  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--aas-accent);
+}
+.aas-slide-inner .aas-stat > :first-child + * {
+  margin-top: 0;
+}
+.aas-slide-inner .aas-stat p {
+  margin: 0;
+  color: var(--aas-muted);
+}
+
+/* --- Comparison (:::compare, cards split by ---) ------------------------- */
+.aas-slide-inner .aas-compare {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: clamp(1rem, 3vw, 2rem);
+  margin: 1.1em 0;
+  align-items: start;
+}
+.aas-slide-inner .aas-compare-col {
+  padding: 1.1em 1.3em 1.2em;
+  border: 1px solid var(--aas-border);
+  border-radius: 0.9rem;
+  background: var(--aas-tint);
+}
+.aas-slide-inner .aas-compare-col > :first-child {
+  margin-top: 0;
+}
+.aas-slide-inner .aas-compare-col > :last-child {
+  margin-bottom: 0;
+}
+.aas-slide-inner .aas-compare-col > :is(h2, h3, h4):first-child {
+  font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+  margin: 0 0 0.5em;
+  color: var(--aas-text);
+}
+
+/* --- Hero quote (<Slide class="quote">) ---------------------------------- */
+.aas-slide.quote .aas-slide-inner {
+  text-align: center;
+  max-width: min(60rem, 90%);
+}
+.aas-slide.quote blockquote {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-size: clamp(1.8rem, 4.4vw, 3.1rem);
+  font-weight: 600;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  color: var(--aas-text);
+}
+.aas-slide.quote blockquote p {
+  margin: 0;
+  font-size: inherit;
+}
+.aas-slide.quote blockquote::before {
+  content: '\201C';
+  display: block;
+  font-size: 2.2em;
+  line-height: 0.7;
+  margin-bottom: 0.1em;
+  color: var(--aas-accent);
+  opacity: 0.55;
+}
+.aas-slide.quote .aas-subtitle {
+  margin: 1.1em 0 0;
+  font-size: clamp(1rem, 1.9vw, 1.45rem);
+  color: var(--aas-muted);
+}
+
+/* --- Step reveal (:::steps) — fragments shown one at a time -------------- */
+/* Progressive enhancement: hidden state is added by the deck script, so with no
+   JS (and in print) every step is visible. */
+.aas-slide-inner .aas-step {
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+.aas-slide-inner .aas-step.is-step-hidden {
+  opacity: 0;
+  transform: translateY(0.4em);
+}
+
+/* Walkthrough steps (`:::step{scroll=…}`): the block-level step gets some room,
+   and while stepping the non-active ones dim so the current one leads the eye
+   (paired with the diagram scrolling to the step's spot). */
+.aas-slide-inner .aas-step[data-scroll] {
+  margin: 0 0 0.9em;
+  padding-left: 0.9em;
+  border-left: 3px solid transparent;
+}
+.aas-slide-inner .aas-step[data-scroll] > :first-child {
+  margin-top: 0;
+}
+.aas-slide-inner .aas-step[data-scroll]:not(.is-step-hidden):not(.is-step-active) {
+  opacity: 0.4;
+}
+.aas-slide-inner .aas-step[data-scroll].is-step-active {
+  border-left-color: var(--aas-accent);
+}
+
+/* --- Visual themes ------------------------------------------------------- */
+/* Picked per deck via `theme:` in frontmatter (adds .aas-theme-<name> to the
+   deck). They restyle slide typography only; light/dark still follows the site.
+   `default` is the base look above — the classes below are the alternatives. */
+
+/* simple — quiet and monochrome: headings in the text colour (no accent pop),
+   markers and table headers muted. Reads like clean notes. */
+.aas-theme-simple .aas-slide-inner h2 {
+  color: var(--aas-text);
+  font-weight: 600;
+}
+.aas-theme-simple .aas-slide-inner li::marker {
+  color: var(--aas-muted);
+}
+
+/* calm — serif headings, softened accent, roomier lines. A relaxed, editorial
+   feel. Uses the site's reading serif (MaruBuri) for headings. */
+.aas-theme-calm .aas-slide-inner h1,
+.aas-theme-calm .aas-slide-inner h2,
+.aas-theme-calm .aas-slide-inner h3 {
+  font-family: 'MaruBuri', ui-serif, Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.aas-theme-calm .aas-slide-inner h2 {
+  color: color-mix(in srgb, var(--aas-accent) 55%, var(--aas-text));
+}
+.aas-theme-calm .aas-slide-inner p,
+.aas-theme-calm .aas-slide-inner li {
+  line-height: 1.75;
+}
+.aas-theme-calm .aas-slide-inner p {
+  margin-bottom: 0.9em;
+}
+
+/* bold — big, heavy, high-contrast headings; accent-coloured emphasis. */
+.aas-theme-bold .aas-slide-inner h1 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.aas-theme-bold .aas-slide-inner h2 {
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  font-size: clamp(1.7rem, 4.2vw, 3rem);
+}
+.aas-theme-bold .aas-slide-inner strong {
+  color: var(--aas-accent);
+}
+.aas-theme-bold .aas-slide.cover h1 {
+  font-size: clamp(3rem, 9vw, 6.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+/* --- Deck chrome (progress bar, back link, prev/next + counter) ---------- */
+.aas-deck-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--aas-border);
+  z-index: 10;
+}
+.aas-deck-progress-fill {
+  height: 100%;
+  width: 0;
+  background: var(--aas-accent);
+  transition: width 0.25s ease;
+}
+
+.aas-deck-back {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem 0.4rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--aas-muted);
+  background: color-mix(in srgb, var(--aas-panel) 85%, transparent);
+  border: 1px solid var(--aas-border);
+  text-decoration: none;
+  opacity: 0.5;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+.aas-deck-back:hover {
+  opacity: 1;
+  color: var(--aas-text);
+}
+
+/* Actions drawer (left edge, vertically centered): a slim tab pokes out; when
+   opened, the panel slides in from the left and the tab's arrow flips. */
+.aas-deck-menu {
+  --menu-w: 12rem;
+  position: fixed;
+  top: 50%;
+  left: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  /* Closed: the panel is parked off-screen left, only the tab shows at the edge. */
+  transform: translate(calc(-1 * var(--menu-w)), -50%);
+  transition: transform 0.28s ease;
+}
+.aas-deck-menu.is-open {
+  transform: translate(0, -50%);
+}
+.aas-deck-menu-panel {
+  width: var(--menu-w);
+  padding: 0.4rem;
+  border: 1px solid var(--aas-border);
+  border-left: none;
+  border-radius: 0 0.9rem 0.9rem 0;
+  background: var(--aas-panel);
+  box-shadow: var(--aas-shadow);
+}
+.aas-deck-menu-panel button {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--aas-text);
+  font-size: 0.9rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.aas-deck-menu-panel button:hover {
+  background: var(--aas-tint);
+}
+.aas-deck-menu-panel button svg {
+  color: var(--aas-muted);
+  flex: none;
+}
+/* Divider between the actions and the theme options. */
+.aas-deck-menu-sep {
+  height: 1px;
+  margin: 0.35rem 0.3rem;
+  background: var(--aas-border);
+}
+/* Theme options: a single row of icon buttons (system · light · dark). */
+.aas-deck-menu-themes {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.15rem 0.2rem 0.05rem;
+}
+.aas-deck-menu-themes button {
+  flex: 1;
+  justify-content: center;
+  padding: 0.4rem 0;
+  color: var(--aas-muted);
+}
+.aas-deck-menu-themes button svg {
+  color: inherit;
+}
+.aas-deck-menu-themes button[aria-pressed='true'] {
+  background: var(--aas-tint);
+  color: var(--aas-accent, var(--aas-text));
+}
+/* The handle/tab — attached to the panel's right edge. */
+.aas-deck-menu-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 3.25rem;
+  padding: 0;
+  border: 1px solid var(--aas-border);
+  border-left: none;
+  border-radius: 0 0.6rem 0.6rem 0;
+  background: color-mix(in srgb, var(--aas-panel) 88%, transparent);
+  color: var(--aas-muted);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+.aas-deck-menu-tab:hover,
+.aas-deck-menu.is-open .aas-deck-menu-tab {
+  opacity: 1;
+  color: var(--aas-text);
+}
+.aas-deck-menu-arrow {
+  transition: transform 0.28s ease;
+}
+.aas-deck-menu.is-open .aas-deck-menu-arrow {
+  transform: rotate(180deg); /* ▶ (open) → ◀ (close) */
+}
+
+/* Footer (bottom-left): presenter · date. */
+.aas-deck-footer {
+  position: fixed;
+  bottom: 1.1rem;
+  left: 1rem;
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--aas-muted);
+  opacity: 0.7;
+}
+.aas-deck-footer-sep {
+  opacity: 0.5;
+}
+
+/* Print / PDF export (menu → Print/PDF, or the browser print dialog). Each slide
+   becomes exactly one 16:9 page — a fixed physical size so it can't overflow onto
+   a stray extra page, and wide enough that image splits never stack. Enable
+   "Background graphics" in the print dialog for themed/image backgrounds. */
+@media print {
+  /* PowerPoint-style 16:9 page (13.333in × 7.5in). */
+  @page {
+    size: 13.333in 7.5in;
+    margin: 0;
+  }
+  .aas-deck-body {
+    overflow: visible;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .aas-deck-back,
+  .aas-deck-menu,
+  .aas-deck-toc,
+  .aas-deck-nav,
+  .aas-deck-progress,
+  .aas-deck-footer,
+  .mermaidTooltip {
+    /* the last one is Mermaid's stray hover-tooltip div — its few px otherwise
+       overflow into a trailing blank page. */
+    display: none !important;
+  }
+  .aas-deck {
+    position: static;
+    display: block;
+    overflow: visible;
+    height: auto;
+    scroll-snap-type: none;
+  }
+  .aas-slide {
+    width: 13.333in;
+    height: 7.5in;
+    overflow: hidden;
+    scroll-snap-align: none;
+    break-inside: avoid;
+  }
+  .aas-slide:not(:last-child) {
+    break-after: page;
+  }
+  /* Fixed page size, so don't derive the content width from viewport units. */
+  .aas-slide-inner {
+    max-width: 92%;
+  }
+}
+
+/* Table of contents — a top-right toggle that opens a jump-list of headings. */
+.aas-deck-toc {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 11;
+}
+.aas-deck-toc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  color: var(--aas-muted);
+  background: color-mix(in srgb, var(--aas-panel) 85%, transparent);
+  border: 1px solid var(--aas-border);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+.aas-deck-toc-btn:hover,
+.aas-deck-toc-btn[aria-expanded='true'] {
+  opacity: 1;
+  color: var(--aas-text);
+}
+.aas-deck-toc-panel {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  min-width: 15rem;
+  max-width: min(22rem, 80vw);
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0.4rem;
+  border-radius: 0.9rem;
+  background: var(--aas-panel);
+  border: 1px solid var(--aas-border);
+  box-shadow: var(--aas-shadow);
+}
+.aas-deck-toc-panel ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.aas-deck-toc-panel li {
+  margin: 0;
+}
+.aas-deck-toc-panel button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--aas-text);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+.aas-deck-toc-panel button:hover {
+  background: var(--aas-tint);
+}
+.aas-deck-toc-panel button.active {
+  color: var(--aas-accent);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--aas-accent) 10%, transparent);
+}
+/* ### / #### sub-entries (toc_level 3-4) sit indented and a touch smaller. */
+.aas-deck-toc-panel .aas-toc-l3 button,
+.aas-deck-toc-panel .aas-toc-l4 button {
+  font-size: 0.82rem;
+  color: var(--aas-muted);
+}
+.aas-deck-toc-panel .aas-toc-l3 button {
+  padding-left: 1.4rem;
+}
+.aas-deck-toc-panel .aas-toc-l4 button {
+  padding-left: 2.4rem;
+}
+.aas-deck-toc-panel .aas-toc-l3 button.active,
+.aas-deck-toc-panel .aas-toc-l4 button.active {
+  color: var(--aas-accent);
+}
+
+.aas-deck-nav {
+  position: fixed;
+  bottom: 1.1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--aas-panel) 85%, transparent);
+  border: 1px solid var(--aas-border);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--aas-shadow);
+}
+.aas-deck-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--aas-text);
+  cursor: pointer;
+}
+.aas-deck-btn:hover:not(:disabled) {
+  background: var(--aas-tint);
+}
+.aas-deck-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.aas-deck-count {
+  font-size: 0.85rem;
+  color: var(--aas-muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5ch;
+  text-align: center;
+}

@@ -1,0 +1,183 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { pricingLabels, useTranslations, type Lang } from '../i18n/ui';
+import { getRepoStats, formatStars, stalenessOf } from '../lib/github';
+import { pricingTags, COMPLETELY_FREE } from '../lib/pricing';
+import { isImageRef, resolveImageUrl } from '../lib/assets';
+import { inlineMd } from '../lib/inline-md';
+import ToolAvatar from './ToolAvatar.astro';
+import ToolMeta from './ToolMeta.astro';
+import StarIcon from './StarIcon.astro';
+
+interface Props {
+  slug: string;
+  lang: Lang;
+  name: string;
+  formerNames?: string[];
+  vendor?: string;
+  description: string;
+  tags: string[];
+  pricing: string[];
+  license?: string;
+  language?: string;
+  category?: string;
+  logo?: string;
+  logoDark?: string;
+  repo?: string;
+  version?: string;
+  deprecated?: boolean;
+}
+
+const { slug, lang, name, formerNames = [], vendor, description, tags, pricing, license, language, category, logo, logoDark, repo, version, deprecated } =
+  Astro.props;
+const t = useTranslations(lang);
+const href = getRelativeLocaleUrl(lang, `stack/${slug}/`);
+
+// Resolved logo URL (for the blurred backdrop in the gallery view). Only image
+// logos qualify; monograms/emoji have nothing to blur.
+const logoUrl = isImageRef(logo) ? resolveImageUrl(logo) : undefined;
+
+// Live stats from GitHub (build-time), with the manual `version` as fallback.
+const stats = await getRepoStats(repo);
+const displayVersion = stats?.version ?? version;
+// Warn when an open-source project's latest release is getting old (6m / 1y).
+const staleness = pricing.includes('open-source') ? stalenessOf(stats?.releasedAt) : 'fresh';
+// Months since the latest release, for the "last updated" freshness filter
+// (open-source only; others have no meaningful release cadence to flag).
+const releaseMs = pricing.includes('open-source') ? Date.parse(stats?.releasedAt ?? '') : NaN;
+const updateMonths = Number.isNaN(releaseMs)
+  ? ''
+  : String(Math.floor((Date.now() - releaseMs) / (30.44 * 24 * 60 * 60 * 1000)));
+
+// Data for client-side search / filter / sort (used on the homepage).
+const langTokens = (language ?? '')
+  .split('/')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const searchText = `${name} ${description} ${tags.join(' ')}`.toLowerCase();
+---
+
+{/* The card is a container, not a link: the name is the stretched primary link
+   (its ::after covers the whole card), while tag links sit above it (z-10) so
+   they remain individually clickable. */}
+<div
+  class="aas-lift relative isolate flex flex-col gap-3 overflow-hidden rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-5 min-[1000px]:flex-row"
+  data-tool
+  data-name={name}
+  data-search={searchText}
+  data-pricing={pricingTags(pricing).join('|')}
+  data-license={license ?? ''}
+  data-langs={langTokens.join('|')}
+  data-stars={typeof stats?.stars === 'number' ? String(stats.stars) : ''}
+  data-date={stats?.releasedAt?.slice(0, 10) ?? ''}
+  data-updatemonths={updateMonths}
+>
+  {/* Gallery view only: an enlarged, blurred copy of the logo as an ambient
+     backdrop behind the header (hidden in the standard view via CSS). */}
+  {logoUrl && (
+    <div class="aas-gallery-bg" aria-hidden="true" style={`background-image:url("${logoUrl}")`} />
+  )}
+
+  {/* Left column: the content. Grows; chips on the right don't push it down. */}
+  <div class="flex min-w-0 flex-1 flex-col" data-card-body>
+    <div class="flex min-w-0 items-center gap-3" data-card-head>
+      <ToolAvatar name={name} logo={logo} logoDark={logoDark} category={category} size={40} />
+      <div class="min-w-0">
+        <h3 class="truncate text-base font-semibold text-[var(--aas-text)]">
+          <a href={href} class="no-underline after:absolute after:inset-0 after:content-['']">
+            {name}
+          </a>
+        </h3>
+        {vendor && <p class="truncate text-xs text-[var(--aas-muted)]">{vendor}</p>}
+        {formerNames.length > 0 && (
+          <p class="truncate text-xs text-[var(--aas-muted)]">
+            {t('meta.formerly')} {formerNames[0]}
+          </p>
+        )}
+      </div>
+    </div>
+
+    <p
+      class="aas-md mt-2 text-sm leading-relaxed text-[var(--aas-muted)]"
+      data-card-desc
+      set:html={inlineMd(description)}
+    />
+
+    {/* Secondary facts: version · release date · language · license.
+        Hidden in the compact gallery view (see [data-view=gallery] in CSS). */}
+    <div data-card-meta>
+      <ToolMeta
+        lang={lang}
+        pricing={[]}
+        license={license}
+        language={language}
+        version={displayVersion}
+        released={stats?.releasedAt?.slice(0, 10)}
+        deprecated={deprecated}
+        staleness={staleness}
+        class="mt-3"
+      />
+    </div>
+
+    {/* Keyword tags — clickable links to per-tag pages, above the card overlay */}
+    {
+      tags.length > 0 && (
+        <div
+          data-card-tags
+          class="relative z-10 mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-3 text-xs text-[var(--aas-muted)]"
+        >
+          {tags.slice(0, 4).map((tag) => (
+            <a
+              href={getRelativeLocaleUrl(lang, `tags/${tag}/`)}
+              class="no-underline opacity-80 hover:text-[var(--aas-accent)] hover:opacity-100"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </div>
+
+  {/* Key facts (stars + pricing). On desktop they sit in a right-hand column so
+     the chip count never shifts the description; on mobile they drop below the
+     content as a row instead of stealing width from the title/description. */}
+  <div class="flex shrink-0 gap-1.5 text-xs min-[1000px]:flex-col min-[1000px]:items-end" data-card-foot>
+    {
+      typeof stats?.stars === 'number' && (
+        <span class="aas-chip inline-flex items-center gap-1 rounded-lg px-2.5 py-1">
+          <StarIcon class="text-[var(--aas-text)]" />
+          {formatStars(stats.stars)}
+        </span>
+      )
+    }
+    {
+      pricingTags(pricing).map((p) => (
+        <span
+          data-pricing-tag={p}
+          title={pricingLabels[lang][p] ?? p}
+          class:list={[p === COMPLETELY_FREE ? 'aas-free' : 'aas-pricing', 'rounded-lg px-2.5 py-1']}
+        >
+          {p === 'open-source' && (
+            <svg
+              class="aas-oss-icon"
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="16 18 22 12 16 6" />
+              <polyline points="8 6 2 12 8 18" />
+            </svg>
+          )}
+          <span data-chip-label>{pricingLabels[lang][p] ?? p}</span>
+        </span>
+      ))
+    }
+  </div>
+</div>

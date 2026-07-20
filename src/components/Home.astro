@@ -1,0 +1,90 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import StackCard from './StackCard.astro';
+import FilterControls from './FilterControls.astro';
+import ArrowUpRight from './ArrowUpRight.astro';
+import { rootCategories, descendantIds } from '@aas-data/categories';
+import { getStacks, slugOf } from '../lib/stacks';
+import { site } from '@aas-data/site';
+import { deriveFacets } from '../lib/facets';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const entries = await getStacks(lang);
+
+// Default order is alphabetical (matches the client's default sort, so no flash).
+// Group by top-level category, rolling up every subcategory in its subtree.
+const byCategory = (categoryId: string) => {
+  const ids = new Set(descendantIds(categoryId));
+  return entries
+    .filter((e) => ids.has(e.data.category))
+    .sort((a, b) => a.data.name.localeCompare(b.data.name));
+};
+
+// Filter facet options, derived from the data (shared with the category pages).
+const facets = deriveFacets(entries, lang);
+
+---
+
+<section class="py-6">
+  <h1 class="text-4xl font-bold tracking-tight">{site.name}</h1>
+  <p class="mt-3 max-w-2xl text-lg text-[var(--aas-muted)]">{t('site.tagline')}</p>
+</section>
+
+{/* Search · filter · sort controls (client-side, URL-synced) */}
+<div class="mt-6">
+  <FilterControls lang={lang} facets={facets} anchorId="categories" />
+</div>
+
+<section class="mt-8 space-y-12">
+  {
+    rootCategories.map((cat) => {
+      const items = byCategory(cat.id);
+      if (items.length === 0) return null;
+      return (
+        <div data-section>
+          <div class="pb-1">
+            <h2 class="text-2xl font-semibold">
+              <a
+                href={getRelativeLocaleUrl(lang, `categories/${cat.id}/`)}
+                data-keep-filters
+                class="text-[var(--aas-text)] no-underline hover:text-[var(--aas-accent)]"
+              >
+                {cat.label[lang]}
+                <ArrowUpRight size={20} class="ml-1 text-[var(--aas-muted)]" />
+              </a>
+            </h2>
+            <p class="mt-1 text-sm text-[var(--aas-muted)]">{cat.description[lang]}</p>
+          </div>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2" data-grid>
+            {items.map((e) => (
+              <StackCard
+                slug={slugOf(e)}
+                lang={lang}
+                name={e.data.name}
+                formerNames={e.data.formerNames}
+                vendor={e.data.vendor}
+                description={e.data.description}
+                tags={e.data.tags}
+                pricing={e.data.pricing}
+                license={e.data.license}
+                language={e.data.language}
+                category={e.data.category}
+                logo={e.data.logo}
+                logoDark={e.data.logoDark}
+                repo={e.data.repo}
+                version={e.data.version}
+                deprecated={e.data.deprecated}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    })
+  }
+</section>

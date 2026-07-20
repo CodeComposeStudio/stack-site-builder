@@ -1,0 +1,264 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { glossary } from '@aas-data/glossary.mjs';
+import { getStacks, slugOf } from '../lib/stacks';
+import { getConcepts, conceptSlugOf } from '../lib/concepts';
+import { getArticles, articleSlugOf } from '../lib/articles';
+import { pathOf as stackPath, rootCategories } from '@aas-data/categories';
+import { conceptTree, conceptCatOf } from '@aas-data/concept-categories';
+import { articleTree, articleCatOf } from '@aas-data/article-categories';
+import ToolAvatar from './ToolAvatar.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+type Entry = {
+  label: string | { ko: string; en: string };
+  stack?: string;
+  concept?: string;
+  article?: string;
+  href?: string;
+  def?: string | { ko: string; en: string };
+};
+
+type Term = {
+  id: string;
+  label: string;
+  href?: string;
+  external: boolean;
+  subtitle: string;
+  icon: { name: string; logo?: string; logoDark?: string; category?: string; fallback?: string };
+  catId: string;
+  catLabel: string;
+  search: string;
+};
+
+type Group = { id: string; label: string; terms: Term[] };
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const map = glossary as Record<string, Entry>;
+const labelOf = (l: Entry['label']) => (typeof l === 'string' ? l : l[lang]);
+const defOf = (d: Entry['def']) => (!d ? '' : typeof d === 'string' ? d : d[lang]);
+
+const stacks = await getStacks(lang);
+const stackBySlug = new Map(stacks.map((s) => [slugOf(s), s]));
+const concepts = await getConcepts(lang);
+const conceptBySlug = new Map(concepts.map((c) => [conceptSlugOf(c), c]));
+const articles = await getArticles(lang);
+const articleBySlug = new Map(articles.map((a) => [articleSlugOf(a), a]));
+
+const tools: Term[] = [];
+const conceptTerms: Term[] = [];
+const articleTerms: Term[] = [];
+const defTerms: Term[] = [];
+const external: Term[] = [];
+
+for (const [id, e] of Object.entries(map)) {
+  const label = labelOf(e.label);
+  const def = defOf(e.def);
+  if (e.stack) {
+    const s = stackBySlug.get(e.stack);
+    const path = stackPath(s?.data.category ?? '');
+    const leaf = path[path.length - 1];
+    const top = path[0];
+    tools.push({
+      id,
+      label,
+      href: getRelativeLocaleUrl(lang, `stack/${e.stack}/`),
+      subtitle: leaf?.label[lang] ?? '',
+      external: false,
+      icon: { name: s?.data.name ?? label, logo: s?.data.logo, logoDark: s?.data.logoDark, category: s?.data.category },
+      catId: top?.id ?? 'zzz',
+      catLabel: top?.label[lang] ?? '',
+      search: `${label} ${leaf?.label[lang] ?? ''} ${top?.label[lang] ?? ''}`.toLowerCase(),
+    });
+  } else if (e.concept) {
+    const c = conceptBySlug.get(e.concept);
+    const catId = conceptCatOf(c?.data.category);
+    const path = conceptTree.pathOf(catId);
+    const leaf = path[path.length - 1];
+    const top = path[0];
+    conceptTerms.push({
+      id,
+      label,
+      href: getRelativeLocaleUrl(lang, `concept/${e.concept}/`),
+      subtitle: leaf?.label[lang] ?? '',
+      external: false,
+      icon: { name: label, fallback: 'concept' },
+      catId: top?.id ?? 'zzz',
+      catLabel: top?.label[lang] ?? '',
+      search: `${label} ${leaf?.label[lang] ?? ''} ${top?.label[lang] ?? ''}`.toLowerCase(),
+    });
+  } else if (e.article) {
+    const a = articleBySlug.get(e.article);
+    const catId = articleCatOf(a?.data.category);
+    const path = articleTree.pathOf(catId);
+    const leaf = path[path.length - 1];
+    const top = path[0];
+    articleTerms.push({
+      id,
+      label,
+      href: getRelativeLocaleUrl(lang, `article/${e.article}/`),
+      subtitle: leaf?.label[lang] ?? '',
+      external: false,
+      icon: { name: label, fallback: 'article' },
+      catId: top?.id ?? 'zzz',
+      catLabel: top?.label[lang] ?? '',
+      search: `${label} ${leaf?.label[lang] ?? ''} ${top?.label[lang] ?? ''}`.toLowerCase(),
+    });
+  } else if (e.href) {
+    external.push({
+      id,
+      label,
+      href: e.href,
+      subtitle: def,
+      external: true,
+      icon: { name: label, fallback: 'external' },
+      catId: '',
+      catLabel: '',
+      search: `${label} ${def}`.toLowerCase(),
+    });
+  } else {
+    // Definition-only term: no link, its `[[Term]]` points here.
+    defTerms.push({
+      id,
+      label,
+      subtitle: def,
+      external: false,
+      icon: { name: label, fallback: 'term' },
+      catId: '',
+      catLabel: '',
+      search: `${label} ${def}`.toLowerCase(),
+    });
+  }
+}
+
+// Group a kind's terms by top-level category, ordered by the category tree, then
+// each group's terms by label.
+const groupBy = (terms: Term[], order: string[]): Group[] => {
+  const byId = new Map<string, Group>();
+  for (const term of terms) {
+    if (!byId.has(term.catId)) byId.set(term.catId, { id: term.catId, label: term.catLabel, terms: [] });
+    byId.get(term.catId)!.terms.push(term);
+  }
+  const groups = [...byId.values()];
+  const rank = (id: string) => {
+    const i = order.indexOf(id);
+    return i === -1 ? order.length : i;
+  };
+  groups.sort((a, b) => rank(a.id) - rank(b.id) || a.label.localeCompare(b.label, lang));
+  for (const g of groups) g.terms.sort((a, b) => a.label.localeCompare(b.label, lang));
+  return groups;
+};
+
+const flat = (terms: Term[]): Group[] =>
+  terms.length ? [{ id: '', label: '', terms: terms.sort((a, b) => a.label.localeCompare(b.label, lang)) }] : [];
+
+const kinds = [
+  { key: 'tool', title: t('glossary.tool'), groups: groupBy(tools, rootCategories.map((c) => c.id)) },
+  { key: 'concept', title: t('glossary.concept'), groups: groupBy(conceptTerms, conceptTree.roots.map((c) => c.id)) },
+  { key: 'article', title: t('glossary.article'), groups: groupBy(articleTerms, articleTree.roots.map((c) => c.id)) },
+  { key: 'term', title: t('glossary.term'), groups: flat(defTerms) },
+  { key: 'external', title: t('glossary.external'), groups: flat(external) },
+].filter((k) => k.groups.length > 0);
+---
+
+<section class="py-6">
+  <h1 class="text-4xl font-bold tracking-tight">{t('glossary.title')}</h1>
+  <p class="mt-3 max-w-2xl text-lg text-[var(--aas-muted)]">{t('glossary.tagline')}</p>
+</section>
+
+<div data-glossary>
+  <div class="relative max-w-md">
+    <svg
+      class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[var(--aas-muted)]"
+      width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+    >
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+    </svg>
+    <input
+      type="search"
+      data-glossary-search
+      placeholder={t('glossary.search')}
+      aria-label={t('glossary.search')}
+      class="w-full rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-2 pr-3 pl-9 text-sm text-[var(--aas-text)] placeholder:text-[var(--aas-muted)]"
+    />
+  </div>
+
+  <p data-glossary-empty hidden class="mt-6 text-[var(--aas-muted)]">{t('glossary.noResults')}</p>
+
+  {
+    kinds.map((kind) => (
+      <section data-kind class="mt-8">
+        <h2 class="text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">{kind.title}</h2>
+        {kind.groups.map((group) => (
+          <div data-group class="mt-3">
+            {group.label && (
+              <h3 class="mb-2 text-sm font-medium text-[var(--aas-text)]">{group.label}</h3>
+            )}
+            <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {group.terms.map((term) => {
+                // A term with a target is a link; a definition-only term is a
+                // plain card that its `[[Term]]` anchors to (via the id).
+                const Wrapper = term.href ? 'a' : 'div';
+                return (
+                  <li data-term data-search={term.search} id={term.id} class="scroll-mt-24">
+                    <Wrapper
+                      href={term.href}
+                      target={term.external ? '_blank' : undefined}
+                      rel={term.external ? 'noopener noreferrer' : undefined}
+                      class:list={[
+                        'flex items-center gap-3 rounded-xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-3 no-underline',
+                        term.href && 'aas-lift',
+                      ]}
+                    >
+                      <ToolAvatar name={term.icon.name} logo={term.icon.logo} logoDark={term.icon.logoDark} category={term.icon.category} fallback={term.icon.fallback} size={36} />
+                      <span class="min-w-0">
+                        <span class="block truncate font-semibold text-[var(--aas-text)]">{term.label}</span>
+                        {term.subtitle && (
+                          <span class="block line-clamp-2 text-xs text-[var(--aas-muted)]">{term.subtitle}</span>
+                        )}
+                      </span>
+                    </Wrapper>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </section>
+    ))
+  }
+</div>
+
+<script>
+  // Client-side filter for the glossary: match each term's `data-search` text,
+  // then hide any category group or kind section left with no visible terms.
+  const root = document.querySelector('[data-glossary]');
+  if (root) {
+    const input = root.querySelector<HTMLInputElement>('[data-glossary-search]');
+    const empty = root.querySelector<HTMLElement>('[data-glossary-empty]');
+    const terms = Array.from(root.querySelectorAll<HTMLElement>('[data-term]'));
+    const groups = Array.from(root.querySelectorAll<HTMLElement>('[data-group]'));
+    const kinds = Array.from(root.querySelectorAll<HTMLElement>('[data-kind]'));
+    const hasVisibleTerm = (el: HTMLElement) => !!el.querySelector('[data-term]:not([hidden])');
+    const apply = () => {
+      const q = (input?.value ?? '').trim().toLowerCase();
+      let any = false;
+      for (const el of terms) {
+        const show = !q || (el.dataset.search ?? '').includes(q);
+        el.hidden = !show;
+        if (show) any = true;
+      }
+      for (const g of groups) g.hidden = !hasVisibleTerm(g);
+      for (const k of kinds) k.hidden = !hasVisibleTerm(k);
+      if (empty) empty.hidden = any;
+    };
+    input?.addEventListener('input', apply);
+  }
+</script>

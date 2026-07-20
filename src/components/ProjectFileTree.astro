@@ -1,0 +1,95 @@
+---
+// Recursive file-tree node. Folders are native <details> so they fold/expand
+// with no JS; files stay plain buttons carrying the data-* attributes the
+// ProjectViewer script matches on (data-file-path / data-file-folder), so the
+// tree is a drop-in for the old flat list.
+//
+// Indentation is relative: each nested level is one <ul> with a left padding +
+// a faint guide line (border-l), so children visibly hang off their folder.
+import Self from './ProjectFileTree.astro';
+
+export interface FileNode {
+  type: 'file';
+  name: string;
+  path: string;
+  index: number;
+}
+export interface DirNode {
+  type: 'dir';
+  name: string;
+  path: string;
+  children: TreeNode[];
+}
+export type TreeNode = FileNode | DirNode;
+
+interface Props {
+  folder: string;
+  nodes: TreeNode[];
+  depth?: number;
+}
+
+const { folder, nodes, depth = 0 } = Astro.props;
+---
+
+<ul
+  class:list={[
+    'space-y-0.5',
+    // Guide line + indent for nested levels; the top level sits flush.
+    depth > 0 && 'ml-[0.85rem] border-l border-[var(--aas-border)] pl-1.5',
+  ]}
+>
+  {
+    nodes.map((node) =>
+      node.type === 'dir' ? (
+        <li>
+          <details open class="aas-tree-dir" data-tree-folder={folder} data-tree-dir={node.path}>
+            <summary class="flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-2 py-1 text-left font-mono text-xs text-[var(--aas-muted)] select-none hover:bg-[var(--aas-tint)]">
+              <svg
+                class="aas-tree-caret h-3 w-3 shrink-0 transition-transform"
+                viewBox="0 0 12 12"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 2.5 7.5 6 4 9.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <span>{node.name}/</span>
+            </summary>
+            <Self folder={folder} nodes={node.children} depth={depth + 1} />
+          </details>
+        </li>
+      ) : (
+        <li>
+          <button
+            type="button"
+            data-file={node.index}
+            data-file-path={node.path}
+            data-file-folder={folder}
+            aria-current={node.index === 0 ? 'true' : 'false'}
+            class="block w-full truncate rounded-lg px-2 py-1 text-left font-mono text-xs text-[var(--aas-muted)] hover:bg-[var(--aas-tint)] aria-[current=true]:bg-[var(--aas-tint)] aria-[current=true]:text-[var(--aas-text)]"
+          >
+            {node.name}
+          </button>
+        </li>
+      ),
+    )
+  }
+</ul>
+
+<style>
+  .aas-tree-dir > summary::-webkit-details-marker {
+    display: none;
+  }
+  .aas-tree-dir > summary {
+    list-style: none;
+  }
+  /* Caret points right when collapsed, rotates down when the folder is open. */
+  .aas-tree-dir[open] > summary .aas-tree-caret {
+    transform: rotate(90deg);
+  }
+</style>

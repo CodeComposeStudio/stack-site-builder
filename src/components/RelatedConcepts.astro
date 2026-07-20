@@ -1,0 +1,60 @@
+---
+// "Related concepts" card section, shared by stack / concept / article detail
+// pages so they all present concept links the same way (image + title + doc
+// meta + description, in a collapsible grid).
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import { conceptSlugOf, type ConceptEntry } from '../lib/concepts';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate } from '../lib/dates';
+import { inlineMd } from '../lib/inline-md';
+import CollapsibleGrid from './CollapsibleGrid.astro';
+
+interface Props {
+  lang: Lang;
+  concepts: ConceptEntry[];
+}
+
+const { lang, concepts } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{
+  concepts.length > 0 && (
+    <section class="mt-8">
+      <h2 class="text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('concept.relatedConcepts')}
+      </h2>
+      <CollapsibleGrid lang={lang} count={concepts.length}>
+        {concepts.map((c) => (
+          <a
+            href={getRelativeLocaleUrl(lang, `concept/${conceptSlugOf(c)}/`)}
+            class="aas-lift flex items-stretch overflow-hidden rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)] no-underline"
+          >
+            {c.data.image && (
+              <Image src={c.data.image} alt="" class="w-28 shrink-0 self-stretch object-cover" />
+            )}
+            <div class="min-w-0 p-4">
+              <span class="block font-semibold text-[var(--aas-text)]">{c.data.title}</span>
+              {(c.data.version || c.data.updated) && (
+                <span class="mt-0.5 block text-xs text-[var(--aas-muted)]">
+                  {c.data.version && <span>{t('meta.docVersion')} {c.data.version}</span>}
+                  {c.data.version && c.data.updated && <span> · </span>}
+                  {c.data.updated && (
+                    <span>
+                      {t('concept.updated')} {formatDate(c.data.updated, lang)}
+                    </span>
+                  )}
+                </span>
+              )}
+              <span
+                class="aas-md mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--aas-muted)] opacity-75"
+                set:html={inlineMd(c.data.description)}
+              />
+            </div>
+          </a>
+        ))}
+      </CollapsibleGrid>
+    </section>
+  )
+}

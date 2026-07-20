@@ -1,0 +1,45 @@
+---
+// Inline, full-width callout linking to a blog article, for use inside a
+// concept's MDX body, e.g.
+//   <ArticleLink slug="web-search-fx-agent" />
+// Deliberately distinct from <ConceptLink/> (a filled accent tint, "learn
+// more"): this is a plain panel with an accent left-bar, a "related writing"
+// label, and the post's date — signalling a read, not another concept.
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getArticles, articleSlugOf, type ArticleEntry } from '../lib/articles';
+import { formatDate } from '../lib/dates';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { inlineMd } from '../lib/inline-md';
+
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+const lang: Lang = Astro.currentLocale === 'ko' ? 'ko' : 'en';
+const t = useTranslations(lang);
+const articles = await getArticles(lang);
+const target = articles.find((a) => articleSlugOf(a) === slug) as ArticleEntry | undefined;
+---
+
+{
+  target && (
+    <a
+      href={getRelativeLocaleUrl(lang, `article/${articleSlugOf(target)}/`)}
+      class="aas-lift mt-3 flex items-start gap-4 rounded-xl border border-l-4 p-4 no-underline"
+      style="border-color: var(--aas-border); border-left-color: var(--aas-accent); background: var(--aas-panel);"
+    >
+      <div class="min-w-0 flex-1">
+        <span class="block text-xs font-semibold tracking-wide text-[var(--aas-accent)] uppercase">
+          {t('detail.relatedWriting')}
+        </span>
+        <span class="mt-0.5 block font-semibold text-[var(--aas-text)]">{target.data.title}</span>
+        <span class="aas-md mt-1 block text-sm text-[var(--aas-muted)]" set:html={inlineMd(target.data.description)} />
+        <span class="mt-1.5 block text-xs text-[var(--aas-muted)]">
+          {formatDate(target.data.date, lang)}
+        </span>
+      </div>
+      <span aria-hidden="true" class="shrink-0 text-xl text-[var(--aas-accent)]">&rarr;</span>
+    </a>
+  )
+}

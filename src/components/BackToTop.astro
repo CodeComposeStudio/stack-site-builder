@@ -1,0 +1,47 @@
+---
+// Floating "back to top" button. Mobile only — on wide viewports (≥1200px) the
+// sticky TOC rail already gives a way to jump around, so it is hidden there via
+// the .aas-totop rule in global.css. Appears once the page is scrolled down.
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<button
+  type="button"
+  data-totop
+  aria-label={t('nav.backToTop')}
+  class="aas-totop fixed right-5 bottom-5 z-40 h-11 w-11 items-center justify-center rounded-full border border-[var(--aas-border)] bg-[var(--aas-panel)] text-[var(--aas-text)] shadow-lg transition hover:text-[var(--aas-accent)]"
+>
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="m18 15-6-6-6 6" />
+  </svg>
+</button>
+
+<script>
+  const btn = document.querySelector('[data-totop]');
+  if (btn) {
+    const onScroll = () => {
+      if (window.scrollY > 400) btn.setAttribute('data-visible', '');
+      else btn.removeAttribute('data-visible');
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+  }
+</script>

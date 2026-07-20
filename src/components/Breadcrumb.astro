@@ -1,0 +1,37 @@
+---
+// A simple breadcrumb trail. Segments with an `href` render as links; the
+// last (current) segment is typically passed without one.
+interface Segment {
+  label: string;
+  href?: string;
+}
+interface Props {
+  segments: Segment[];
+  class?: string;
+}
+const { segments, class: className } = Astro.props;
+---
+
+<nav
+  aria-label="Breadcrumb"
+  class:list={['flex flex-wrap items-center gap-1.5 text-sm text-[var(--aas-muted)]', className]}
+>
+  {
+    segments.map((s, i) => (
+      <Fragment>
+        {i > 0 && (
+          <span aria-hidden="true" class="opacity-60">
+            ›
+          </span>
+        )}
+        {s.href ? (
+          <a href={s.href} class="text-[var(--aas-accent)] no-underline hover:underline">
+            {s.label}
+          </a>
+        ) : (
+          <span class="text-[var(--aas-text)]">{s.label}</span>
+        )}
+      </Fragment>
+    ))
+  }
+</nav>

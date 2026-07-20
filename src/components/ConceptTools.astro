@@ -1,0 +1,49 @@
+---
+// Inline tool cards for use inside a concept's MDX body, e.g.
+//   <Tools slugs={["langgraph", "crewai"]} />
+// Renders the same mini-cards as the catalog's "related tools", resolving the
+// locale from the current page (concepts are served under /<lang>/...).
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getStacks, slugOf, type StackEntry } from '../lib/stacks';
+import { categoryMap } from '@aas-data/categories';
+import ToolAvatar from './ToolAvatar.astro';
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+  slugs: string[] | string;
+}
+
+const { slugs } = Astro.props;
+const list = Array.isArray(slugs)
+  ? slugs
+  : String(slugs)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+const lang: Lang = Astro.currentLocale === 'ko' ? 'ko' : 'en';
+const stacks = await getStacks(lang);
+const bySlug = new Map(stacks.map((s) => [slugOf(s), s]));
+const tools = list.map((s) => bySlug.get(s)).filter(Boolean) as StackEntry[];
+---
+
+{
+  tools.length > 0 && (
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      {tools.map((e) => (
+        <a
+          href={getRelativeLocaleUrl(lang, `stack/${slugOf(e)}/`)}
+          class="aas-lift flex items-center gap-3 rounded-xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-3 no-underline"
+        >
+          <ToolAvatar name={e.data.name} logo={e.data.logo} logoDark={e.data.logoDark} category={e.data.category} size={36} />
+          <div class="min-w-0">
+            <span class="block truncate font-semibold text-[var(--aas-text)]">{e.data.name}</span>
+            <span class="block truncate text-xs text-[var(--aas-muted)]">
+              {categoryMap.get(e.data.category)?.label[lang]}
+            </span>
+          </div>
+        </a>
+      ))}
+    </div>
+  )
+}

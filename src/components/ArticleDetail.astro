@@ -1,0 +1,100 @@
+---
+import { render } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getArticles, articleSlugOf, type ArticleEntry } from '../lib/articles';
+import { getConcepts, type ConceptEntry } from '../lib/concepts';
+import { Image } from 'astro:assets';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate } from '../lib/dates';
+import { inlineMd } from '../lib/inline-md';
+import TocRail from './TocRail.astro';
+import MermaidLoader from './MermaidLoader.astro';
+import Breadcrumb from './Breadcrumb.astro';
+import { articleTree, articleCatOf } from '@aas-data/article-categories';
+import RelatedTools from './RelatedTools.astro';
+import RelatedConcepts from './RelatedConcepts.astro';
+import RelatedArticles from './RelatedArticles.astro';
+
+interface Props {
+  entry: ArticleEntry;
+  lang: Lang;
+}
+
+const { entry, lang } = Astro.props;
+const t = useTranslations(lang);
+const { Content, headings } = await render(entry);
+const data = entry.data;
+const dateStr = data.date.toISOString().slice(0, 10);
+const updatedStr = data.updated?.toISOString().slice(0, 10);
+const tocItems = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+// Articles may embed Mermaid diagrams (and a <SampleProject/> whose README can
+// too); load the client renderer when the body uses any.
+const bodyHasMermaid = (entry.body ?? '').includes('```mermaid');
+
+// Related concepts: concepts whose frontmatter lists this article (backlink).
+const articleSlug = articleSlugOf(entry);
+const relatedConcepts = (await getConcepts(lang)).filter((c) =>
+  c.data.articles.includes(articleSlug),
+) as ConceptEntry[];
+
+// Related writing: articles this one explicitly cross-links (frontmatter
+// `related`), kept in the authored order.
+const articlesBySlug = new Map((await getArticles(lang)).map((a) => [articleSlugOf(a), a]));
+const relatedArticles = (data.related ?? [])
+  .map((s) => articlesBySlug.get(s))
+  .filter((a): a is ArticleEntry => Boolean(a) && articleSlugOf(a!) !== articleSlug);
+
+// A referenced sample (frontmatter `project`) is no longer embedded here — the
+// body's <SampleProject/> renders a callout card to its sample/<folder>/ page,
+// which carries the viewer, the file rail, and the related tools itself.
+
+// Breadcrumb: All writing › category › subcategory… (each segment linked).
+const crumbs = [
+  { label: t('article.backToBlog'), href: getRelativeLocaleUrl(lang, 'article/') },
+  ...articleTree.pathOf(articleCatOf(data.category)).map((c) => ({
+    label: c.label[lang],
+    href: getRelativeLocaleUrl(lang, `article/category/${c.id}/`),
+  })),
+];
+---
+
+<Breadcrumb segments={crumbs} />
+
+<header class="mt-4 pb-6">
+  <p class="text-sm text-[var(--aas-muted)]">
+    <time datetime={dateStr}>{formatDate(data.date, lang)}</time>
+    {data.version && <span> · {t('meta.docVersion')} {data.version}</span>}
+    {data.updated && updatedStr !== dateStr && (
+      <span>
+        {' '}
+        · {t('meta.updated')} <time datetime={updatedStr}>{formatDate(data.updated, lang)}</time>
+      </span>
+    )}
+  </p>
+  <h1 class="mt-1 text-3xl font-bold tracking-tight">{data.title}</h1>
+  <p class="mt-2 aas-md text-lg whitespace-pre-line text-[var(--aas-muted)]" set:html={inlineMd(data.description)} />
+  {
+    data.image && (
+      <Image
+        src={data.image}
+        alt={data.imageAlt ?? data.title}
+        class="mt-5 aspect-[2/1] w-full rounded-2xl border border-[var(--aas-border)] object-cover"
+      />
+    )
+  }
+</header>
+
+<RelatedConcepts lang={lang} concepts={relatedConcepts} />
+
+<div class="mt-8 flex items-start gap-8">
+  <article class="prose max-w-none aas-reading min-w-0 flex-1">
+    <Content />
+  </article>
+  <TocRail lang={lang} items={tocItems} />
+</div>
+
+<RelatedTools lang={lang} slugs={data.tools} />
+
+<RelatedArticles lang={lang} articles={relatedArticles} />
+
+{bodyHasMermaid && <MermaidLoader />}

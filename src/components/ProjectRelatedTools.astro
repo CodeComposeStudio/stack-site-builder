@@ -1,0 +1,70 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { categoryMap } from '@aas-data/categories';
+import { useTranslations, type Lang } from '../i18n/ui';
+import type { ToolRef } from '../lib/stacks';
+import ToolAvatar from './ToolAvatar.astro';
+
+/** A related tool resolved against the stacks collection — an alias of ToolRef
+ *  (produced by `toolResolver` in src/lib/stacks.ts). */
+export type RelatedTool = ToolRef;
+
+interface Props {
+  lang: Lang;
+  tools: RelatedTool[];
+}
+
+const { lang, tools } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{
+  tools.length > 0 && (
+    <nav aria-label={t('project.relatedTools')} class="text-sm">
+      <p class="mb-2 text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('project.relatedTools')}
+      </p>
+      <ul class="space-y-1.5">
+        {tools.map((tool) =>
+          tool.registered ? (
+            <li>
+              <a
+                href={getRelativeLocaleUrl(lang, `stack/${tool.slug}/`)}
+                class="aas-lift flex items-center gap-2.5 rounded-xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-2 no-underline"
+              >
+                <ToolAvatar name={tool.name} logo={tool.logo} logoDark={tool.logoDark} category={tool.category} size={28} />
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="truncate font-semibold text-[var(--aas-text)]">{tool.name}</span>
+                    {tool.deprecated && (
+                      <span class="aas-deprecated shrink-0 rounded px-1 py-0.5 text-[0.6rem]">
+                        {t('meta.deprecated')}
+                      </span>
+                    )}
+                  </div>
+                  {tool.category && (
+                    <div class="truncate text-xs text-[var(--aas-muted)]">
+                      {categoryMap.get(tool.category)?.label[lang]}
+                    </div>
+                  )}
+                </div>
+              </a>
+            </li>
+          ) : (
+            <li>
+              <div class="flex items-center gap-2.5 rounded-xl border border-dashed border-[var(--aas-border)] p-2">
+                <ToolAvatar name={tool.name} category="" size={28} />
+                <div class="min-w-0">
+                  <span class="truncate font-medium text-[var(--aas-muted)]">{tool.name}</span>
+                  <div class="truncate text-xs text-[var(--aas-muted)] opacity-70">
+                    {t('project.unregistered')}
+                  </div>
+                </div>
+              </div>
+            </li>
+          ),
+        )}
+      </ul>
+    </nav>
+  )
+}

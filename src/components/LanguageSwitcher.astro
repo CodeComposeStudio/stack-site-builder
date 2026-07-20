@@ -1,0 +1,86 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import ChevronDown from './ChevronDown.astro';
+import { languages, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  /** Locale-relative path of the current page, e.g. '' or 'stack/litellm/'. */
+  path: string;
+}
+
+const { lang, path } = Astro.props;
+const codes = Object.keys(languages) as Lang[];
+---
+
+<details class="aas-lang">
+  <summary
+    class="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-[var(--aas-border)] px-2.5 py-1 whitespace-nowrap text-[var(--aas-text)] select-none"
+  >
+    {/* Compact language code on mobile; full name from the `sm` breakpoint up. */}
+    <span class="sm:hidden">{lang.toUpperCase()}</span>
+    <span class="hidden sm:inline">{languages[lang]}</span>
+    <ChevronDown class="text-[var(--aas-muted)]" />
+  </summary>
+  <ul
+    class="absolute right-0 z-10 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-1 shadow-lg"
+  >
+    {
+      codes.map((code) => (
+        <li>
+          <a
+            data-lang-link
+            data-lang-code={code}
+            href={getRelativeLocaleUrl(code, path)}
+            class:list={[
+              'block px-3 py-1.5 no-underline hover:bg-[var(--aas-bg)]',
+              code === lang ? 'font-semibold text-[var(--aas-text)]' : 'text-[var(--aas-muted)]',
+            ]}
+            aria-current={code === lang ? 'true' : undefined}
+          >
+            {languages[code]}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</details>
+
+<style>
+  /* Lightweight, JS-free dropdown built on <details>. */
+  .aas-lang {
+    position: relative;
+  }
+  .aas-lang > summary::-webkit-details-marker {
+    display: none;
+  }
+</style>
+
+<script>
+  // Carry the current query + hash (selected tab/example/file/section) over to
+  // the other language, so switching keeps you on the same view. The links are
+  // server-rendered without that client-side state, so refresh it when the
+  // dropdown opens (also keeps real hrefs, so open-in-new-tab works too).
+  document.querySelectorAll<HTMLDetailsElement>('.aas-lang').forEach((dd) => {
+    const links = Array.from(dd.querySelectorAll<HTMLAnchorElement>('[data-lang-link]'));
+    const bases = links.map((a) => a.getAttribute('href') ?? '');
+    const sync = () => {
+      const extra = location.search + location.hash;
+      links.forEach((a, i) => a.setAttribute('href', bases[i] + extra));
+    };
+    sync();
+    dd.addEventListener('toggle', () => dd.open && sync());
+
+    // Remember an explicit language choice so the root-home auto-detect
+    // (BaseLayout) respects it instead of overriding on the next visit.
+    links.forEach((a) =>
+      a.addEventListener('click', () => {
+        try {
+          localStorage.setItem('aas:lang', a.dataset.langCode ?? '');
+        } catch {
+          /* ignore */
+        }
+      }),
+    );
+  });
+</script>

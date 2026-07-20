@@ -1,0 +1,36 @@
+---
+import type { ImageMetadata } from 'astro';
+
+// One slide in a deck. Authored in a deck's MDX as <Slide>…</Slide>; the deck
+// page (src/components/DeckView.astro) lays these out as a horizontal
+// scroll-snap presentation.
+//
+//   <Slide>             a normal slide (marked `default`; title pinned to top)
+//   <Slide class="cover">   title slide (centered, large)
+//   <Slide class="center">  short slide, vertically centered
+//   <Slide toc={false}>     keep this slide's headings out of the deck TOC
+//   <Slide bg={img}>        full-bleed background image (import it first); a
+//                           scrim + light text keep the content legible
+//   <Slide source="…">      small citation in the bottom-right corner (≤2 lines)
+interface Props {
+  class?: string;
+  /** Include this slide's headings in the deck's table of contents. */
+  toc?: boolean;
+  /** Full-bleed background image (an imported ImageMetadata). */
+  bg?: ImageMetadata;
+  /** A short source / citation, shown small in the slide's bottom-right corner. */
+  source?: string;
+}
+const { class: cls = 'default', toc = true, bg, source } = Astro.props;
+---
+
+<section
+  class:list={['aas-slide', cls, bg && 'has-bg']}
+  data-no-toc={toc ? undefined : ''}
+  style={bg ? `background-image: url(${bg.src})` : undefined}
+>
+  <div class="aas-slide-inner">
+    <slot />
+  </div>
+  {source && <p class="aas-slide-source">{source}</p>}
+</section>

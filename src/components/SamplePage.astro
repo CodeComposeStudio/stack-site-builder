@@ -1,0 +1,95 @@
+---
+// A sample's own page at sample/<folder>/ — the same viewer the stack impl tab
+// and article embeds use (locale-aware README, file tree, highlighted files),
+// plus "used by" backlinks to every stack and article that ships this folder.
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Breadcrumb from './Breadcrumb.astro';
+import MermaidLoader from './MermaidLoader.astro';
+import ProjectViewer from './ProjectViewer.astro';
+import TocRail from './TocRail.astro';
+import { renderProjects } from '../lib/project';
+import { getStacks, slugOf, type ToolRef } from '../lib/stacks';
+import { getArticles, articleSlugOf } from '../lib/articles';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+  folder: string;
+}
+
+const { lang, folder } = Astro.props;
+const t = useTranslations(lang);
+
+const projects = await renderProjects([folder], lang);
+
+// "Used by" backlinks, derived from frontmatter that references this folder:
+// a stack's `projects` list or an article's `project` field. Related-tool
+// cards are NOT shown here — that association lives in the referencing page's
+// frontmatter, not in the sample itself, so it belongs on those pages.
+const stacks = await getStacks(lang);
+const articles = await getArticles(lang);
+
+const usedByStacks = stacks.filter((s) =>
+  s.data.projects.some((p) => (typeof p === 'string' ? p : p.folder) === folder),
+);
+const usedByArticles = articles.filter((a) => {
+  const p = a.data.project;
+  return p !== undefined && (typeof p === 'string' ? p : p.folder) === folder;
+});
+
+const related = new Map<string, ToolRef[]>();
+
+// The fixed right rail: the README's h2/h3 as the TOC + the clickable file list.
+const project = projects[0];
+const tocItems = project?.headings ?? [];
+const projectFiles = project ? { folder: project.folder, files: project.files } : undefined;
+
+const crumbs = [
+  { label: t('sample.title'), href: getRelativeLocaleUrl(lang, 'sample/') },
+  { label: `samples/${folder}` },
+];
+const usedBy = [
+  ...usedByStacks.map((s) => ({
+    label: s.data.name,
+    href: getRelativeLocaleUrl(lang, `stack/${slugOf(s)}/`),
+  })),
+  ...usedByArticles.map((a) => ({
+    label: a.data.title,
+    href: getRelativeLocaleUrl(lang, `article/${articleSlugOf(a)}/`),
+  })),
+];
+---
+
+<Breadcrumb segments={crumbs} />
+
+{/* Content + the same fixed right rail an article page has (README TOC,
+    related tools, file list). `embedded` drops the viewer's inline sidebar at
+    rail widths so the files aren't listed twice; aas-reading gives the README
+    body the same serif reading typography the articles and stack tabs use. */}
+<div class="mt-6 flex items-start gap-8">
+  <div class="aas-reading min-w-0 flex-1">
+    <ProjectViewer lang={lang} projects={projects} related={related} embedded />
+  </div>
+  <TocRail lang={lang} items={tocItems} projectFiles={projectFiles} />
+</div>
+
+{
+  usedBy.length > 0 && (
+    <aside class="mt-10 border-t border-[var(--aas-border)] pt-6">
+      <h2 class="text-sm font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('sample.usedBy')}
+      </h2>
+      <ul class="mt-3 space-y-2">
+        {usedBy.map((u) => (
+          <li>
+            <a href={u.href} class="text-[var(--aas-accent)] no-underline hover:underline">
+              {u.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  )
+}
+
+<MermaidLoader />

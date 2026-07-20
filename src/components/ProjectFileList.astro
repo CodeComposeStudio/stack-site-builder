@@ -1,0 +1,68 @@
+---
+import { useTranslations, type Lang } from '../i18n/ui';
+import ProjectFileTree, { type DirNode, type TreeNode } from './ProjectFileTree.astro';
+
+interface Props {
+  lang: Lang;
+  folder: string;
+  files: { path: string }[];
+  class?: string;
+}
+
+const { lang, folder, files, class: className } = Astro.props;
+const t = useTranslations(lang);
+
+// Group the flat, pre-sorted file list into a folder tree. Each file keeps its
+// original index (the ProjectViewer script selects the file at index 0 by
+// default). A directory node is created the first time one of its files is
+// seen, so folders land where their contents already sort.
+function buildTree(items: { path: string }[]): TreeNode[] {
+  const roots: TreeNode[] = [];
+  const dirChildren = new Map<string, TreeNode[]>([['', roots]]);
+
+  items.forEach((file, index) => {
+    const parts = file.path.split('/');
+    let parentPath = '';
+    for (let i = 0; i < parts.length - 1; i++) {
+      const dirPath = parentPath ? `${parentPath}/${parts[i]}` : parts[i];
+      if (!dirChildren.has(dirPath)) {
+        const children: TreeNode[] = [];
+        dirChildren.set(dirPath, children);
+        const dir: DirNode = { type: 'dir', name: parts[i], path: dirPath, children };
+        dirChildren.get(parentPath)!.push(dir);
+      }
+      parentPath = dirPath;
+    }
+    dirChildren.get(parentPath)!.push({
+      type: 'file',
+      name: parts[parts.length - 1],
+      path: file.path,
+      index,
+    });
+  });
+
+  return roots;
+}
+
+// Folders before files at every level (stable within each group), so the tree
+// reads like a file explorer.
+function foldersFirst(nodes: TreeNode[]): TreeNode[] {
+  for (const n of nodes) if (n.type === 'dir') n.children = foldersFirst(n.children);
+  return [...nodes.filter((n) => n.type === 'dir'), ...nodes.filter((n) => n.type === 'file')];
+}
+
+const tree = foldersFirst(buildTree(files));
+---
+
+{
+  files.length > 0 && (
+    <div class:list={['text-sm', className]}>
+      <p class="mb-2 text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('project.files')}
+      </p>
+      <div class="rounded-xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-1.5">
+        <ProjectFileTree folder={folder} nodes={tree} />
+      </div>
+    </div>
+  )
+}

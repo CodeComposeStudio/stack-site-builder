@@ -1,0 +1,56 @@
+---
+// Inline, full-width callout linking to a sample's own page, for use inside an
+// article's MDX body, e.g.
+//   <SampleProject folder="tavily_1" />
+// Styled like <ArticleLink/> (accent left-bar callout with a label + date):
+// the full viewer — locale-aware README, file tree, highlighted files — lives
+// on the linked sample page instead of being embedded in the article.
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { listProjects } from '../lib/project';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  folder: string;
+}
+
+const { folder } = Astro.props;
+const lang: Lang = Astro.currentLocale === 'ko' ? 'ko' : 'en';
+const t = useTranslations(lang);
+const target = listProjects(lang).find((p) => p.folder === folder);
+
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return new Intl.DateTimeFormat(lang === 'ko' ? 'ko-KR' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+---
+
+{
+  target && (
+    <a
+      href={getRelativeLocaleUrl(lang, `sample/${target.folder}/`)}
+      class="aas-lift mt-3 flex items-start gap-4 rounded-xl border border-l-4 p-4 no-underline"
+      style="border-color: var(--aas-border); border-left-color: var(--aas-accent); background: var(--aas-panel);"
+    >
+      <div class="min-w-0 flex-1">
+        <span class="block text-xs font-semibold tracking-wide text-[var(--aas-accent)] uppercase">
+          {t('sample.related')}
+        </span>
+        <span class="mt-0.5 block font-semibold text-[var(--aas-text)]">{target.name}</span>
+        {target.excerpt && (
+          <span class="mt-1 block text-sm text-[var(--aas-muted)]">{target.excerpt}</span>
+        )}
+        <span class="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-[var(--aas-muted)]">
+          <code class="rounded bg-[var(--aas-tint)] px-1.5 py-0.5">samples/{target.folder}</code>
+          <span>{formatDate(target.date)}</span>
+        </span>
+      </div>
+      <span aria-hidden="true" class="shrink-0 text-xl text-[var(--aas-accent)]">&rarr;</span>
+    </a>
+  )
+}

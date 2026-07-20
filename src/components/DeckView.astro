@@ -1,0 +1,772 @@
+---
+import { site } from '@aas-data/site';
+import '../styles/global.css';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { render, type CollectionEntry } from 'astro:content';
+import MermaidLoader from './MermaidLoader.astro';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+// Renders a full-screen slide deck as a horizontal scroll-snap presentation.
+// A page (src/pages/slides/[deck].astro and its ko/ sibling) picks the deck for
+// its locale and hands it here; this component is the whole HTML document.
+interface Props {
+  entry: CollectionEntry<'slides'>;
+  lang: Lang;
+}
+
+const { entry, lang } = Astro.props;
+const t = useTranslations(lang);
+const { Content } = await render(entry);
+const hasMermaid = (entry.body ?? '').includes('```mermaid');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const backHref = getRelativeLocaleUrl(lang, 'slides/');
+const themeClass = `aas-theme-${entry.data.theme}`;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{entry.data.title} — {site.name}</title>
+    <meta name="description" content={entry.data.description} />
+    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    {/* Follow the site's light/dark preference before first paint (same logic as
+        BaseLayout). The deck's visual theme is a separate CSS class, below. */}
+    <script is:inline>
+      (function () {
+        try {
+          var pref = localStorage.getItem('theme') || 'system';
+          var dark =
+            pref === 'dark' ||
+            (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="aas-deck-body" data-aspect={entry.data.aspect}>
+    <div class="aas-deck-progress"><div class="aas-deck-progress-fill" data-progress></div></div>
+
+    {/* The slides: <Content/> renders the deck MDX, whose <Slide> blocks become
+        .aas-slide sections laid out as a horizontal scroll-snap track. */}
+    <main
+      class:list={['aas-deck', themeClass]}
+      data-deck
+      data-transition={entry.data.transition}
+      data-toc={String(entry.data.toc)}
+      data-toc-level={String(entry.data.toc_level)}
+      data-toc-open={String(entry.data.toc_open)}
+      aria-label={entry.data.title}
+    >
+      <Content />
+    </main>
+
+    {/* Back to the slides index (top-left). Plain SVG chevrons, no icon fonts. */}
+    <a class="aas-deck-back" href={backHref} aria-label={t('slides.title')}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      <span>{t('slides.title')}</span>
+    </a>
+
+    {/* Actions drawer: a slim tab on the left edge (vertically centered) that
+        slides a panel out. Kept out of the top-left so it doesn't draw the eye. */}
+    <div class="aas-deck-menu" data-menu-root>
+      <div class="aas-deck-menu-panel" data-menu-panel>
+        <button type="button" data-action="print">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+          {t('slides.print')}
+        </button>
+        <button type="button" data-action="fullscreen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          {t('slides.fullscreen')}
+        </button>
+        <div class="aas-deck-menu-sep" role="separator"></div>
+        <div class="aas-deck-menu-themes" role="group" aria-label={t('theme.label')}>
+          <button type="button" data-theme-option="system" aria-pressed="false" title={t('theme.system')} aria-label={t('theme.system')}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>
+          </button>
+          <button type="button" data-theme-option="light" aria-pressed="false" title={t('theme.light')} aria-label={t('theme.light')}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          </button>
+          <button type="button" data-theme-option="dark" aria-pressed="false" title={t('theme.dark')} aria-label={t('theme.dark')}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+          </button>
+        </div>
+      </div>
+      <button type="button" class="aas-deck-menu-tab" data-menu-toggle aria-expanded="false" aria-label={t('slides.menu')}>
+        <svg class="aas-deck-menu-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    {
+      (entry.data.presenter || entry.data.date) && (
+        <div class="aas-deck-footer">
+          {entry.data.presenter && <span>{entry.data.presenter}</span>}
+          {entry.data.presenter && entry.data.date && <span class="aas-deck-footer-sep">·</span>}
+          {entry.data.date && <span>{entry.data.date}</span>}
+        </div>
+      )
+    }
+
+    {/* Table of contents (top-right). Populated + revealed by the script only
+        when the deck has TOC headings. */}
+    <div class="aas-deck-toc" data-toc-root hidden>
+      <button type="button" class="aas-deck-toc-btn" data-toc-toggle aria-expanded="false" aria-label={t('slides.contents')}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>
+      </button>
+      <nav class="aas-deck-toc-panel" data-toc-panel hidden aria-label={t('slides.contents')}></nav>
+    </div>
+
+    <div class="aas-deck-nav">
+      <button type="button" class="aas-deck-btn" data-prev aria-label={t('slides.prev')}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+      </button>
+      <span class="aas-deck-count"><span data-current>1</span> / <span data-total>1</span></span>
+      <button type="button" class="aas-deck-btn" data-next aria-label={t('slides.next')}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      </button>
+    </div>
+
+    {/* Overview grid (press `o`). Thumbnails are built by the script. */}
+    <div class="aas-ov" data-ov hidden aria-label={t('slides.overview')}></div>
+
+    {/* Lightbox for enlarging a diagram or image. Filled + shown by the script. */}
+    <div class="aas-zoom" data-zoom hidden data-zoom-label={t('slides.zoom')}>
+      <button type="button" class="aas-zoom-close" data-zoom-close aria-label={t('slides.close')}>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <div class="aas-zoom-stage" data-zoom-stage></div>
+    </div>
+
+    {hasMermaid && <MermaidLoader />}
+
+    <script>
+      const deck = document.querySelector<HTMLElement>('[data-deck]');
+      if (deck) {
+        // Animate slide changes unless the deck opts out (data-transition="none")
+        // or the viewer prefers reduced motion.
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const animate = deck.dataset.transition !== 'none' && !reduceMotion;
+        const slides = Array.from(deck.querySelectorAll<HTMLElement>('.aas-slide'));
+        const total = slides.length;
+        const elCur = document.querySelector<HTMLElement>('[data-current]');
+        const elTot = document.querySelector<HTMLElement>('[data-total]');
+        const elFill = document.querySelector<HTMLElement>('[data-progress]');
+        const btnPrev = document.querySelector<HTMLButtonElement>('[data-prev]');
+        const btnNext = document.querySelector<HTMLButtonElement>('[data-next]');
+        if (elTot) elTot.textContent = String(total);
+
+        let current = 0;
+        // Step reveal (fragments): each slide's `.aas-step` elements are revealed
+        // one at a time. `shown[i]` = how many are currently visible.
+        const slideSteps = slides.map((s) =>
+          Array.from(s.querySelectorAll<HTMLElement>('.aas-step')),
+        );
+        // The scroll container a walkthrough drives (the scrollable diagram in a
+        // `scroll` split, a `scroll-x` slide's diagram, or a generic scroll box
+        // such as the image walkthrough's `.aas-scrollbox`).
+        const stepScroller = slides.map(
+          (s) =>
+            s.querySelector<HTMLElement>(
+              '.aas-split.scroll > .aas-diagram, .aas-scrollbox, [data-scroll-container]',
+            ) || (s.classList.contains('scroll-x') ? s.querySelector<HTMLElement>('.aas-diagram') : null),
+        );
+        // Parse a line spec like "3-6,9" into a set of 1-based line numbers.
+        const parseLines = (spec: string) => {
+          const set = new Set<number>();
+          for (const part of spec.split(',')) {
+            const m = part.trim().match(/^(\d+)(?:-(\d+))?$/);
+            if (!m) continue;
+            const a = +m[1];
+            const bb = m[2] ? +m[2] : a;
+            for (let n = a; n <= bb; n++) set.add(n);
+          }
+          return set;
+        };
+        // Code walkthrough: highlight the active step's line range and scroll the
+        // code block so it's centred.
+        const syncStepLines = (i: number) => {
+          const code = slides[i].querySelector<HTMLElement>('pre.astro-code');
+          if (!code) return;
+          const lines = Array.from(code.querySelectorAll<HTMLElement>('.line'));
+          lines.forEach((l) => l.classList.remove('is-line-hl'));
+          code.classList.remove('has-hl');
+          const el = slideSteps[i][shown[i] - 1];
+          const spec = el && el.dataset.lines;
+          if (!spec) return;
+          const set = parseLines(spec);
+          let first: HTMLElement | null = null;
+          lines.forEach((l, idx) => {
+            if (set.has(idx + 1)) {
+              l.classList.add('is-line-hl');
+              if (!first) first = l;
+            }
+          });
+          if (!first) return;
+          code.classList.add('has-hl');
+          const cr = code.getBoundingClientRect();
+          const lr = (first as HTMLElement).getBoundingClientRect();
+          const delta = lr.top - cr.top - (code.clientHeight / 2 - lr.height / 2);
+          code.scrollTo({ top: code.scrollTop + delta, behavior: animate ? 'smooth' : 'auto' });
+        };
+        const shown = slides.map(() => 0);
+        // If the active step carries `data-scroll`, scroll the slide's container
+        // to that spot (`N` = N% of the scrollable length, or `Npx`). The axis is
+        // whichever one actually overflows.
+        const syncStepScroll = (i: number) => {
+          const el = slideSteps[i][shown[i] - 1];
+          const scroller = stepScroller[i];
+          if (!el || !scroller || el.dataset.scroll == null) return;
+          const raw = el.dataset.scroll;
+          const maxX = scroller.scrollWidth - scroller.clientWidth;
+          const maxY = scroller.scrollHeight - scroller.clientHeight;
+          const behavior: ScrollBehavior = animate ? 'smooth' : 'auto';
+          if (maxX > maxY) {
+            const left = /px$/.test(raw) ? parseFloat(raw) : (parseFloat(raw) / 100) * maxX;
+            scroller.scrollTo({ left, behavior });
+          } else {
+            const top = /px$/.test(raw) ? parseFloat(raw) : (parseFloat(raw) / 100) * maxY;
+            scroller.scrollTo({ top, behavior });
+          }
+        };
+        const applySteps = (i: number) => {
+          slideSteps[i].forEach((el, k) => {
+            el.classList.toggle('is-step-hidden', k >= shown[i]);
+            el.classList.toggle('is-step-active', k === shown[i] - 1);
+          });
+          syncStepScroll(i);
+          syncStepLines(i);
+        };
+        slides.forEach((_, i) => applySteps(i));
+        const revealAllSteps = (i: number) => {
+          shown[i] = slideSteps[i].length;
+          applySteps(i);
+        };
+        // Programmatic navigation (buttons/keys/TOC) is the source of truth: while
+        // a smooth scroll is animating toward `target`, the IntersectionObserver
+        // must NOT rewrite `current` to slides it passes — otherwise fast presses
+        // compute the next step from an intermediate slide and jump backward.
+        let target = 0;
+        let navLock = false;
+        let navTimer: ReturnType<typeof setTimeout> | undefined;
+        // Filled in by the TOC builder below; paint() highlights the active entry.
+        const tocLinks: { el: HTMLElement; slide: number }[] = [];
+
+        const paint = () => {
+          if (elCur) elCur.textContent = String(current + 1);
+          if (elFill) elFill.style.width = total > 1 ? `${(current / (total - 1)) * 100}%` : '100%';
+          // Prev/Next stay enabled while there are steps to hide/reveal on the edge slides.
+          if (btnPrev) btnPrev.disabled = current === 0 && shown[current] === 0;
+          if (btnNext)
+            btnNext.disabled = current === total - 1 && shown[current] === slideSteps[current].length;
+          for (const l of tocLinks) l.el.classList.toggle('active', l.slide === current);
+        };
+
+        // Slide-change animation length (ms). Native smooth scroll can't be timed;
+        // this rAF tween runs for a fixed, tunable duration.
+        const DURATION = 450;
+        const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+        let rafId: number | undefined;
+
+        const go = (i: number, smooth = true, revealAll = true) => {
+          target = Math.max(0, Math.min(total - 1, i));
+          current = target;
+          // Landing on a slide: reveal all its steps (jumps/back) or none of them
+          // (forward, so they can be stepped through).
+          shown[current] = revealAll ? slideSteps[current].length : 0;
+          applySteps(current);
+          navLock = true;
+          clearTimeout(navTimer);
+          // Fallback: release the lock even if the observer never reports arrival.
+          navTimer = setTimeout(() => {
+            navLock = false;
+          }, 1200);
+          const el = slides[current];
+          if (el) {
+            const x = el.offsetLeft;
+            if (rafId) cancelAnimationFrame(rafId);
+            if (smooth && animate && Math.abs(deck.scrollLeft - x) > 1) {
+              // Custom tween instead of scrollIntoView({behavior:'smooth'}): fixed
+              // short duration, and scroll-snap turned off while animating so it
+              // doesn't stutter against the motion. Ends exactly on the snap point.
+              const startX = deck.scrollLeft;
+              const dist = x - startX;
+              const t0 = performance.now();
+              deck.style.scrollSnapType = 'none';
+              const stepFrame = (now: number) => {
+                const t = Math.min(1, (now - t0) / DURATION);
+                deck.scrollLeft = startX + dist * easeOutCubic(t);
+                if (t < 1) {
+                  rafId = requestAnimationFrame(stepFrame);
+                } else {
+                  deck.style.scrollSnapType = '';
+                  rafId = undefined;
+                }
+              };
+              rafId = requestAnimationFrame(stepFrame);
+            } else {
+              deck.scrollLeft = x; // instant (transition:none / reduced motion / deep-link)
+            }
+          }
+          history.replaceState(null, '', `#${current + 1}`);
+          paint();
+        };
+
+        // Next/Prev reveal or hide a step first, and only move slides once the
+        // current slide's steps are exhausted.
+        const goNext = () => {
+          if (shown[current] < slideSteps[current].length) {
+            shown[current]++;
+            applySteps(current);
+            paint();
+          } else {
+            go(current + 1, true, false);
+          }
+        };
+        const goPrev = () => {
+          if (shown[current] > 0) {
+            shown[current]--;
+            applySteps(current);
+            paint();
+          } else {
+            go(current - 1, true, true);
+          }
+        };
+
+        // Mermaid sizes a diagram to its container at render time; a diagram in
+        // an off-screen slide can occasionally come out mis-sized. When a slide
+        // becomes current, re-run the site's Mermaid renderer if its diagram
+        // didn't lay out (missing or zero-height SVG). Idempotent + cheap.
+        const ensureMermaid = (i: number) => {
+          const pre = slides[i]?.querySelector('pre.mermaid');
+          if (!pre) return;
+          const svg = pre.querySelector('svg');
+          if (!svg || svg.getBoundingClientRect().height < 2) {
+            (window as unknown as { __aasRenderMermaid?: () => void }).__aasRenderMermaid?.();
+          }
+        };
+
+        // --- Table of contents ------------------------------------------------
+        // Collect headings h2..h{toc_level} from slides not marked data-no-toc,
+        // each linking to the slide it lives on. Reveal the top-right control
+        // only if there's at least one entry.
+        const tocRoot = document.querySelector<HTMLElement>('[data-toc-root]');
+        const tocPanel = document.querySelector<HTMLElement>('[data-toc-panel]');
+        const tocToggle = document.querySelector<HTMLButtonElement>('[data-toc-toggle]');
+        const closeToc = () => {
+          if (tocPanel) tocPanel.hidden = true;
+          tocToggle?.setAttribute('aria-expanded', 'false');
+        };
+        if (deck.dataset.toc !== 'false' && tocRoot && tocPanel && tocToggle) {
+          const level = Math.min(4, Math.max(2, parseInt(deck.dataset.tocLevel || '2', 10)));
+          const sel = ['h2', 'h3', 'h4'].slice(0, level - 1).join(', ');
+          const ul = document.createElement('ul');
+          slides.forEach((slide, i) => {
+            if (slide.hasAttribute('data-no-toc')) return;
+            // Only the slide's leading heading (its title) goes in the TOC — not
+            // sub-headings within it, e.g. the column titles inside a :::cols slide.
+            const h = slide.querySelector<HTMLElement>(sel);
+            if (!h) return;
+            const li = document.createElement('li');
+            li.className = 'aas-toc-l' + h.tagName[1];
+            const a = document.createElement('button');
+            a.type = 'button';
+            a.textContent = (h.textContent || '').trim();
+            // Jump to the slide but keep the panel open — it's a persistent
+            // agenda, not a menu that dismisses on use.
+            a.addEventListener('click', () => go(i));
+            li.appendChild(a);
+            ul.appendChild(li);
+            tocLinks.push({ el: a, slide: i });
+          });
+          if (tocLinks.length) {
+            tocPanel.appendChild(ul);
+            tocRoot.hidden = false;
+            // Start expanded unless the deck opts out (data-toc-open="false").
+            if (deck.dataset.tocOpen !== 'false') {
+              tocPanel.hidden = false;
+              tocToggle.setAttribute('aria-expanded', 'true');
+            }
+            tocToggle.addEventListener('click', () => {
+              const open = tocPanel.hidden;
+              tocPanel.hidden = !open;
+              tocToggle.setAttribute('aria-expanded', String(open));
+            });
+          }
+        }
+
+        // Actions menu (top-left): print/PDF and fullscreen.
+        const menuRoot = document.querySelector<HTMLElement>('[data-menu-root]');
+        const menuPanel = document.querySelector<HTMLElement>('[data-menu-panel]');
+        const menuToggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+        if (menuRoot && menuPanel && menuToggle) {
+          const closeMenu = () => {
+            menuRoot.classList.remove('is-open');
+            menuToggle.setAttribute('aria-expanded', 'false');
+          };
+          menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const open = !menuRoot.classList.contains('is-open');
+            menuRoot.classList.toggle('is-open', open);
+            menuToggle.setAttribute('aria-expanded', String(open));
+          });
+          // The drawer stays open until the tab is toggled again — an outside
+          // click must not close it (same as the TOC panel).
+          menuPanel.querySelector('[data-action="print"]')?.addEventListener('click', () => {
+            closeMenu();
+            // Reveal every step so nothing is hidden in the PDF.
+            slides.forEach((_, i) => revealAllSteps(i));
+            window.print();
+          });
+          menuPanel.querySelector('[data-action="fullscreen"]')?.addEventListener('click', () => {
+            closeMenu();
+            if (document.fullscreenElement) document.exitFullscreen();
+            else document.documentElement.requestFullscreen?.();
+          });
+
+          // Light / dark / system — same storage + resolution as the site's
+          // ThemeToggle. MermaidLoader watches data-theme and re-renders, so the
+          // diagrams follow along automatically.
+          const root = document.documentElement;
+          const mq = window.matchMedia('(prefers-color-scheme: dark)');
+          const themeOptions = Array.from(
+            menuPanel.querySelectorAll<HTMLButtonElement>('[data-theme-option]')
+          );
+          const getPref = () => {
+            try {
+              return localStorage.getItem('theme') || 'system';
+            } catch (e) {
+              return 'system';
+            }
+          };
+          const applyTheme = (pref: string) => {
+            root.dataset.theme = pref === 'dark' || (pref === 'system' && mq.matches) ? 'dark' : 'light';
+            themeOptions.forEach((el) =>
+              el.setAttribute('aria-pressed', el.dataset.themeOption === pref ? 'true' : 'false')
+            );
+          };
+          themeOptions.forEach((el) => {
+            el.addEventListener('click', () => {
+              const pref = el.dataset.themeOption || 'system';
+              try {
+                localStorage.setItem('theme', pref);
+              } catch (e) {}
+              applyTheme(pref);
+            });
+          });
+          mq.addEventListener('change', () => {
+            if (getPref() === 'system') applyTheme('system');
+          });
+          applyTheme(getPref());
+        }
+
+        // Keep `current` in sync when the user swipes/scrolls the track directly.
+        // During programmatic navigation (navLock), ignore the slides we scroll
+        // past and only clear the lock once the target slide has arrived.
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              const idx = slides.indexOf(e.target as HTMLElement);
+              ensureMermaid(idx);
+              if (navLock) {
+                if (idx === target) navLock = false;
+              } else if (idx >= 0 && idx !== current) {
+                current = idx;
+                history.replaceState(null, '', `#${current + 1}`);
+                paint();
+              }
+            }
+          },
+          { root: deck, threshold: 0.6 },
+        );
+        slides.forEach((s) => io.observe(s));
+
+        btnPrev?.addEventListener('click', () => goPrev());
+        btnNext?.addEventListener('click', () => goNext());
+
+        window.addEventListener('keydown', (e) => {
+          // While the overview grid is open, it owns the keys (handled below).
+          if (deck.dataset.overview === 'open') return;
+          if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
+            e.preventDefault();
+            goNext();
+          } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            goPrev();
+          } else if (e.key === 'Home') {
+            e.preventDefault();
+            go(0);
+          } else if (e.key === 'End') {
+            e.preventDefault();
+            go(total - 1);
+          } else if (e.key === 'Escape') {
+            closeToc();
+          }
+        });
+
+        // Zoom / lightbox: enlarge a diagram or image in an overlay. Diagrams get
+        // a button inside their (.aas-diagram) box; images are wrapped so the
+        // button can sit in the corner. Clicking the media works too.
+        const zoom = document.querySelector<HTMLElement>('[data-zoom]');
+        const zoomStage = document.querySelector<HTMLElement>('[data-zoom-stage]');
+        if (zoom && zoomStage) {
+          const zoomLabel = zoom.dataset.zoomLabel || 'Enlarge';
+          let zoomOpen = false;
+          const openZoom = (media: Element | null) => {
+            if (!media) return;
+            // For a diagram, enlarge the rendered svg itself (not the bordered
+            // box); for an image, the <img>.
+            const source = media.classList.contains('aas-diagram')
+              ? media.querySelector('svg') || media.querySelector('.mermaid') || media
+              : media;
+            const clone = source.cloneNode(true) as HTMLElement;
+            clone.querySelectorAll?.('.aas-zoom-btn').forEach((b) => b.remove());
+            let content: HTMLElement = clone;
+            if (clone.tagName?.toLowerCase() === 'svg') {
+              // The pastel node styling is scoped to `.mermaid …`; tag the clone
+              // so it keeps that look outside the slide.
+              clone.classList.add('mermaid');
+              // Mermaid measured its labels with the slide's font (25px+ inside
+              // .aas-slide-inner); outside that context the labels drop to the
+              // 16px root size and drift to the top-left of their boxes. Copy the
+              // source label's computed font onto the clone so text lays out at
+              // the size the boxes were measured for.
+              // Query the <p> first: the .nodeLabel span around it inherits the
+              // svg's 16px, while the p is what the slide's font rule actually
+              // sizes (and what Mermaid measured against).
+              const srcLabel =
+                source.querySelector('.nodeLabel p') ||
+                source.querySelector('.nodeLabel, .edgeLabel, text');
+              if (srcLabel) {
+                const lcs = getComputedStyle(srcLabel);
+                clone.style.fontSize = lcs.fontSize;
+                clone.style.lineHeight = lcs.lineHeight;
+              }
+              // Size for a readable enlargement: small diagrams scale up to fill
+              // the stage; a diagram bigger than the stage is shown at its natural
+              // size and the stage scrolls (pan a complex flowchart).
+              const vb = (clone.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+              const nW = vb[2] || 800;
+              const nH = vb[3] || 450;
+              const stageW = window.innerWidth * 0.92;
+              const stageH = window.innerHeight * 0.86;
+              const fit = Math.min(stageW / nW, stageH / nH);
+              const scale = fit >= 1 ? Math.min(fit, 2.4) : 1;
+              // Enlarge with a CSS transform on the natural-size svg (not by
+              // resizing width/height) so the node shapes and their labels scale
+              // together — resizing the svg shifts Mermaid's labels off-centre.
+              clone.style.width = `${nW}px`;
+              clone.style.height = `${nH}px`;
+              clone.style.maxWidth = 'none';
+              clone.style.maxHeight = 'none';
+              clone.style.transform = `scale(${scale})`;
+              clone.style.transformOrigin = 'top left';
+              // A box the size of the scaled diagram, so the stage scrolls/centres it.
+              const box = document.createElement('div');
+              box.className = 'aas-zoom-scalebox';
+              box.style.width = `${Math.round(nW * scale)}px`;
+              box.style.height = `${Math.round(nH * scale)}px`;
+              box.appendChild(clone);
+              content = box;
+            }
+            // A centering wrapper: it's at least the stage size (so a small
+            // diagram/image is centred both ways) and grows with the content (so
+            // a big diagram scrolls). Reliable, unlike flex `margin:auto`.
+            const fitWrap = document.createElement('div');
+            fitWrap.className = 'aas-zoom-fit';
+            fitWrap.appendChild(content);
+            zoomStage.replaceChildren(fitWrap);
+            zoom.hidden = false;
+            requestAnimationFrame(() => {
+              zoom.classList.add('is-open');
+              // Start centred horizontally, at the top vertically (read top-down).
+              zoomStage.scrollLeft = (zoomStage.scrollWidth - zoomStage.clientWidth) / 2;
+              zoomStage.scrollTop = 0;
+            });
+            zoomOpen = true;
+          };
+          const closeZoom = () => {
+            zoom.classList.remove('is-open');
+            zoomOpen = false;
+            const done = () => {
+              if (!zoomOpen) {
+                zoom.hidden = true;
+                zoomStage.replaceChildren();
+              }
+              zoom.removeEventListener('transitionend', done);
+            };
+            zoom.addEventListener('transitionend', done);
+          };
+          zoom.addEventListener('click', (e) => {
+            if (e.target === zoom || (e.target as HTMLElement).closest('[data-zoom-close]')) closeZoom();
+          });
+          // Capture phase so Escape / arrows don't reach the slide navigation while
+          // the lightbox is open.
+          window.addEventListener(
+            'keydown',
+            (e) => {
+              if (!zoomOpen) return;
+              if (e.key === 'Escape') closeZoom();
+              e.stopImmediatePropagation();
+              e.preventDefault();
+            },
+            true,
+          );
+
+          const zoomBtn = (media: Element) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'aas-zoom-btn';
+            btn.setAttribute('aria-label', zoomLabel);
+            btn.title = zoomLabel;
+            btn.innerHTML =
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6"/><path d="M8 11h6"/></svg>';
+            btn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              openZoom(media);
+            });
+            return btn;
+          };
+
+          // Diagrams: button inside the box; the whole box is clickable too.
+          deck.querySelectorAll<HTMLElement>('.aas-slide-inner .aas-diagram').forEach((d) => {
+            d.classList.add('aas-zoomable');
+            d.appendChild(zoomBtn(d));
+            d.addEventListener('click', (e) => {
+              if (!(e.target as HTMLElement).closest('.aas-zoom-btn')) openZoom(d);
+            });
+          });
+          // Images: wrap so the button can overlay the picture's corner.
+          deck.querySelectorAll<HTMLImageElement>('.aas-slide-inner img').forEach((img) => {
+            const wrap = document.createElement('span');
+            wrap.className = 'aas-zoomable aas-zoomable-img';
+            img.parentNode?.insertBefore(wrap, img);
+            wrap.appendChild(img);
+            wrap.appendChild(zoomBtn(img));
+            wrap.addEventListener('click', (e) => {
+              if (!(e.target as HTMLElement).closest('.aas-zoom-btn')) openZoom(img);
+            });
+          });
+        }
+
+        // Auto-fit: if a slide's content is taller than the slide, scale it down
+        // so it fits instead of scrolling. (Filled media slides already measure
+        // exactly 100%, so they're never scaled.)
+        const fitSlide = (s: HTMLElement) => {
+          const inner = s.querySelector<HTMLElement>('.aas-slide-inner');
+          if (!inner) return;
+          inner.style.transform = '';
+          inner.style.removeProperty('--aas-fit');
+          s.style.removeProperty('overflow-y');
+          const cs = getComputedStyle(s);
+          const avail = s.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+          const need = inner.scrollHeight;
+          if (need > avail + 2) {
+            const scale = Math.max(0.55, avail / need);
+            inner.style.transform = `scale(${scale})`;
+            inner.style.transformOrigin = 'top center';
+            s.style.overflowY = 'hidden';
+          }
+        };
+        const fitAll = () => slides.forEach(fitSlide);
+        fitAll();
+        // Re-fit after late layout shifts (fonts, images, Mermaid).
+        setTimeout(fitAll, 300);
+        setTimeout(fitAll, 900);
+        window.addEventListener('load', fitAll);
+
+        // Overview grid (press `o`): scaled thumbnails of every slide; click one
+        // to jump there. Built lazily and rebuilt when the viewport changes.
+        const ov = document.querySelector<HTMLElement>('[data-ov]');
+        let ovOpen = false;
+        const buildOv = () => {
+          if (!ov) return;
+          ov.replaceChildren();
+          const scale = 260 / window.innerWidth;
+          const thumbH = window.innerHeight * scale;
+          slides.forEach((s, i) => {
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.className = 'aas-ov-cell';
+            const thumb = document.createElement('div');
+            thumb.className = 'aas-ov-thumb';
+            thumb.style.height = `${thumbH}px`;
+            const clone = s.cloneNode(true) as HTMLElement;
+            clone.removeAttribute('style');
+            clone.style.width = `${window.innerWidth}px`;
+            clone.style.height = `${window.innerHeight}px`;
+            clone.style.transform = `scale(${scale})`;
+            clone.style.transformOrigin = 'top left';
+            if (s.classList.contains('has-bg'))
+              clone.style.backgroundImage = s.style.backgroundImage;
+            clone.querySelectorAll('.aas-zoom-btn, .aas-slide-source').forEach((n) => n.remove());
+            thumb.appendChild(clone);
+            const num = document.createElement('span');
+            num.className = 'aas-ov-num';
+            num.textContent = String(i + 1);
+            cell.append(thumb, num);
+            cell.addEventListener('click', () => {
+              closeOv();
+              go(i);
+            });
+            ov.appendChild(cell);
+          });
+        };
+        const openOv = () => {
+          if (!ov) return;
+          buildOv();
+          ov.hidden = false;
+          requestAnimationFrame(() => ov.classList.add('is-open'));
+          deck.dataset.overview = 'open';
+          ovOpen = true;
+          const active = ov.children[current] as HTMLElement | undefined;
+          active?.classList.add('is-current');
+          active?.scrollIntoView({ block: 'center' });
+        };
+        const closeOv = () => {
+          if (!ov) return;
+          ov.classList.remove('is-open');
+          delete deck.dataset.overview;
+          ovOpen = false;
+          const done = () => {
+            if (!ovOpen) {
+              ov.hidden = true;
+              ov.replaceChildren();
+            }
+            ov.removeEventListener('transitionend', done);
+          };
+          ov.addEventListener('transitionend', done);
+        };
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'o' || e.key === 'O') {
+            if (
+              (e.target as HTMLElement)?.tagName === 'INPUT' ||
+              (e.target as HTMLElement)?.tagName === 'TEXTAREA'
+            )
+              return;
+            e.preventDefault();
+            ovOpen ? closeOv() : openOv();
+          } else if (ovOpen && e.key === 'Escape') {
+            e.preventDefault();
+            closeOv();
+          }
+        });
+
+        let resizeT: ReturnType<typeof setTimeout> | undefined;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeT);
+          resizeT = setTimeout(() => {
+            fitAll();
+            if (ovOpen) buildOv();
+          }, 150);
+        });
+
+        // Deep-link: open at #N if present, else slide 1. Jump without animation.
+        const fromHash = parseInt((location.hash || '').slice(1), 10);
+        go(Number.isFinite(fromHash) && fromHash >= 1 ? fromHash - 1 : 0, false);
+        paint();
+      }
+    </script>
+  </body>
+</html>

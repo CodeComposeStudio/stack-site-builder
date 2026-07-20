@@ -1,0 +1,96 @@
+---
+// Renders any <pre class="mermaid"> on the page on the client, themed to match
+// the site (colors pulled from our CSS variables), and re-renders when the
+// theme changes. Include once on pages that contain Mermaid diagrams.
+---
+
+<script>
+  import mermaid from 'mermaid';
+
+  // Read the live site palette so Mermaid matches the current theme exactly.
+  function palette() {
+    const cs = getComputedStyle(document.documentElement);
+    const v = (name: string) => cs.getPropertyValue(name).trim();
+    return {
+      bg: v('--aas-bg'),
+      panel: v('--aas-panel'),
+      text: v('--aas-text'),
+      accent: v('--aas-accent'),
+      border: v('--aas-border'),
+      muted: v('--aas-muted'),
+    };
+  }
+
+  function init() {
+    const p = palette();
+    mermaid.initialize({
+      startOnLoad: false,
+      securityLevel: 'strict',
+      theme: 'base',
+      themeVariables: {
+        background: 'transparent',
+        fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+        primaryColor: p.panel,
+        primaryTextColor: p.text,
+        primaryBorderColor: p.accent,
+        nodeBorder: p.accent,
+        mainBkg: p.panel,
+        nodeTextColor: p.text,
+        lineColor: p.muted,
+        edgeLabelBackground: p.bg,
+        clusterBkg: 'transparent',
+        clusterBorder: p.muted,
+        titleColor: p.text,
+        secondaryColor: p.bg,
+        tertiaryColor: p.bg,
+      },
+    });
+  }
+
+  async function renderAll() {
+    const nodes = Array.from(document.querySelectorAll<HTMLElement>('pre.mermaid'));
+    if (nodes.length === 0) return;
+    for (const n of nodes) {
+      if (!n.dataset.src) n.dataset.src = (n.textContent ?? '').trim();
+      n.removeAttribute('data-processed');
+      // textContent, not innerHTML: dataset.src is entity-DECODED source, so
+      // injecting it as HTML would turn `<…>` in labels into live DOM (the
+      // server-side escaping exists precisely to prevent that). Mermaid reads
+      // the element's innerHTML and decodes entities itself.
+      n.textContent = n.dataset.src ?? '';
+    }
+    init();
+    try {
+      await mermaid.run({ nodes });
+    } catch {
+      /* leave the raw source visible on failure */
+    }
+  }
+
+  renderAll();
+
+  // Allow tab/version switches to re-render diagrams that were hidden (and thus
+  // mis-sized) at first paint.
+  (window as unknown as { __aasRenderMermaid?: () => void }).__aasRenderMermaid = renderAll;
+
+  // Re-render diagrams (with fresh palette) when the theme toggles.
+  let last = document.documentElement.dataset.theme;
+  new MutationObserver(() => {
+    const now = document.documentElement.dataset.theme;
+    if (now !== last) {
+      last = now;
+      renderAll();
+    }
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // A diagram inside a closed <details> renders at zero size; when the reveal
+  // opens, re-render so it lays out correctly. `toggle` doesn't bubble — capture.
+  document.addEventListener(
+    'toggle',
+    (e) => {
+      const d = e.target as HTMLElement;
+      if (d instanceof HTMLDetailsElement && d.open && d.querySelector('pre.mermaid')) renderAll();
+    },
+    true,
+  );
+</script>

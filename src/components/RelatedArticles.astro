@@ -1,0 +1,52 @@
+---
+// "Related writing" card section, shared by stack / concept / article detail
+// pages. Mirrors RelatedConcepts (image + title + date + description, in a
+// collapsible grid) so articles and concepts read consistently.
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import { articleSlugOf, type ArticleEntry } from '../lib/articles';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate } from '../lib/dates';
+import { inlineMd } from '../lib/inline-md';
+import CollapsibleGrid from './CollapsibleGrid.astro';
+
+interface Props {
+  lang: Lang;
+  articles: ArticleEntry[];
+}
+
+const { lang, articles } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{
+  articles.length > 0 && (
+    <section class="mt-8">
+      <h2 class="text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('detail.relatedWriting')}
+      </h2>
+      <CollapsibleGrid lang={lang} count={articles.length}>
+        {articles.map((a) => (
+          <a
+            href={getRelativeLocaleUrl(lang, `article/${articleSlugOf(a)}/`)}
+            class="aas-lift flex items-stretch overflow-hidden rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)] no-underline"
+          >
+            {a.data.image && (
+              <Image src={a.data.image} alt="" class="w-28 shrink-0 self-stretch object-cover" />
+            )}
+            <div class="min-w-0 p-4">
+              <span class="block font-semibold text-[var(--aas-text)]">{a.data.title}</span>
+              <span class="mt-0.5 block text-xs text-[var(--aas-muted)]">
+                {formatDate(a.data.date, lang)}
+              </span>
+              <span
+                class="aas-md mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--aas-muted)] opacity-75"
+                set:html={inlineMd(a.data.description)}
+              />
+            </div>
+          </a>
+        ))}
+      </CollapsibleGrid>
+    </section>
+  )
+}
