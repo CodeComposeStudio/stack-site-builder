@@ -1,7 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import ChevronDown from './ChevronDown.astro';
-import { languages, type Lang } from '../i18n/ui';
+import { languages, useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
   lang: Lang;
@@ -10,17 +9,18 @@ interface Props {
 }
 
 const { lang, path } = Astro.props;
+const t = useTranslations(lang);
 const codes = Object.keys(languages) as Lang[];
 ---
 
 <details class="aas-lang">
   <summary
-    class="flex cursor-pointer list-none items-center gap-1 rounded-lg border border-[var(--aas-border)] px-2.5 py-1 whitespace-nowrap text-[var(--aas-text)] select-none"
+    class="flex cursor-pointer list-none items-center rounded-lg border border-[var(--aas-border)] px-2.5 py-1 text-[var(--aas-text)] select-none"
+    aria-label={t('nav.language')}
+    title={t('nav.language')}
   >
-    {/* Compact language code on mobile; full name from the `sm` breakpoint up. */}
-    <span class="sm:hidden">{lang.toUpperCase()}</span>
-    <span class="hidden sm:inline">{languages[lang]}</span>
-    <ChevronDown class="text-[var(--aas-muted)]" />
+    {/* A globe stands in for the current language; the dropdown lists names. */}
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
   </summary>
   <ul
     class="absolute right-0 z-10 mt-1 min-w-[8rem] overflow-hidden rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] py-1 shadow-lg"
