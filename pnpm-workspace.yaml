@@ -1,0 +1,14 @@
+# The theme package lives at the repo root; the playground is a minimal
+# consuming site used to develop the theme against something renderable.
+packages:
+  - .
+  - playground
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+# pnpm 10+ no longer runs dependency build scripts unless explicitly allowed.
+# Astro needs esbuild (bundling) and sharp (image optimization) to build.
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
