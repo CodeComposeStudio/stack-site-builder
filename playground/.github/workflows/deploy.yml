@@ -1,0 +1,65 @@
+# Example deploy workflow for a site built on stack-site-builder.
+#
+# COPY this into YOUR site's repo as `.github/workflows/deploy.yml` (it is
+# inert here — GitHub only runs workflows from a repo's root `.github/`).
+# It builds the site and publishes it to GitHub Pages on every push to main.
+#
+# If the site has `private: true` entries, add the secrets under
+# Settings → Secrets and variables → Actions:
+#   AAS_PRIVATE_USERS          "id:password,id2:password2"
+#   AAS_PRIVATE_MASTER_SECRET  one long random string (rotate = log everyone out)
+# and remember: private entries require the SOURCE repo to be private
+# (GitHub Pages from a private repo needs a paid plan; Firebase Hosting is a
+# free alternative — swap the deploy step for FirebaseExtended/action-hosting-deploy).
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # manual runs — e.g. after editing the secrets
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Build
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+        env:
+          # Only needed when the site has private entries; harmless otherwise.
+          AAS_PRIVATE_USERS: ${{ secrets.AAS_PRIVATE_USERS }}
+          AAS_PRIVATE_MASTER_SECRET: ${{ secrets.AAS_PRIVATE_MASTER_SECRET }}
+          AAS_PRIVATE_SESSION_DAYS: '30'
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
