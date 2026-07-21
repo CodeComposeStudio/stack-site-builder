@@ -6,6 +6,7 @@
 
 <script>
   import mermaid from 'mermaid';
+  import { initOnReady } from '../lib/reinit';
 
   // Read the live site palette so Mermaid matches the current theme exactly.
   function palette() {
@@ -67,7 +68,8 @@
     }
   }
 
-  renderAll();
+  // Re-runs after private-content decryption too (diagrams arrive with it).
+  initOnReady(() => void renderAll());
 
   // Allow tab/version switches to re-render diagrams that were hidden (and thus
   // mis-sized) at first paint.

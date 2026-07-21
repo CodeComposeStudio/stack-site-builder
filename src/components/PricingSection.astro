@@ -84,8 +84,11 @@ const hasTable = tiers.length > 0;
 <script>
   // Flag prices that haven't been re-checked recently, relative to the viewer's
   // current date (so a stale static build still warns). Mirrors stalenessOf().
+  import { initOnReady } from '../lib/reinit';
   const SIX_MONTHS = 182 * 24 * 60 * 60 * 1000;
   const ONE_YEAR = 365 * 24 * 60 * 60 * 1000;
+  // Re-runs after private-content decryption (idempotent per element).
+  initOnReady(() =>
   document.querySelectorAll<HTMLElement>('[data-pricing-freshness]').forEach((el) => {
     const ts = Date.parse(el.dataset.checked || '');
     if (Number.isNaN(ts)) return;
@@ -96,5 +99,5 @@ const hasTable = tiers.length > 0;
     el.title = kind === 'stale' ? el.dataset.staleHint! : el.dataset.agingHint!;
     el.classList.add(kind === 'stale' ? 'aas-stale' : 'aas-aging');
     el.classList.remove('hidden');
-  });
+  }));
 </script>

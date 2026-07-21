@@ -1,0 +1,29 @@
+---
+title: Private notes (demo)
+description: This description is private — it must not appear anywhere without login. SECRET-DESC-EN
+private: true
+teaser: A demo concept only logged-in users can read. (demo / demo-passphrase-1)
+tags: [demo, private]
+---
+
+## What this document verifies \{#what}
+
+This whole body is encrypted at build time. This sentence (SECRET-BODY-EN) must
+not exist as plaintext in the deployed HTML.
+
+The [[diffusion]] wikilink and the [[comfyui]] tool link are only visible after
+decryption.
+
+## Diagram \{#diagram}
+
+```mermaid
+graph LR
+  A[Login] --> B[Unwrap key]
+  B --> C[Decrypt body]
+```
+
+## Code \{#code}
+
+```bash
+echo "copy button should mount after decryption"
+```

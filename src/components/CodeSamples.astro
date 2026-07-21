@@ -90,7 +90,12 @@ const t = useTranslations(lang);
 </style>
 
 <script>
+  import { initOnReady } from '../lib/reinit';
+  // Re-runs after private-content decryption; the dataset flag guards each root.
+  initOnReady(() =>
   document.querySelectorAll<HTMLElement>('[data-samples]').forEach((root) => {
+    if (root.dataset.aasInit) return;
+    root.dataset.aasInit = '1';
     const dd = root.querySelector<HTMLDetailsElement>('[data-samples-dd]');
     const current = root.querySelector<HTMLElement>('[data-sample-current]');
     const options = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sample-option]'));
@@ -137,5 +142,5 @@ const t = useTranslations(lang);
       const cur = options.find((o) => o.getAttribute('aria-current') === 'true');
       if (cur) writeV(cur.dataset.sampleOption!);
     });
-  });
+  }));
 </script>

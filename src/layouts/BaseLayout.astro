@@ -17,9 +17,11 @@ interface Props {
   path: string;
   /** Wider container — used by detail pages that have a right-rail TOC. */
   wide?: boolean;
+  /** Private entries: ask crawlers not to index the gate page. */
+  noindex?: boolean;
 }
 
-const { title, lang, path, wide = false } = Astro.props;
+const { title, lang, path, wide = false, noindex = false } = Astro.props;
 const t = useTranslations(lang);
 // Collapse any authored line breaks (used for on-page wrapping) to a single
 // space so the SEO meta description stays one clean line.
@@ -113,6 +115,7 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="icon" type="image/svg+xml" href={`${base.replace(/\/$/, '')}/favicon.svg`} />
     {/* On the root (default-locale) home, send first-time visitors to the
         locale matching their browser — unless they've already picked one (the
@@ -262,6 +265,8 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
     <BackToTop lang={lang} />
 
     <script>
+      import { initOnReady } from '../lib/reinit';
+
       // Clicking a heading's "#" anchor copies that section's URL to the
       // clipboard (and updates the address bar) instead of just navigating.
       document.addEventListener('click', (e) => {
@@ -279,8 +284,9 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
       // Mount a copy-to-clipboard button on every code block: README/overview
       // prose (.prose pre), the file viewer (.aas-projfile), and the Code tab
       // (.aas-code). The button is pinned to a non-scrolling host so it stays in
-      // place on long, horizontally-scrolling code.
-      (function mountCopyButtons() {
+      // place on long, horizontally-scrolling code. Re-runs after private-content
+      // decryption (mount() skips hosts that already have a button).
+      initOnReady(function mountCopyButtons() {
         const LABEL = document.documentElement.dataset.copyLabel || 'Copy code';
         const DONE = document.documentElement.dataset.copiedLabel || 'Copied';
         const COPY_ICON =
@@ -334,7 +340,7 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
           const fig = el.closest('figure');
           mount(el, (fig as HTMLElement) ?? wrap(el));
         });
-      })();
+      });
 
       // Close any open <details> dropdown when clicking outside it (or on Esc).
       // Only nav dropdowns — leave file-tree folders (.aas-tree-dir) and prose

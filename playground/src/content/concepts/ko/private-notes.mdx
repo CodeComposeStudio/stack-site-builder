@@ -1,0 +1,28 @@
+---
+title: 비공개 노트 (데모)
+description: 이 설명은 비공개입니다 — 로그인 없이는 어디에도 보이지 않아야 합니다. SECRET-DESC-KO
+private: true
+teaser: 로그인한 사용자만 볼 수 있는 데모 개념입니다. (demo / demo-passphrase-1)
+tags: [demo, private]
+---
+
+## 이 문서가 검증하는 것 \{#what}
+
+이 본문 전체는 빌드 시 암호화됩니다. 이 문장(SECRET-BODY-KO)은 배포 HTML에
+평문으로 존재하면 안 됩니다.
+
+[[diffusion|디퓨전]] 위키링크와 [[comfyui]] 도구 링크도 복호화 후에만 보입니다.
+
+## 다이어그램 \{#diagram}
+
+```mermaid
+graph LR
+  A[로그인] --> B[키 언랩]
+  B --> C[본문 복호화]
+```
+
+## 코드 \{#code}
+
+```bash
+echo "copy button should mount after decryption"
+```

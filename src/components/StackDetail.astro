@@ -402,8 +402,16 @@ const relatedToolsByFolder = new Map(projectRail.map((p) => [p.folder, p.tools])
 
 <script>
   import { startScrollSpy, initBackToTop, initReveals } from '../lib/toc-rail-client';
+  import { initOnReady } from '../lib/reinit';
 
+  // Wrapped in initOnReady: on a private tool page all of this DOM sits inside
+  // the encrypted body, so the load-time run wires nothing (null rail, empty
+  // lists — its document listeners are inert) and the post-decryption run does
+  // the real wiring against the injected DOM.
+  initOnReady(() => {
   const rail = document.querySelector<HTMLElement>('[data-toc-rail]');
+  if (rail?.dataset.aasInit) return;
+  if (rail) rail.dataset.aasInit = '1';
   // Scroll-spy + back-to-top + prose-<details> persistence, shared with
   // TocRail.astro. The tab/version/example handlers below re-run the spy after
   // changing which headings are visible.
@@ -481,6 +489,7 @@ const relatedToolsByFolder = new Map(projectRail.map((p) => [p.folder, p.tools])
       });
     }),
   );
+  });
 </script>
 
 {

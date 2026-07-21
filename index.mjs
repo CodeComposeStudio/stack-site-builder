@@ -119,6 +119,15 @@ export default function aasTheme({ glossary, sections = {} }) {
                 defaultLocale,
                 locales: Object.fromEntries(locales.map((l) => [l, l])),
               },
+              // Private entries stay out of the sitemap. PrivateGate records each
+              // private pathname (via globalThis — it lives in a different module
+              // graph) while pages render; @astrojs/sitemap runs this after.
+              filter: (page) => {
+                const paths = globalThis.__aasPrivatePaths;
+                if (!paths) return true;
+                const p = new URL(page).pathname.replace(/\/?$/, '/');
+                return !paths.has(p);
+              },
             }),
           ],
 
