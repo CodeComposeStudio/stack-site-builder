@@ -1,0 +1,149 @@
+# Design: private content (login-gated entries)
+
+Status: **draft — not implemented.** This document pins the design before any
+code. Target: a minor release after v1.13.0.
+
+## Goal
+
+Any collection entry (stacks, concepts, articles, slides, pages) can be marked
+`private: true` in frontmatter. Visitors see it in listings as **title + lock**;
+opening it shows a login form instead of the body. Users are managed in `.env`
+(no server, no signup flow) so the site keeps deploying to any static host —
+GitHub Pages, Firebase Hosting, anything.
+
+```yaml
+---
+title: 레이아웃 샘플
+private: true # ← the whole feature, from the author's side
+---
+```
+
+```bash
+# .env.sample
+# Users allowed to read private entries — "id:password", comma-separated.
+# Real values go in .env (gitignored); in CI, set this as a secret.
+AAS_PRIVATE_USERS="alice:use-a-long-passphrase,bob:another-long-one"
+```
+
+## The constraint that shapes everything
+
+A static host has no server: every byte we deploy is publicly fetchable. A
+JS-only "hide unless logged in" gate is not protection — the body would sit in
+the HTML source. The only honest options are (a) don't ship the content at all,
+or (b) **ship it encrypted and decrypt in the browser**. We do (b), the
+StatiCrypt approach: real cryptography, zero infrastructure.
+
+## Threat model (what this does and doesn't protect)
+
+Protected:
+
+- Body confidentiality against anyone without a password — including people who
+  can read the deployed files or even the repository (ciphertext only). A
+  public GitHub Pages repo is fine.
+
+Deliberately public (by the chosen listing mode):
+
+- The **title** and existence of each private entry (listings show title + 🔒).
+  Description, body, headings, images referenced only from the body: private.
+
+Not protected (inherent to any scheme without a server):
+
+- A registered user sharing the password or the decrypted content.
+- Revocation: removing a user or rotating keys requires rebuild + redeploy.
+  That's acceptable at ".env user list" scale.
+- Weak passwords: the wrapped key can be brute-forced offline. The build should
+  refuse passwords shorter than ~10 chars.
+
+## Cryptography
+
+One content key per build; per-user wrapping; standard WebCrypto primitives.
+
+- **Content key `K`**: 32 random bytes, generated at build (Node `crypto`).
+- **Page body**: rendered HTML → AES-256-GCM with `K`, fresh IV per page →
+  base64 ciphertext embedded in the page.
+- **Per user**: `KEK = PBKDF2-SHA256(password, salt_user, 600k iters)`;
+  `wrappedK = AES-GCM(KEK, K)`. Published record:
+  `{ idHash, salt_user, iv, wrappedK }` where
+  `idHash = SHA-256(build_salt + lowercase(id))` — so the deployed site doesn't
+  expose the raw user list.
+- **Login (browser)**: enter id + password → find record by `idHash` → derive
+  KEK (WebCrypto PBKDF2, same params) → unwrap `K` → cache `K` in
+  `localStorage` (`aas:pk`) → decrypt this and every other private page without
+  re-login. Logout button clears it. No expiry by default (v1).
+- The user records are **inlined into each private page** (~120 bytes/user) —
+  no extra manifest fetch, no ordering problems.
+
+One `K` for the whole site is intentional: any registered user may read all
+private entries (no per-user ACL in v1), and one login unlocks everything.
+
+## What exactly is public vs private on a private entry
+
+| Surface | Treatment |
+| --- | --- |
+| Listing cards (home, index, category, tags, vendors, related-*) | Title + 🔒 badge; description and other card meta omitted |
+| Client-side search/filter | Runs over the rendered cards, so it can only match the title — nothing to do |
+| Detail page `<head>` | `<title>` keeps the entry title; **no** meta description; `noindex` robots meta |
+| Detail page body | Ciphertext + login form (site chrome — header/nav/footer — stays) |
+| TOC rail | Headings would leak: not server-rendered; rebuilt client-side after decryption |
+| Sitemap | Private URLs excluded |
+| Wikilinks pointing at a private entry | Resolve normally (target title is public); the reader hits the login gate on arrival |
+| Glossary | **Out of scope in v1** — terms are data on one shared page, not entries; a private glossary term has no clean unit to encrypt |
+
+## Build-time flow
+
+1. **Schema**: add `private: z.boolean().default(false)` to all five collections
+   in `src/content.ts`.
+2. **`PrivateGate.astro`** (theme component): detail components wrap their body
+   in it when `entry.data.private`. It calls `await Astro.slots.render('default')`
+   (Astro 5 API) to get the body HTML as a string server-side, encrypts it with
+   `K`, and emits: ciphertext + user records + the login form + the client
+   script. If the visitor already has `K` cached, the script decrypts on load
+   with no flash of the form.
+3. **Users/keys**: read `AAS_PRIVATE_USERS` from `process.env` (the site loads
+   `.env` however it likes; document `.env` + CI secret). Module-level singleton
+   in the theme derives `K` and the records once per build.
+4. **Fail loud**: if any entry is `private: true` and `AAS_PRIVATE_USERS` is
+   unset/empty → **build error** (not a silently locked-forever page). Password
+   under the minimum length → build error naming the user id, not the password.
+5. **Cards/sitemap**: card components receive the `private` flag (lock badge,
+   omit description); sitemap filter drops private URLs.
+
+## Client runtime
+
+One small script (loaded only by pages/cards that need it):
+
+- Login submit → WebCrypto PBKDF2 → AES-GCM unwrap → decrypt → inject HTML →
+  dispatch **`aas:private-decrypted`** on `document`.
+- Re-init hooks listen for that event, because the injected HTML missed the
+  initial page scripts: mermaid render, copy-button mounting (BaseLayout), and
+  the slide deck engine (DeckView queries `[data-deck]`/`.aas-slide` at load —
+  its init must be wrapped in a function and re-invoked). This is the riskiest
+  part of the implementation; slides especially.
+- Wrong id/password → inline error (`private.error` string); no lockout
+  (offline attackers aren't slowed by UI anyway — password strength is the
+  defense).
+
+## i18n
+
+New UI strings (en/ko in theme; sites add others via `site.ui`):
+`private.locked`, `private.login`, `private.id`, `private.password`,
+`private.submit`, `private.error`, `private.logout`, `private.badge`.
+
+## Decisions still open
+
+1. **Session expiry** — v1: cached key never expires, logout is manual. OK?
+   (Alternative: optional `AAS_PRIVATE_SESSION_DAYS`.)
+2. **Slides in v1** — decks need the re-init refactor of DeckView's inline
+   script. Included per the original ask, but it's the bulk of the risk; could
+   ship v1 without slides if we want it smaller.
+3. **Description on cards** — treated as private (hidden) above. If some sites
+   want a public teaser, a later `teaser:` frontmatter field could opt in.
+
+## Non-goals (v1)
+
+- Per-user or per-entry permissions (groups, roles).
+- Server-verified auth, rate limiting, audit logs — impossible statically.
+- Encrypting images/assets referenced by private bodies (they ship as normal
+  files; guessable only by URL. Documented limitation; a determined site can
+  put private images in the body as embedded data if needed).
+- Glossary terms.
