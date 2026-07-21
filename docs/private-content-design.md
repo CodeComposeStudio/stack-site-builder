@@ -37,9 +37,17 @@ StatiCrypt approach: real cryptography, zero infrastructure.
 
 Protected:
 
-- Body confidentiality against anyone without a password — including people who
-  can read the deployed files or even the repository (ciphertext only). A
-  public GitHub Pages repo is fine.
+- Body confidentiality against anyone who can fetch the **deployed** files —
+  the built output contains ciphertext only, so the public site URL is safe on
+  any host.
+
+**The source repository must be private.** Encryption happens at build time;
+the `.mdx` sources stay plaintext in the repo (that's also how you edit — see
+"Authoring workflow"). A public repo would expose every private entry's source
+regardless of what the deployed site does — and anything once pushed to a
+public repo stays in its git history. The intended setup is a private repo
+deploying to a public URL (Firebase Hosting, or GitHub Pages on a paid plan).
+The build should print a reminder when private entries exist.
 
 Deliberately public (by the chosen listing mode):
 
@@ -53,6 +61,22 @@ Not protected (inherent to any scheme without a server):
   That's acceptable at ".env user list" scale.
 - Weak passwords: the wrapped key can be brute-forced offline. The build should
   refuse passwords shorter than ~10 chars.
+
+## Authoring workflow
+
+Nothing changes for the author. Sources are plaintext `.mdx`, edited and
+previewed as usual; only the **build output** is encrypted:
+
+```text
+src/content/slides/ko/secret/index.mdx   ← plaintext, in the (private) repo
+        │  astro build (encrypts with the .env-derived key)
+        ▼
+dist/ko/slides/secret/index.html         ← ciphertext, deployed
+```
+
+In `astro dev` the gate is skipped: the entry renders as plaintext with a
+visible "🔒 private" banner, so authors preview without logging in (dev is
+localhost; the banner prevents forgetting an entry is private).
 
 ## Cryptography
 
@@ -68,8 +92,13 @@ One content key per build; per-user wrapping; standard WebCrypto primitives.
   expose the raw user list.
 - **Login (browser)**: enter id + password → find record by `idHash` → derive
   KEK (WebCrypto PBKDF2, same params) → unwrap `K` → cache `K` in
-  `localStorage` (`aas:pk`) → decrypt this and every other private page without
-  re-login. Logout button clears it. No expiry by default (v1).
+  `localStorage` (`aas:pk`, stored with a login timestamp) → decrypt this and
+  every other private page without re-login. Logout button clears it.
+- **Session expiry**: configurable via `AAS_PRIVATE_SESSION_DAYS` (default 30).
+  The client compares the stored timestamp on each page load and drops the key
+  past the limit → the login form reappears. This is client-side UX/hygiene for
+  shared machines, not enforcement (the ciphertext never changes until a
+  rebuild); `0` = no expiry.
 - The user records are **inlined into each private page** (~120 bytes/user) —
   no extra manifest fetch, no ordering problems.
 
@@ -129,14 +158,19 @@ New UI strings (en/ko in theme; sites add others via `site.ui`):
 `private.locked`, `private.login`, `private.id`, `private.password`,
 `private.submit`, `private.error`, `private.logout`, `private.badge`.
 
-## Decisions still open
+## Decisions
 
-1. **Session expiry** — v1: cached key never expires, logout is manual. OK?
-   (Alternative: optional `AAS_PRIVATE_SESSION_DAYS`.)
-2. **Slides in v1** — decks need the re-init refactor of DeckView's inline
+- **Settled — hosting model**: private repo + public deploy URL; the build
+  warns when private entries exist (see threat model).
+- **Settled — session expiry**: configurable `AAS_PRIVATE_SESSION_DAYS`,
+  default 30, `0` disables (see Cryptography).
+
+Still open:
+
+1. **Slides in v1** — decks need the re-init refactor of DeckView's inline
    script. Included per the original ask, but it's the bulk of the risk; could
    ship v1 without slides if we want it smaller.
-3. **Description on cards** — treated as private (hidden) above. If some sites
+2. **Description on cards** — treated as private (hidden) above. If some sites
    want a public teaser, a later `teaser:` frontmatter field could opt in.
 
 ## Non-goals (v1)
