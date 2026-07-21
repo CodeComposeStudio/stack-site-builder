@@ -1,7 +1,7 @@
 # Design: private content (login-gated entries)
 
-Status: **draft — not implemented.** This document pins the design before any
-code. Target: a minor release after v1.13.0.
+Status: **design final — not implemented yet.** All decisions settled; see
+"Decisions" at the bottom. Target: a minor release after v1.13.0.
 
 ## Goal
 
@@ -109,9 +109,9 @@ private entries (no per-user ACL in v1), and one login unlocks everything.
 
 | Surface | Treatment |
 | --- | --- |
-| Listing cards (home, index, category, tags, vendors, related-*) | Title + 🔒 badge; description and other card meta omitted |
-| Client-side search/filter | Runs over the rendered cards, so it can only match the title — nothing to do |
-| Detail page `<head>` | `<title>` keeps the entry title; **no** meta description; `noindex` robots meta |
+| Listing cards (home, index, category, tags, vendors, related-*) | Title + 🔒 badge; description and other card meta omitted. If the entry authors a `teaser`, it shows in the description's place — `teaser` is **explicitly public** copy, written for the gate |
+| Client-side search/filter | Runs over the rendered cards, so it can only match the title (+ teaser) — nothing to do |
+| Detail page `<head>` | `<title>` keeps the entry title; meta description only from `teaser` (if any); `noindex` robots meta |
 | Detail page body | Ciphertext + login form (site chrome — header/nav/footer — stays) |
 | TOC rail | Headings would leak: not server-rendered; rebuilt client-side after decryption |
 | Sitemap | Private URLs excluded |
@@ -120,8 +120,12 @@ private entries (no per-user ACL in v1), and one login unlocks everything.
 
 ## Build-time flow
 
-1. **Schema**: add `private: z.boolean().default(false)` to all five collections
-   in `src/content.ts`.
+1. **Schema**: add to all five collections in `src/content.ts`:
+   `private: z.boolean().default(false)` and `teaser: z.string().optional()`
+   (public one-liner for cards/meta on a private entry; ignored when the entry
+   is public — `description` already serves that role). The gate page also
+   shows the teaser above the login form so visitors know what they're
+   unlocking.
 2. **`PrivateGate.astro`** (theme component): detail components wrap their body
    in it when `entry.data.private`. It calls `await Astro.slots.render('default')`
    (Astro 5 API) to get the body HTML as a string server-side, encrypts it with
@@ -158,20 +162,20 @@ New UI strings (en/ko in theme; sites add others via `site.ui`):
 `private.locked`, `private.login`, `private.id`, `private.password`,
 `private.submit`, `private.error`, `private.logout`, `private.badge`.
 
-## Decisions
+## Decisions (all settled — design final)
 
-- **Settled — hosting model**: private repo + public deploy URL; the build
-  warns when private entries exist (see threat model).
-- **Settled — session expiry**: configurable `AAS_PRIVATE_SESSION_DAYS`,
-  default 30, `0` disables (see Cryptography).
-
-Still open:
-
-1. **Slides in v1** — decks need the re-init refactor of DeckView's inline
-   script. Included per the original ask, but it's the bulk of the risk; could
-   ship v1 without slides if we want it smaller.
-2. **Description on cards** — treated as private (hidden) above. If some sites
-   want a public teaser, a later `teaser:` frontmatter field could opt in.
+- **Hosting model**: private repo + public deploy URL; the build warns when
+  private entries exist (see threat model).
+- **Session expiry**: configurable `AAS_PRIVATE_SESSION_DAYS`, default 30,
+  `0` disables (see Cryptography).
+- **Slides included in v1**. The theme can't assume which sections a site
+  uses, so every collection gets the flag from the start. Cost: DeckView's
+  inline init must be refactored into a re-invokable function driven by the
+  `aas:private-decrypted` event — the implementation's main risk, planned as
+  its own step with its own verification.
+- **`teaser` field included in v1** (public card/meta copy for a private
+  entry), same reasoning — both behaviors must exist for site builders to
+  choose from. No teaser → title + lock only.
 
 ## Non-goals (v1)
 
