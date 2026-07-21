@@ -3,6 +3,7 @@ import { site } from '@aas-data/site';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import ConceptDetail from '../../../components/ConceptDetail.astro';
+import PrivateGate from '../../../components/PrivateGate.astro';
 import { getConcepts, conceptSlugOf } from '../../../lib/concepts';
 import { allLocales, langParam } from '../../../lib/locales';
 
@@ -18,13 +19,17 @@ export const getStaticPaths = (async () => {
 
 const { lang, entry } = Astro.props;
 const slug = conceptSlugOf(entry);
+const priv = entry.data.private;
 ---
 
 <BaseLayout
   title={`${entry.data.title} — ${site.name}`}
-  description={entry.data.description}
+  description={priv ? entry.data.teaser : entry.data.description}
   lang={lang}
   path={`concept/${slug}/`}
+  noindex={priv}
 >
-  <ConceptDetail entry={entry} lang={lang} />
+  <PrivateGate enabled={priv} lang={lang} title={entry.data.title} teaser={entry.data.teaser}>
+    <ConceptDetail entry={entry} lang={lang} />
+  </PrivateGate>
 </BaseLayout>

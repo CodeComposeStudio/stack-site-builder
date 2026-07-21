@@ -11,6 +11,24 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [Unreleased]
+
+### Added
+
+- **Private (login-gated) content** — mark any entry in any collection
+  (stacks, concepts, articles, slides, pages) with `private: true`. The
+  rendered body ships AES-256-GCM-encrypted and is decrypted in the browser
+  after login, so it works on any static host with no server; the users
+  (`AAS_PRIVATE_USERS`, `id:password` pairs) and the master secret
+  (`AAS_PRIVATE_MASTER_SECRET` — rotate to force every device to log in again)
+  come from env vars, with sessions cached per device for
+  `AAS_PRIVATE_SESSION_DAYS` (default 30). Listings show only the title + 🔒
+  plus an optional public `teaser`; private pages are `noindex` and excluded
+  from the sitemap; the client re-initializes embedded behaviors (TOC,
+  mermaid, tabs, copy buttons, the slide deck engine) after decryption. The
+  source repo must be private — `.mdx` files stay plaintext; see
+  docs/private-content-design.md.
+
 ## [1.13.0] - 2026-07-20
 
 ### Added
@@ -120,6 +138,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[Unreleased]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.13.0...HEAD
 [1.13.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.11.0...v1.12.0
 [1.11.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.10.0...v1.11.0

@@ -1,0 +1,135 @@
+---
+// Login gate for private entries (docs/private-content-design.md). Wrap a
+// detail component in it; when `enabled` the slot's rendered HTML ships
+// encrypted with a login form in its place, and the client (private-client.ts)
+// decrypts after login — or instantly when this device already holds the key.
+// When `enabled` is false it renders the slot untouched, so callers can wrap
+// unconditionally. In dev the gate is skipped: authors see the content with a
+// "private" banner instead of logging in on localhost.
+import { useTranslations, type Lang } from '../i18n/ui';
+import { encryptHtml, privateClientData, registerPrivatePath } from '../lib/private';
+
+interface Props {
+  enabled: boolean;
+  lang: Lang;
+  /** Entry title, shown above the login form (titles are public by design). */
+  title?: string;
+  /** The entry's PUBLIC teaser, shown under the title on the gate. */
+  teaser?: string;
+}
+
+const { enabled, lang, title, teaser } = Astro.props;
+const t = useTranslations(lang);
+const dev = import.meta.env.DEV;
+
+let payload: string | null = null;
+if (enabled && !dev) {
+  const html = await Astro.slots.render('default');
+  registerPrivatePath(Astro.url.pathname);
+  payload = JSON.stringify({ ...encryptHtml(html), ...privateClientData() });
+}
+---
+
+{!enabled && <slot />}
+
+{
+  enabled && dev && (
+    <div>
+      <p class="aas-private-devbanner">
+        🔒 {t('private.badge')} — dev preview (built sites require login)
+      </p>
+      <slot />
+    </div>
+  )
+}
+
+{
+  enabled && !dev && (
+    <div class="aas-private-gate" data-private-gate data-logout-label={t('private.logout')}>
+      <script type="application/json" data-private-data set:html={payload} />
+      <div class="aas-private-card">
+        <p class="aas-private-badge" aria-hidden="true">🔒</p>
+        {title && <h1 class="text-2xl font-bold tracking-tight">{title}</h1>}
+        {teaser && <p class="mt-2 text-[var(--aas-muted)]">{teaser}</p>}
+        <p class="mt-2 text-sm text-[var(--aas-muted)]">{t('private.locked')}</p>
+        <div data-private-form hidden>
+          <form class="mt-5 flex flex-col gap-3">
+            <label class="flex flex-col gap-1 text-sm">
+              <span>{t('private.id')}</span>
+              <input
+                name="id"
+                type="text"
+                required
+                autocomplete="username"
+                class="rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-2"
+              />
+            </label>
+            <label class="flex flex-col gap-1 text-sm">
+              <span>{t('private.password')}</span>
+              <input
+                name="password"
+                type="password"
+                required
+                autocomplete="current-password"
+                class="rounded-lg border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-2"
+              />
+            </label>
+            <p data-private-error hidden class="text-sm text-red-600 dark:text-red-400">
+              {t('private.error')}
+            </p>
+            <button
+              type="submit"
+              class="mt-1 cursor-pointer rounded-lg bg-[var(--aas-accent)] px-4 py-2 font-semibold text-white"
+            >
+              {t('private.submit')}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .aas-private-card {
+    max-width: 26rem;
+    margin: 3rem auto;
+    padding: 2rem;
+    border: 1px solid var(--aas-border);
+    border-radius: 1rem;
+    background: var(--aas-panel);
+    text-align: center;
+  }
+  .aas-private-badge {
+    font-size: 2rem;
+  }
+  .aas-private-devbanner {
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    border: 1px dashed var(--aas-border);
+    border-radius: 0.75rem;
+    color: var(--aas-muted);
+    font-size: 0.875rem;
+  }
+  /* Injected by private-client.ts (global: it lives outside this component's scope). */
+  :global(.aas-private-bar) {
+    display: flex;
+    justify-content: flex-end;
+  }
+  :global(.aas-private-logout) {
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--aas-muted);
+    padding: 0.15rem 0.5rem;
+    border-radius: 0.5rem;
+  }
+  :global(.aas-private-logout:hover) {
+    color: var(--aas-text);
+    background: var(--aas-tint);
+  }
+</style>
+
+<script>
+  import { mountGate } from '../lib/private-client';
+  document.querySelectorAll<HTMLElement>('[data-private-gate]').forEach(mountGate);
+</script>

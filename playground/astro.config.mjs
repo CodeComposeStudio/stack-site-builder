@@ -6,6 +6,12 @@ import aasTheme from 'stack-site-builder';
 import { glossary } from './src/data/glossary.mjs';
 import { site } from './src/data/site';
 
+// Demo credentials for the playground's private-content entries, so it builds
+// out of the box. `??=` means a real .env / CI secret always wins. A real site
+// must NEVER hardcode these — see .env.sample.
+process.env.AAS_PRIVATE_USERS ??= 'demo:demo-passphrase-1';
+process.env.AAS_PRIVATE_MASTER_SECRET ??= 'playground-demo-master-secret';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://example.invalid',

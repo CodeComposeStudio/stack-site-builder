@@ -26,9 +26,12 @@ interface Props {
   repo?: string;
   version?: string;
   deprecated?: boolean;
+  /** Private entry: show a lock and the (public) `teaser` instead of the description. */
+  isPrivate?: boolean;
+  teaser?: string;
 }
 
-const { slug, lang, name, formerNames = [], vendor, description, tags, pricing, license, language, category, logo, logoDark, repo, version, deprecated } =
+const { slug, lang, name, formerNames = [], vendor, description, tags, pricing, license, language, category, logo, logoDark, repo, version, deprecated, isPrivate = false, teaser } =
   Astro.props;
 const t = useTranslations(lang);
 const href = getRelativeLocaleUrl(lang, `stack/${slug}/`);
@@ -54,7 +57,11 @@ const langTokens = (language ?? '')
   .split('/')
   .map((s) => s.trim())
   .filter(Boolean);
-const searchText = `${name} ${description} ${tags.join(' ')}`.toLowerCase();
+// Private entries: the card carries only public copy — the title and the
+// authored `teaser` (description stays inside the encrypted detail page), and
+// the search index must not include the hidden description either.
+const shownDesc = isPrivate ? (teaser ?? '') : description;
+const searchText = `${name} ${shownDesc} ${tags.join(' ')}`.toLowerCase();
 ---
 
 {/* The card is a container, not a link: the name is the stretched primary link
@@ -85,6 +92,11 @@ const searchText = `${name} ${description} ${tags.join(' ')}`.toLowerCase();
       <div class="min-w-0">
         <h3 class="truncate text-base font-semibold text-[var(--aas-text)]">
           <a href={href} class="no-underline after:absolute after:inset-0 after:content-['']">
+            {isPrivate && (
+              <span aria-label={t('private.badge')} title={t('private.badge')}>
+                🔒{' '}
+              </span>
+            )}
             {name}
           </a>
         </h3>
@@ -100,7 +112,7 @@ const searchText = `${name} ${description} ${tags.join(' ')}`.toLowerCase();
     <p
       class="aas-md mt-2 text-sm leading-relaxed text-[var(--aas-muted)]"
       data-card-desc
-      set:html={inlineMd(description)}
+      set:html={inlineMd(shownDesc)}
     />
 
     {/* Secondary facts: version · release date · language · license.

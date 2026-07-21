@@ -1,0 +1,22 @@
+---
+title: 非公開ノート (デモ)
+description: この説明は非公開です — ログインなしでは表示されません。SECRET-DESC-JA
+private: true
+teaser: ログインしたユーザーだけが読めるデモです。(demo / demo-passphrase-1)
+tags: [demo, private]
+---
+
+## このページが検証すること \{#what}
+
+この本文はビルド時に暗号化されます。この文(SECRET-BODY-JA)は配布 HTML に
+平文で存在してはいけません。
+
+[[diffusion|拡散]] のウィキリンクと [[comfyui]] へのリンクも復号後にのみ見えます。
+
+## ダイアグラム \{#diagram}
+
+```mermaid
+graph LR
+  A[ログイン] --> B[キー展開]
+  B --> C[本文復号]
+```

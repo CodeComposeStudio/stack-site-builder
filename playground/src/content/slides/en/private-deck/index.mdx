@@ -1,0 +1,27 @@
+---
+title: Private deck (demo)
+description: This description is private — SECRET-DECK-DESC-EN
+private: true
+teaser: A demo deck that requires login.
+order: 100
+theme: simple
+---
+
+import Slide from 'stack-site-builder/components/Slide.astro';
+
+<Slide class="cover">
+
+# Private slides
+
+SECRET-DECK-BODY-EN — this sentence must not exist as plaintext in the deployed
+HTML.
+
+</Slide>
+
+<Slide>
+
+## Second slide \{#second}
+
+After decryption the deck engine (nav, TOC, zoom) must re-initialize.
+
+</Slide>

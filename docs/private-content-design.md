@@ -1,7 +1,9 @@
 # Design: private content (login-gated entries)
 
-Status: **design final — not implemented yet.** All decisions settled; see
-"Decisions" at the bottom. Target: a minor release after v1.13.0.
+Status: **implemented** (post-v1.13.0, CHANGELOG [Unreleased]). This document
+records the design; the code lives in `src/lib/private.ts` (build),
+`src/lib/private-client.ts` (browser), `src/components/PrivateGate.astro` and
+`src/lib/reinit.ts`. Demo entries + `.env.sample` are in the playground.
 
 ## Goal
 

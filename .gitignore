@@ -5,5 +5,10 @@ dist/
 *.log
 .DS_Store
 
+# Private-content credentials (AAS_PRIVATE_*) — never commit; see .env.sample
+.env
+.env.*
+!.env.sample
+
 # pnpm content-addressable store (local to this devcontainer)
 .pnpm-store/

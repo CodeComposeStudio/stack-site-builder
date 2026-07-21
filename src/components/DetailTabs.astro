@@ -131,7 +131,12 @@ const tabClass =
       if (tab !== id) ps.forEach((p) => url.searchParams.delete(p));
   }
 
+  import { initOnReady } from '../lib/reinit';
+  // Re-runs after private-content decryption; the dataset flag guards each root.
+  initOnReady(() =>
   document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((root) => {
+    if (root.dataset.aasInit) return;
+    root.dataset.aasInit = '1';
     const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-tab]'));
     const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-panel]'));
     const tabIds = tabs.map((t) => t.dataset.tab);
@@ -215,5 +220,5 @@ const tabClass =
         document.dispatchEvent(new CustomEvent('aas:select-sample', { detail: { index: Number(m[1]) } }));
       document.getElementById(raw)?.scrollIntoView();
     }
-  });
+  }));
 </script>

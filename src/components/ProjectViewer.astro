@@ -290,7 +290,12 @@ function formatDate(iso: string): string {
   const PARAM_EX = 'ex'; // sample project folder, e.g. "langgraph_1"
   const PARAM_FILE = 'file'; // file path within the project, e.g. "app.py"
 
+  import { initOnReady } from '../lib/reinit';
+  // Re-runs after private-content decryption; the dataset flag guards each root.
+  initOnReady(() =>
   document.querySelectorAll<HTMLElement>('[data-projects]').forEach((root) => {
+    if (root.dataset.aasInit) return;
+    root.dataset.aasInit = '1';
     const projDD = root.querySelector<HTMLDetailsElement>('[data-project-dd]');
     const projCurrent = root.querySelector<HTMLElement>('[data-project-current]');
     const projOptions = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-project-option]'));
@@ -392,13 +397,14 @@ function formatDate(iso: string): string {
     document.addEventListener('aas:tabchange', (e) => {
       if ((e as CustomEvent<{ id: string }>).detail.id === 'impl') reflectSelection();
     });
-  });
+  }));
 </script>
 
 <script>
   // Collapsible README, remembered in localStorage (one preference for all
   // implementation samples). The inline pre-paint above applies it before paint;
   // this binds the toggle and keeps every README in sync.
+  import { initOnReady } from '../lib/reinit';
   const README_KEY = 'aas:readme-collapsed';
   const isReadmeCollapsed = () => {
     try {
@@ -416,16 +422,21 @@ function formatDate(iso: string): string {
       if (body) body.hidden = collapsed;
     });
   }
-  applyReadme(isReadmeCollapsed());
-  document.querySelectorAll<HTMLButtonElement>('[data-readme-toggle]').forEach((btn) =>
-    btn.addEventListener('click', () => {
-      const collapsed = !isReadmeCollapsed();
-      try {
-        localStorage.setItem(README_KEY, collapsed ? '1' : '0');
-      } catch {
-        /* private mode — best effort */
-      }
-      applyReadme(collapsed);
-    }),
-  );
+  // Re-runs after private-content decryption; the dataset flag guards each button.
+  initOnReady(() => {
+    applyReadme(isReadmeCollapsed());
+    document.querySelectorAll<HTMLButtonElement>('[data-readme-toggle]').forEach((btn) => {
+      if (btn.dataset.aasInit) return;
+      btn.dataset.aasInit = '1';
+      btn.addEventListener('click', () => {
+        const collapsed = !isReadmeCollapsed();
+        try {
+          localStorage.setItem(README_KEY, collapsed ? '1' : '0');
+        } catch {
+          /* private mode — best effort */
+        }
+        applyReadme(collapsed);
+      });
+    });
+  });
 </script>

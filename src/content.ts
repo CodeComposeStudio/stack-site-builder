@@ -107,6 +107,11 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
         )
         .default([]),
       featured: z.boolean().default(false),
+      // Login-gated entry: the body ships encrypted and listings show only the
+      // title (+ `teaser`, an explicitly PUBLIC one-liner written for the gate).
+      // See docs/private-content-design.md. Requires the AAS_PRIVATE_* env vars.
+      private: z.boolean().default(false),
+      teaser: z.string().optional(),
     }),
   });
 
@@ -147,6 +152,10 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
           .optional(),
         tags: z.array(z.string()).default([]),
         draft: z.boolean().default(false),
+        // Login-gated entry (encrypted body; listings show title + optional
+        // PUBLIC `teaser`). See docs/private-content-design.md.
+        private: z.boolean().default(false),
+        teaser: z.string().optional(),
       }),
   });
 
@@ -181,6 +190,10 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
         tags: z.array(z.string()).default([]),
         order: z.number().optional(), // manual sort on the index (lower first)
         draft: z.boolean().default(false),
+        // Login-gated entry (encrypted body; listings show title + optional
+        // PUBLIC `teaser`). See docs/private-content-design.md.
+        private: z.boolean().default(false),
+        teaser: z.string().optional(),
       }),
   });
 
@@ -221,6 +234,10 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
       toc_level: z.number().int().min(2).max(4).default(2),
       toc_open: z.boolean().default(true),
       draft: z.boolean().default(false),
+      // Login-gated deck (encrypted body; the slides index shows title +
+      // optional PUBLIC `teaser`). See docs/private-content-design.md.
+      private: z.boolean().default(false),
+      teaser: z.string().optional(),
     }),
   });
 
@@ -249,6 +266,10 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
         navLabel: z.string().optional(),
         order: z.number().default(0),
         draft: z.boolean().default(false),
+        // Login-gated page (encrypted body; the nav/meta show title + optional
+        // PUBLIC `teaser`). See docs/private-content-design.md.
+        private: z.boolean().default(false),
+        teaser: z.string().optional(),
       }),
   });
 
