@@ -21,8 +21,14 @@ private: true # ← the whole feature, from the author's side
 ```bash
 # .env.sample
 # Users allowed to read private entries — "id:password", comma-separated.
-# Real values go in .env (gitignored); in CI, set this as a secret.
+# Passwords are PLAINTEXT here: use passphrases unique to this site, never
+# reused ones. Real values go in .env (gitignored); in CI, set as secrets.
 AAS_PRIVATE_USERS="alice:use-a-long-passphrase,bob:another-long-one"
+# Stable secret the content key derives from. Sessions survive redeploys as
+# long as it's unchanged; CHANGE it to force every device to log in again.
+AAS_PRIVATE_MASTER_SECRET="generate-one-long-random-string"
+# Days a cached login lasts on a device (client-side hygiene; 0 = no expiry).
+AAS_PRIVATE_SESSION_DAYS=30
 ```
 
 ## The constraint that shapes everything
@@ -61,6 +67,10 @@ Not protected (inherent to any scheme without a server):
   That's acceptable at ".env user list" scale.
 - Weak passwords: the wrapped key can be brute-forced offline. The build should
   refuse passwords shorter than ~10 chars.
+- `.env` holds ids and **plaintext** passwords plus the master secret — it is
+  the site's most sensitive file. Never commit it; in CI use secrets; tell
+  users to pick passphrases unique to this site. (A later version could accept
+  pre-derived keys from a CLI helper so plaintext passwords never touch disk.)
 
 ## Authoring workflow
 
@@ -80,9 +90,13 @@ localhost; the banner prevents forgetting an entry is private).
 
 ## Cryptography
 
-One content key per build; per-user wrapping; standard WebCrypto primitives.
+One content key per site; per-user wrapping; standard WebCrypto primitives.
 
-- **Content key `K`**: 32 random bytes, generated at build (Node `crypto`).
+- **Content key `K`**: derived at build as
+  `HKDF-SHA256(AAS_PRIVATE_MASTER_SECRET, info="aas-private-v1")` — **not**
+  random per build. Deterministic derivation is what keeps logged-in devices
+  working across ordinary redeploys; rotating the master secret is the
+  deliberate "log everyone out" switch (see Account & session lifecycle).
 - **Page body**: rendered HTML → AES-256-GCM with `K`, fresh IV per page →
   base64 ciphertext embedded in the page.
 - **Per user**: `KEK = PBKDF2-SHA256(password, salt_user, 600k iters)`;
@@ -104,6 +118,23 @@ One content key per build; per-user wrapping; standard WebCrypto primitives.
 
 One `K` for the whole site is intentional: any registered user may read all
 private entries (no per-user ACL in v1), and one login unlocks everything.
+
+## Account & session lifecycle (what "logout" can and can't mean)
+
+There is no server, so nothing can reach into another device's storage. The
+honest capability matrix:
+
+| Action | Possible? | How |
+| --- | --- | --- |
+| Log out this device | ✅ | Logout button clears the cached key |
+| Auto-expire idle devices | ✅ | `AAS_PRIVATE_SESSION_DAYS` (client-side hygiene — a tampered client can ignore it; password strength and rotation are the real controls) |
+| Block a user from logging in again | ✅ | Remove them from `AAS_PRIVATE_USERS`, rebuild, redeploy — their password no longer unwraps anything on newly served pages |
+| Force **every** device to log in again | ✅ | Rotate `AAS_PRIVATE_MASTER_SECRET`, rebuild, redeploy — `K` changes, every cached key stops decrypting |
+| Remotely log out one specific device | ❌ | Impossible without a server |
+
+Note the removal caveat: a removed user's already-cached `K` keeps decrypting
+until the master secret rotates. **Removing a user should therefore usually be
+paired with a rotation** — the docs will say so.
 
 ## What exactly is public vs private on a private entry
 
@@ -135,9 +166,10 @@ private entries (no per-user ACL in v1), and one login unlocks everything.
 3. **Users/keys**: read `AAS_PRIVATE_USERS` from `process.env` (the site loads
    `.env` however it likes; document `.env` + CI secret). Module-level singleton
    in the theme derives `K` and the records once per build.
-4. **Fail loud**: if any entry is `private: true` and `AAS_PRIVATE_USERS` is
-   unset/empty → **build error** (not a silently locked-forever page). Password
-   under the minimum length → build error naming the user id, not the password.
+4. **Fail loud**: if any entry is `private: true` and `AAS_PRIVATE_USERS` or
+   `AAS_PRIVATE_MASTER_SECRET` is unset/empty → **build error** (not a silently
+   locked-forever page). Password under the minimum length → build error naming
+   the user id, not the password.
 5. **Cards/sitemap**: card components receive the `private` flag (lock badge,
    omit description); sitemap filter drops private URLs.
 
