@@ -16,10 +16,14 @@ interface Props {
   imageAlt?: string;
   version?: string;
   updated?: Date;
+  /** Private entry: show a lock and the (public) `teaser` instead of the description. */
+  isPrivate?: boolean;
+  teaser?: string;
 }
 
-const { lang, slug, title, description, tags, image, imageAlt, version, updated } = Astro.props;
+const { lang, slug, title, description, tags, image, imageAlt, version, updated, isPrivate = false, teaser } = Astro.props;
 const t = useTranslations(lang);
+const shownDesc = isPrivate ? (teaser ?? '') : description;
 ---
 
 <a
@@ -39,10 +43,12 @@ const t = useTranslations(lang);
         </p>
       )
     }
-    <h3 class="mt-1 text-lg font-semibold text-[var(--aas-text)]">{title}</h3>
+    <h3 class="mt-1 text-lg font-semibold text-[var(--aas-text)]">
+      {isPrivate && <span aria-label={t('private.badge')} title={t('private.badge')}>🔒 </span>}{title}
+    </h3>
     <p
       class="aas-md mt-2 text-sm leading-relaxed text-[var(--aas-muted)]"
-      set:html={inlineMd(description)}
+      set:html={inlineMd(shownDesc)}
     />
     {
       tags.length > 0 && (

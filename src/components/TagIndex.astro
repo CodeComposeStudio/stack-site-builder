@@ -45,6 +45,8 @@ const entries = (await getStacksByTag(lang, tag)).sort((a, b) =>
         repo={e.data.repo}
         version={e.data.version}
         deprecated={e.data.deprecated}
+        isPrivate={e.data.private}
+        teaser={e.data.teaser}
       />
     ))
   }

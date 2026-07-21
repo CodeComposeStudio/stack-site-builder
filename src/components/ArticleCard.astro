@@ -16,10 +16,14 @@ interface Props {
   image?: ImageMetadata;
   imageAlt?: string;
   version?: string;
+  /** Private entry: show a lock and the (public) `teaser` instead of the description. */
+  isPrivate?: boolean;
+  teaser?: string;
 }
 
-const { slug, lang, title, description, date, tags, image, imageAlt, version } = Astro.props;
+const { slug, lang, title, description, date, tags, image, imageAlt, version, isPrivate = false, teaser } = Astro.props;
 const t = useTranslations(lang);
+const shownDesc = isPrivate ? (teaser ?? '') : description;
 const href = getRelativeLocaleUrl(lang, `article/${slug}/`);
 const dateStr = date.toISOString().slice(0, 10);
 ---
@@ -36,10 +40,12 @@ const dateStr = date.toISOString().slice(0, 10);
       <time datetime={dateStr}>{formatDate(date, lang)}</time>
       {version && <span> · {t('meta.docVersion')} {version}</span>}
     </p>
-    <h3 class="mt-1 line-clamp-2 text-base font-semibold text-[var(--aas-text)]">{title}</h3>
+    <h3 class="mt-1 line-clamp-2 text-base font-semibold text-[var(--aas-text)]">
+      {isPrivate && <span aria-label={t('private.badge')} title={t('private.badge')}>🔒 </span>}{title}
+    </h3>
     <p
       class="aas-md mt-1.5 line-clamp-2 text-sm leading-relaxed text-[var(--aas-muted)]"
-      set:html={inlineMd(description)}
+      set:html={inlineMd(shownDesc)}
     />
     {
       tags.length > 0 && (

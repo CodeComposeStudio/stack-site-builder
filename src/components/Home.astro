@@ -80,6 +80,8 @@ const facets = deriveFacets(entries, lang);
                 repo={e.data.repo}
                 version={e.data.version}
                 deprecated={e.data.deprecated}
+                isPrivate={e.data.private}
+                teaser={e.data.teaser}
               />
             ))}
           </div>

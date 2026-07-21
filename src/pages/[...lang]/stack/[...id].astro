@@ -4,6 +4,7 @@ import type { GetStaticPaths } from 'astro';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import StackDetail from '../../../components/StackDetail.astro';
+import PrivateGate from '../../../components/PrivateGate.astro';
 import { getStacks, getStackAliases, slugOf, type StackEntry } from '../../../lib/stacks';
 import { allLocales, langParam } from '../../../lib/locales';
 
@@ -28,6 +29,7 @@ const { lang, entry, redirectTo } = Astro.props as {
   redirectTo: string | null;
 };
 const target = redirectTo ? getRelativeLocaleUrl(lang, `stack/${redirectTo}/`) : null;
+const priv = entry?.data.private ?? false;
 ---
 
 {
@@ -48,11 +50,14 @@ const target = redirectTo ? getRelativeLocaleUrl(lang, `stack/${redirectTo}/`) :
   ) : (
     <BaseLayout
       title={`${entry!.data.name} — ${site.name}`}
-      description={entry!.data.description}
+      description={priv ? entry!.data.teaser : entry!.data.description}
       lang={lang}
       path={`stack/${slugOf(entry!)}/`}
+      noindex={priv}
     >
-      <StackDetail entry={entry!} lang={lang} />
+      <PrivateGate enabled={priv} lang={lang} title={entry!.data.name} teaser={entry!.data.teaser}>
+        <StackDetail entry={entry!} lang={lang} />
+      </PrivateGate>
     </BaseLayout>
   )
 }

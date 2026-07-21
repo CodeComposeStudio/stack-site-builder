@@ -33,8 +33,13 @@ const target = articles.find((a) => articleSlugOf(a) === slug) as ArticleEntry |
         <span class="block text-xs font-semibold tracking-wide text-[var(--aas-accent)] uppercase">
           {t('detail.relatedWriting')}
         </span>
-        <span class="mt-0.5 block font-semibold text-[var(--aas-text)]">{target.data.title}</span>
-        <span class="aas-md mt-1 block text-sm text-[var(--aas-muted)]" set:html={inlineMd(target.data.description)} />
+        <span class="mt-0.5 block font-semibold text-[var(--aas-text)]">
+          {target.data.private && <span aria-label={t('private.badge')} title={t('private.badge')}>🔒 </span>}{target.data.title}
+        </span>
+        <span
+          class="aas-md mt-1 block text-sm text-[var(--aas-muted)]"
+          set:html={inlineMd(target.data.private ? (target.data.teaser ?? '') : target.data.description)}
+        />
         <span class="mt-1.5 block text-xs text-[var(--aas-muted)]">
           {formatDate(target.data.date, lang)}
         </span>

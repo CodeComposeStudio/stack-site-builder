@@ -1,5 +1,7 @@
 # stack-site-builder
 
+> 한국어: [docs/readme.ko.md](docs/readme.ko.md)
+
 An [Astro](https://astro.build) theme for curated "awesome stack" catalog
 sites — a tool catalog with per-entry detail pages, concepts, articles,
 presentation slides, runnable samples, a `[[wikilink]]` glossary, and full
@@ -90,3 +92,52 @@ export const site = {
 import { site } from './src/data/site';
 integrations: [aasTheme({ glossary, sections: site.sections })];
 ```
+
+## Private content
+
+Any entry (tools, concepts, articles, slides, pages) can require login:
+
+```yaml
+private: true
+teaser: A public one-liner shown on cards and above the login form. # optional
+```
+
+The body ships **encrypted** (AES-256-GCM, key wrapped per user with PBKDF2) and
+is decrypted in the browser after login — no server needed, works on any static
+host. Listings show only the title + 🔒 (+ teaser); private URLs get `noindex`
+and stay out of the sitemap. Users and keys come from env vars (see
+`playground/.env.sample`): `AAS_PRIVATE_USERS` (`id:password,…`),
+`AAS_PRIVATE_MASTER_SECRET` (rotate it to log every device out) and
+`AAS_PRIVATE_SESSION_DAYS`. Set them in `.env` locally or as CI secrets.
+
+Two rules: the **source repo must be private** (the `.mdx` files are plaintext —
+only the built output is encrypted), and when you remove a user, also rotate the
+master secret. Full design: `docs/private-content-design.md`.
+
+## Deploying (and where the secrets live)
+
+Encryption happens wherever `astro build` runs, reading `process.env` — the
+values just come from a different place per environment:
+
+| Where you build | Where the `AAS_PRIVATE_*` values live |
+| --- | --- |
+| Your machine (`pnpm build`, `firebase deploy`) | `.env` file (gitignored — copy `.env.sample`) |
+| GitHub Actions (deploy on push) | **Repository secrets**: Settings → Secrets and variables → Actions |
+
+`.env` never reaches GitHub; in CI the workflow maps repository secrets to env
+vars on the build step:
+
+```yaml
+- name: Build
+  run: pnpm install && pnpm build # encryption happens here
+  env:
+    AAS_PRIVATE_USERS: ${{ secrets.AAS_PRIVATE_USERS }}
+    AAS_PRIVATE_MASTER_SECRET: ${{ secrets.AAS_PRIVATE_MASTER_SECRET }}
+    AAS_PRIVATE_SESSION_DAYS: '30'
+```
+
+A complete GitHub Pages workflow a site can copy is in
+[`playground/.github/workflows/deploy.yml`](playground/.github/workflows/deploy.yml)
+(inert inside the playground — workflows only run from a repo's root
+`.github/`). Managing users/keys then never touches git: edit the secrets and
+re-run the workflow. Sites without private content need none of this.

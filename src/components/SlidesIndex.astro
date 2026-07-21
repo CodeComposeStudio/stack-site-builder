@@ -32,8 +32,14 @@ const decks = await getDecks(lang);
           <p class="text-xs font-medium tracking-wide text-[var(--aas-muted)] uppercase">
             {t('slides.deck')}
           </p>
-          <h2 class="mt-1 text-xl font-semibold text-[var(--aas-text)]">{deck.data.title}</h2>
-          <p class="mt-2 text-sm leading-relaxed text-[var(--aas-muted)]">{deck.data.description}</p>
+          <h2 class="mt-1 text-xl font-semibold text-[var(--aas-text)]">
+            {deck.data.private && (
+              <span aria-label={t('private.badge')} title={t('private.badge')}>🔒 </span>
+            )}{deck.data.title}
+          </h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--aas-muted)]">
+            {deck.data.private ? (deck.data.teaser ?? '') : deck.data.description}
+          </p>
           <span class="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[var(--aas-text)]">
             {t('slides.open')}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

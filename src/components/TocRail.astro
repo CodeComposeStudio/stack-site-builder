@@ -64,11 +64,17 @@ const hasContent = items.length > 0 || relatedTools.length > 0 || Boolean(projec
 
 <script>
   import { startScrollSpy, initBackToTop, initReveals } from '../lib/toc-rail-client';
+  import { initOnReady } from '../lib/reinit';
 
-  const rail = document.querySelector<HTMLElement>('[data-toc-rail]');
-  if (rail) {
-    startScrollSpy(rail);
-    initBackToTop(rail);
-    initReveals(rail);
-  }
+  // Re-runs after private-content decryption (the rail ships inside the
+  // encrypted body); the dataset flag keeps a live rail from double-wiring.
+  initOnReady(() => {
+    const rail = document.querySelector<HTMLElement>('[data-toc-rail]');
+    if (rail && !rail.dataset.aasInit) {
+      rail.dataset.aasInit = '1';
+      startScrollSpy(rail);
+      initBackToTop(rail);
+      initReveals(rail);
+    }
+  });
 </script>
