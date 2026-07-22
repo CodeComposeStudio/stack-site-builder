@@ -2355,3 +2355,32 @@ summary {
   min-width: 3.5ch;
   text-align: center;
 }
+
+/* Click-to-run embeds in slide decks (DeckView wraps each slide iframe): the
+   frame stays blank behind this overlay until the viewer runs it; leaving the
+   slide unloads the frame and brings the overlay back. */
+.aas-embed {
+  position: relative;
+  display: block;
+}
+.aas-embed .aas-embed-run {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px dashed var(--aas-border);
+  border-radius: 12px;
+  background: var(--aas-panel);
+  color: var(--aas-text);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.aas-embed .aas-embed-run:hover {
+  background: var(--aas-tint);
+}
+.aas-embed.running .aas-embed-run {
+  display: none;
+}
