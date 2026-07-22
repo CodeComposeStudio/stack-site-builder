@@ -1,0 +1,116 @@
+---
+import { render, getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getCourses, courseSlugOf, type CourseEntry } from '../lib/courses';
+import { inlineMd } from '../lib/inline-md';
+import { Image } from 'astro:assets';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate } from '../lib/dates';
+import { sectionEnabled } from '../lib/sections';
+import MermaidLoader from './MermaidLoader.astro';
+import TocRail from './TocRail.astro';
+import Breadcrumb from './Breadcrumb.astro';
+import DifficultyStars from './DifficultyStars.astro';
+import { courseTree, courseCatOf } from '@aas-data/course-categories';
+import RelatedCourses from './RelatedCourses.astro';
+
+interface Props {
+  entry: CourseEntry;
+  lang: Lang;
+}
+
+const { entry, lang } = Astro.props;
+const t = useTranslations(lang);
+const { Content, headings } = await render(entry);
+const data = entry.data;
+const tocItems = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const bodyHasMermaid = (entry.body ?? '').includes('```mermaid');
+
+// Sibling courses linked from frontmatter (mutual cross-links, like concepts).
+const courses = await getCourses(lang);
+const courseBySlug = new Map(courses.map((c) => [courseSlugOf(c), c]));
+const relatedCourses = data.related
+  .map((sl) => courseBySlug.get(sl))
+  .filter(Boolean) as CourseEntry[];
+
+// Decks in the `slides` collection that belong to this course. Only linked when
+// the slides section is enabled (otherwise its routes don't exist) and the deck
+// id actually resolves — a typo just drops the chip instead of a dead link.
+const slideDecks = sectionEnabled('slides') && data.slides.length > 0
+  ? (await getCollection('slides')).filter(
+      (d) => data.slides.includes(d.id) && !d.data.draft,
+    )
+  : [];
+
+// Breadcrumb: All courses › category › subcategory… (each segment linked).
+const crumbs = [
+  { label: t('course.backToCourses'), href: getRelativeLocaleUrl(lang, 'course/') },
+  ...courseTree.pathOf(courseCatOf(data.category)).map((c) => ({
+    label: c.label[lang],
+    href: getRelativeLocaleUrl(lang, `course/category/${c.id}/`),
+  })),
+];
+---
+
+<Breadcrumb segments={crumbs} />
+
+<header class="mt-4 pb-6">
+  <h1 class="text-3xl font-bold tracking-tight">{data.title}</h1>
+  <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--aas-muted)]">
+    {data.level && <DifficultyStars lang={lang} level={data.level} size={14} />}
+    {
+      data.hours && (
+        <span class="inline-flex items-center gap-1" title={t('course.hours')}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          {data.hours}
+        </span>
+      )
+    }
+    {data.version && <span>{t('meta.docVersion')} {data.version}</span>}
+    {
+      data.updated && (
+        <span>
+          {t('course.updated')} {formatDate(data.updated, lang)}
+        </span>
+      )
+    }
+  </p>
+  <p class="mt-2 aas-md text-lg whitespace-pre-line text-[var(--aas-muted)]" set:html={inlineMd(data.description)} />
+  {
+    slideDecks.length > 0 && (
+      <p class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+          {t('course.slides')}
+        </span>
+        {slideDecks.map((d) => (
+          <a
+            href={getRelativeLocaleUrl(lang, `slides/${d.id}/`)}
+            class="rounded-full border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1 text-sm text-[var(--aas-text)] no-underline hover:bg-[var(--aas-tint)]"
+          >
+            {d.data.title}
+          </a>
+        ))}
+      </p>
+    )
+  }
+  {
+    data.image && (
+      <Image
+        src={data.image}
+        alt={data.imageAlt ?? data.title}
+        class="mt-5 aspect-[2/1] w-full rounded-2xl border border-[var(--aas-border)] object-cover"
+      />
+    )
+  }
+</header>
+
+<RelatedCourses lang={lang} courses={relatedCourses} />
+
+<div class="mt-8 flex items-start gap-8">
+  <article class="prose max-w-none aas-reading min-w-0 flex-1">
+    <Content />
+  </article>
+  <TocRail lang={lang} items={tocItems} />
+</div>
+
+{bodyHasMermaid && <MermaidLoader />}

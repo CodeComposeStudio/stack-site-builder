@@ -1,0 +1,37 @@
+---
+// Link-preview card for MDX bodies (a Hugo `bookmark` shortcode successor):
+//   <Bookmark url="https://…" title="…" description="…" />
+import ArrowUpRight from './ArrowUpRight.astro';
+
+interface Props {
+  url: string;
+  title: string;
+  description?: string;
+  /** Host label under the title; derived from `url` when omitted. */
+  host?: string;
+}
+
+const { url, title, description, host = new URL(url).host } = Astro.props;
+---
+
+<a
+  href={url}
+  target="_blank"
+  rel="noopener noreferrer"
+  class="not-prose aas-lift my-4 block rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-4 no-underline"
+>
+  <span class="flex items-center justify-between gap-3">
+    <span class="min-w-0">
+      <span class="block truncate font-semibold text-[var(--aas-text)]">{title}</span>
+      {
+        description && (
+          <span class="mt-1 line-clamp-2 block text-sm leading-relaxed text-[var(--aas-muted)]">
+            {description}
+          </span>
+        )
+      }
+      <span class="mt-1.5 block text-xs text-[var(--aas-muted)] opacity-75">{host}</span>
+    </span>
+    <ArrowUpRight size={18} class="shrink-0 text-[var(--aas-muted)]" />
+  </span>
+</a>

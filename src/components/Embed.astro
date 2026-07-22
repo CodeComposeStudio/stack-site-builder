@@ -1,0 +1,36 @@
+---
+// Responsive iframe wrapper for MDX bodies (a Hugo `iframe` shortcode
+// successor) — interactive demos, videos, and other embeds:
+//   <Embed src="/demos/foo/index.html" title="Foo demo" ratio="4:3" />
+interface Props {
+  src: string;
+  /** Accessible name for the iframe — required; it is the only label. */
+  title: string;
+  /** Aspect ratio ("16:9" default, "4:3", …), or "auto" paired with `height`. */
+  ratio?: string;
+  /** CSS height, used when `ratio` is "auto" (e.g. "32rem"). */
+  height?: string;
+  /** `sandbox` attribute passthrough (omit = unsandboxed, same-origin demos). */
+  sandbox?: string;
+  allowFullscreen?: boolean;
+}
+
+const { src, title, ratio = '16:9', height, sandbox, allowFullscreen = true } = Astro.props;
+const style =
+  ratio === 'auto'
+    ? height
+      ? `height: ${height};`
+      : undefined
+    : `aspect-ratio: ${ratio.replace(':', ' / ')};`;
+---
+
+<div class="not-prose my-4" style={style}>
+  <iframe
+    src={src}
+    title={title}
+    loading="lazy"
+    class="h-full w-full rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)]"
+    {...(sandbox !== undefined ? { sandbox } : {})}
+    {...(allowFullscreen ? { allowfullscreen: true } : {})}
+  ></iframe>
+</div>

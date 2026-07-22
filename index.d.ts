@@ -1,16 +1,26 @@
 import type { AstroIntegration } from 'astro';
 
 /** Optional content sections that a site can turn off. `pages` is the
- *  standalone-pages collection (About/소개, …). */
-export type SectionKey = 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary' | 'pages';
+ *  standalone-pages collection (About/소개, …); `courses` is opt-IN
+ *  (default off — enabling it requires site-side course data). */
+export type SectionKey =
+  | 'concepts'
+  | 'articles'
+  | 'courses'
+  | 'samples'
+  | 'slides'
+  | 'glossary'
+  | 'pages';
 
 export interface AasThemeOptions {
   /** The site's glossary (`src/data/glossary.mjs`) — `[[wikilink]]` targets. */
   glossary: Record<string, unknown>;
   /**
-   * Turn optional sections off (all on by default), e.g. `{ slides: false }`.
-   * A disabled section's routes aren't injected; pass the same object to
-   * `src/data/site.ts` `sections` so its header-nav item is hidden too.
+   * Section toggles, e.g. `{ slides: false }`. Every section is on by default
+   * except `courses`, which is opt-in (`{ courses: true }`) and additionally
+   * requires `src/data/course-categories.ts` on the site. A disabled section's
+   * routes aren't injected; pass the same object to `src/data/site.ts`
+   * `sections` so its header-nav item is hidden too.
    */
   sections?: Partial<Record<SectionKey, boolean>>;
 }

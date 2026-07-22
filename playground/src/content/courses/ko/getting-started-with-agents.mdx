@@ -1,0 +1,46 @@
+---
+title: AI 에이전트 입문
+description: 첫 AI 에이전트를 직접 만들어 보는 실습 강의 — 도구, 루프, 가드레일까지.
+summary: 첫 AI 에이전트를 단계별로 만들어 봅니다.
+date: 2026-06-01
+updated: 2026-07-01
+version: "1.1"
+category: ai-basics
+tags: [agents, beginner]
+level: 2
+hours: "1:30"
+order: "2601-01"
+related: [advanced-agent-patterns]
+---
+
+import Lead from 'stack-site-builder/components/Lead.astro';
+import Bookmark from 'stack-site-builder/components/Bookmark.astro';
+import Embed from 'stack-site-builder/components/Embed.astro';
+
+<Lead>에이전트는 루프입니다: 모델이 판단하고, 도구가 실행되고, 결과가 다시 모델로 돌아갑니다. 이 강의에서 그 루프를 바닥부터 만듭니다.</Lead>
+
+## 무엇을 만드나요 \{#what-youll-build}
+
+검색하고 요약하는 단일 파일 에이전트를 예산 가드레일과 함께 만듭니다.
+
+```mermaid
+flowchart LR
+  U[사용자] --> M[모델]
+  M -->|도구 호출| T[도구]
+  T -->|결과| M
+  M --> A[답변]
+```
+
+## 준비물 \{#prerequisites}
+
+기본적인 Python과 API 키. 아래 글이 사고 모델을 잡아줍니다:
+
+<Bookmark
+  url="https://www.anthropic.com/engineering/building-effective-agents"
+  title="Building effective agents"
+  description="에이전트 시스템의 패턴 — 워크플로와 에이전트, 각각 언제 쓰는지."
+/>
+
+## 직접 해보기 \{#try-it}
+
+<Embed src="https://example.invalid/demo/agent-loop/" title="에이전트 루프 데모" ratio="4:3" />
