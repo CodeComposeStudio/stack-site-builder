@@ -2384,3 +2384,11 @@ summary {
 .aas-embed.running .aas-embed-run {
   display: none;
 }
+
+/* Tables: keep the first (label) column on one line — a wide table otherwise
+   squeezes short labels like "Part 1" into two rows. Applies to reading prose
+   and slide-deck tables alike; label columns are short by convention. */
+.prose :where(table) :where(th, td):first-child,
+.aas-slide :where(table) :where(th, td):first-child {
+  white-space: nowrap;
+}
