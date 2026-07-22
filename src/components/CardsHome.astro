@@ -4,6 +4,7 @@
 // Things-style studio home), and a closing CTA banner. Everything renders
 // from `site.home`; sections without data simply don't render.
 import { site } from '@aas-data/site';
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import { home, loc, locList } from '../lib/home';
 import { useTranslations, type Lang } from '../i18n/ui';
 
@@ -21,6 +22,10 @@ const heroTitle = loc(h?.hero?.title, lang) ?? site.name;
 const heroSubtitle = loc(h?.hero?.subtitle, lang) ?? t('site.tagline');
 const extAttrs = (external?: boolean) =>
   external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+// Internal links ("/apps/…") are written locale-less in site.home and get the
+// current locale's prefix here, so the en home links to the en pages.
+const resolveHref = (href: string, external?: boolean) =>
+  !external && href.startsWith('/') ? getRelativeLocaleUrl(lang, href.replace(/^\//, '')) : href;
 ---
 
 <section class="py-14 text-center">
@@ -37,7 +42,7 @@ const extAttrs = (external?: boolean) =>
         <div class="flex flex-col gap-5">
           {h?.cards?.map((c) => (
             <a
-              href={c.href}
+              href={resolveHref(c.href, c.external)}
               {...extAttrs(c.external)}
               class="aas-lift flex items-center gap-6 rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-bg)] p-6 no-underline"
             >
@@ -84,7 +89,7 @@ const extAttrs = (external?: boolean) =>
       )}
       {h.cta.button && (
         <a
-          href={h.cta.button.href}
+          href={resolveHref(h.cta.button.href, h.cta.button.external)}
           {...extAttrs(h.cta.button.external)}
           class="mt-7 inline-block rounded-full bg-[var(--aas-accent)] px-7 py-3 font-semibold text-white no-underline"
         >
