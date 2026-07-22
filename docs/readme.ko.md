@@ -40,9 +40,9 @@ export const collections = defineAasCollections({ categoryMap });
 | --- | --- |
 | `src/data/site.ts` | 사이트 정체성: 이름, 저장소 URL, 제공 `locales`, 선택적 `sections` 토글, 로케일별 UI 문자열 오버라이드 |
 | `src/data/categories.ts` | 도구 카탈로그 카테고리 트리 (콘텐츠와 대조 검증됨) |
-| `src/data/concept-categories.ts` · `article-categories.ts` | 개념 / 글의 분류 체계 |
+| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` (옵트인) | 개념 / 글 / 강의의 분류 체계 |
 | `src/data/glossary.mjs` | `[[용어]]` 위키링크 대상 |
-| `src/content/{stacks,concepts,articles,slides}/` | 콘텐츠 — 로케일당 MDX 파일 하나 |
+| `src/content/{stacks,concepts,courses,articles,slides}/` | 콘텐츠 — 로케일당 MDX 파일 하나 |
 | `src/content/pages/` | 독립 최상위 페이지 (예: 소개/About). `/<slug>/`로 렌더되고 헤더 네비에 연결 가능 |
 | `public/` · `samples/` | 로고/파비콘과 실행 가능한 샘플 프로젝트 |
 
@@ -75,6 +75,7 @@ export const collections = defineAasCollections({ categoryMap });
 등) — 는 끌 수 있어서, 사이트는 필요한 것만 담아 배포할 수 있습니다. 하나를
 끄면 그 라우트와 헤더 네비 항목이 함께 사라집니다. (`pages`는 더 세밀한
 제어도 가능: 각 페이지의 `nav` / `draft` 프런트매터, 또는 그냥 안 쓰기.)
+**courses**만 유일하게 옵트인 섹션입니다 — 아래 참고.
 
 토글은 `src/data/site.ts`에 한 번 선언하고, astro.config에서 테마로
 전달합니다(라우트 주입을 건너뛰는 데 필요). 테마의 `SectionKey`를 import하면
@@ -94,6 +95,40 @@ export const site = {
 import { site } from './src/data/site';
 integrations: [aasTheme({ glossary, sections: site.sections })];
 ```
+
+## 강의 (옵트인)
+
+가르치는 사이트를 위한 강의 섹션: 난이도 별점(`level` 1–5)·수강 시간(`hours`)
+카드, 기수 정렬(`order`, 큰 값 우선 — 예: `"2601-01"`), 카테고리 탐색 페이지,
+그리고 비공개 콘텐츠 장치를 그대로 쓰는 유료 강의(`private` + `teaser`)까지.
+사이트 데이터가 필요하므로 기본은 꺼져 있고, 켜려면:
+
+1. `src/data/site.ts`에 `sections: { courses: true }` (위처럼 `aasTheme`으로 전달).
+2. `courseTree` / `courseCatOf`를 export하는 `src/data/course-categories.ts`
+   추가 (`playground/src/data/course-categories.ts`를 복사해 트리만 수정).
+3. 선택: `defineAasCollections({ categoryMap, courseCategoryMap })`으로 맵을
+   넘기면 강의 카테고리 id가 빌드 시점에 검증됩니다.
+
+콘텐츠는 `src/content/courses/<lang>/<slug>.mdx`. 라우트는 개념과 동일한
+구조: `/course/`, `/course/<slug>/`, `/course/category/<id>/`.
+
+## 본문 컴포넌트
+
+어느 컬렉션의 MDX 본문에서든 import해 쓰는 컴포넌트: `Bookmark`(링크 카드),
+`Embed`(데모/영상용 반응형 iframe — `ratio`/`height`/`sandbox`),
+`Lead`(리드 문단).
+
+```mdx
+import Bookmark from 'stack-site-builder/components/Bookmark.astro';
+
+<Bookmark url="https://…" title="…" description="…" />
+```
+
+## RSS
+
+articles 컬렉션의 피드가 `/rss.xml`(기본 로케일)과 `/<코드>/rss.xml`로
+생성되고 `<link rel="alternate">`로 광고됩니다. 초안과 비공개 항목은
+사이트맵과 마찬가지로 제외되며, `articles` 섹션이 켜져 있을 때만 주입됩니다.
 
 ## 비공개 콘텐츠
 

@@ -1,0 +1,145 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import CourseCard from './CourseCard.astro';
+import Breadcrumb from './Breadcrumb.astro';
+import ListControls from './ListControls.astro';
+import ArrowUpRight from './ArrowUpRight.astro';
+
+const PAGE = 12;
+import { courseTree, courseCatOf } from '@aas-data/course-categories';
+import { getCourses, courseSlugOf, type CourseEntry } from '../lib/courses';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+// Doubles as the course index (no `categoryId` → all courses, grouped by
+// category) and a category browse page (`categoryId` → that category, with a
+// breadcrumb, its direct courses, and a section per subcategory).
+interface Props {
+  lang: Lang;
+  categoryId?: string;
+}
+
+const { lang, categoryId } = Astro.props;
+const t = useTranslations(lang);
+// getCourses() order (manual `order` desc, then date) agrees with the client
+// "recent" comparator over CourseCard's data-date keys — no reflow on load.
+const all = await getCourses(lang);
+const catUrl = (cid: string) => getRelativeLocaleUrl(lang, `course/category/${cid}/`);
+
+const itemsIn = (cid: string): CourseEntry[] => {
+  const ids = new Set(courseTree.descendantIds(cid));
+  return all.filter((c) => ids.has(courseCatOf(c.data.category)));
+};
+
+const node = categoryId ? courseTree.map.get(categoryId) : undefined;
+const sections = node ? courseTree.childrenOf(node.id) : courseTree.roots;
+const direct = node ? all.filter((c) => courseCatOf(c.data.category) === node.id) : [];
+
+// A leaf category page shows one flat list — that grid gets ?page= pagination.
+// Index and parent-category pages stay grouped overviews: each section is
+// capped to PAGE cards with a "see all" link to the fuller list.
+const isLeaf = !!node && sections.length === 0;
+
+const path = node ? courseTree.pathOf(node.id) : [];
+const crumbs = node
+  ? [
+      { label: t('course.backToCourses'), href: getRelativeLocaleUrl(lang, 'course/') },
+      ...path.map((c, i) => ({
+        label: c.label[lang],
+        href: i === path.length - 1 ? undefined : catUrl(c.id),
+      })),
+    ]
+  : [];
+
+const card = (c: CourseEntry) => ({
+  lang,
+  slug: courseSlugOf(c),
+  title: c.data.title,
+  description: c.data.summary ?? c.data.description,
+  tags: c.data.tags,
+  image: c.data.image,
+  imageAlt: c.data.imageAlt,
+  level: c.data.level,
+  hours: c.data.hours,
+  version: c.data.version,
+  date: c.data.date,
+  updated: c.data.updated,
+  order: c.data.order,
+  isPrivate: c.data.private,
+  teaser: c.data.teaser,
+});
+---
+
+{
+  node ? (
+    <>
+      <Breadcrumb segments={crumbs} />
+      <header class="mt-4">
+        <h1 class="text-3xl font-bold tracking-tight">{node.label[lang]}</h1>
+        <p class="mt-2 max-w-2xl text-lg text-[var(--aas-muted)]">
+          {node.detail?.[lang] ?? node.description[lang]}
+        </p>
+      </header>
+    </>
+  ) : (
+    <section class="py-6">
+      <h1 class="text-4xl font-bold tracking-tight">{t('course.title')}</h1>
+      <p class="mt-3 max-w-2xl text-lg text-[var(--aas-muted)]">{t('course.tagline')}</p>
+    </section>
+  )
+}
+
+{all.length === 0 && <p class="mt-8 text-[var(--aas-muted)]">{t('course.empty')}</p>}
+
+{all.length > 0 && <div class="mt-6"><ListControls lang={lang} /></div>}
+
+{
+  direct.length > 0 && (
+    <div
+      class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+      data-sortgrid
+      data-paginate={isLeaf ? true : undefined}
+      data-page-size={isLeaf ? PAGE : undefined}
+    >
+      {direct.map((c) => (
+        <CourseCard {...card(c)} />
+      ))}
+    </div>
+  )
+}
+
+{
+  sections.map((cat) => {
+    const items = itemsIn(cat.id);
+    return (
+      items.length > 0 && (
+        <section class="mt-8">
+          <h2 class="text-2xl font-semibold">
+            <a
+              href={catUrl(cat.id)}
+              class="text-[var(--aas-text)] no-underline hover:text-[var(--aas-accent)]"
+            >
+              {cat.label[lang]}
+              <ArrowUpRight size={20} class="ml-1 text-[var(--aas-muted)]" />
+            </a>
+          </h2>
+          <p class="mt-1 text-sm text-[var(--aas-muted)]">{cat.description[lang]}</p>
+          <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-sortgrid>
+            {items.slice(0, PAGE).map((c) => (
+              <CourseCard {...card(c)} />
+            ))}
+          </div>
+          {items.length > PAGE && (
+            <a
+              href={catUrl(cat.id)}
+              class="mt-3 inline-block text-sm font-medium text-[var(--aas-accent)] no-underline"
+            >
+              {t('list.seeAll').replace('{n}', String(items.length))} &rarr;
+            </a>
+          )}
+        </section>
+      )
+    );
+  })
+}
+
+{isLeaf && <nav data-pager aria-label="Pagination" class="mt-8 flex flex-wrap items-center justify-center gap-1.5" />}

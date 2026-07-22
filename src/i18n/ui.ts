@@ -58,6 +58,7 @@ export const ui = {
       'A curated stack of the tools and services you actually use to build AI systems — each with a detail page and runnable sample code.',
     'nav.browse': 'Browse',
     'nav.concepts': 'Concepts',
+    'nav.courses': 'Courses',
     'nav.blog': 'Writing',
     'nav.samples': 'Samples',
     'nav.slides': 'Slides',
@@ -117,6 +118,15 @@ export const ui = {
     'concept.learnMore': 'Learn more',
     'concept.backToConcepts': 'All concepts',
     'concept.updated': 'Updated',
+    'course.title': 'Courses',
+    'course.tagline': 'Structured lessons and lectures — from fundamentals to hands-on practice.',
+    'course.empty': 'No courses yet.',
+    'course.backToCourses': 'All courses',
+    'course.level': 'Level',
+    'course.hours': 'Duration',
+    'course.updated': 'Updated',
+    'course.relatedCourses': 'Related courses',
+    'course.slides': 'Slides',
     'detail.usedInConcepts': 'Used in concepts',
     'sort.label': 'Sort',
     'sort.alpha': 'A–Z',
@@ -207,6 +217,7 @@ export const ui = {
       'AI 시스템을 만들 때 실제로 쓰는 도구와 서비스를 모았습니다 — 각 항목마다 상세 페이지와 바로 실행 가능한 샘플 코드를 제공합니다.',
     'nav.browse': '둘러보기',
     'nav.concepts': '개념',
+    'nav.courses': '강의',
     'nav.blog': '글',
     'nav.samples': '샘플',
     'nav.slides': '슬라이드',
@@ -265,6 +276,15 @@ export const ui = {
     'concept.learnMore': '더 알아보기',
     'concept.backToConcepts': '개념 전체',
     'concept.updated': '업데이트',
+    'course.title': '강의',
+    'course.tagline': '기초부터 실습까지, 체계적으로 구성한 강의.',
+    'course.empty': '아직 강의가 없습니다.',
+    'course.backToCourses': '강의 전체',
+    'course.level': '난이도',
+    'course.hours': '수강 시간',
+    'course.updated': '업데이트',
+    'course.relatedCourses': '관련 강의',
+    'course.slides': '슬라이드',
     'detail.usedInConcepts': '이 도구가 쓰이는 개념',
     'sort.label': '정렬',
     'sort.alpha': '이름순',
@@ -396,6 +416,19 @@ export const pricingLabels: Record<string, Record<string, string>> = {
     paid: '유료',
     free: '무료',
   },
+};
+
+/** Localized label for a course `level` (1–5), falling back to the default
+ *  locale then the bare number (so a site-added locale never crashes). */
+export function difficultyLabel(lang: Lang, level: number): string {
+  const key = String(level);
+  return difficultyLabels[lang]?.[key] ?? difficultyLabels[defaultLang]?.[key] ?? key;
+}
+
+/** Human labels for the course `level` frontmatter (1–5), per locale. */
+export const difficultyLabels: Record<string, Record<string, string>> = {
+  en: { '1': 'Beginner', '2': 'Elementary', '3': 'Intermediate', '4': 'Advanced', '5': 'Expert' },
+  ko: { '1': '입문', '2': '초급', '3': '중급', '4': '고급', '5': '전문가' },
 };
 
 /** Descriptive (non-name) licenses get localized; real license names pass through. */

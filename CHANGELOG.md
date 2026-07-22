@@ -11,6 +11,30 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.15.0] - 2026-07-22
+
+### Added
+
+- **`courses` collection** — an opt-in section (`sections: { courses: true }`)
+  for sites that teach rather than catalog: course cards with difficulty stars
+  (`level` 1–5, localized labels), duration (`hours`), a manual sort key
+  (`order`, highest first — e.g. `"2601-01"` cohort keys), a `type` tag, linked
+  slide decks (`slides`), related courses, and the usual draft/private/teaser
+  flags. Routes mirror concepts (`/course/`, `/course/<id>/`,
+  `/course/category/<id>/`); an enabling site adds
+  `src/data/course-categories.ts` (exporting `courseTree` / `courseCatOf`) and
+  may pass `courseCategoryMap` to `defineAasCollections` for build-time
+  category validation. Because the section needs that site data, it stays off
+  until a site explicitly opts in — a theme upgrade alone changes nothing.
+- **Body components** — `Bookmark` (link-preview card), `Embed` (responsive
+  iframe wrapper for demos/videos, with `ratio`/`height`/`sandbox`), and
+  `Lead` (intro paragraph), importable from
+  `stack-site-builder/components/*` in any MDX body.
+- **RSS feed** — a per-locale feed of the articles collection at `/rss.xml`
+  (default locale) and `/<code>/rss.xml`, injected with the `articles` section
+  and advertised via `<link rel="alternate">`. Drafts and private entries stay
+  out, mirroring the sitemap.
+
 ## [1.14.0] - 2026-07-21
 
 ### Added
@@ -138,6 +162,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.15.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.12.0...v1.13.0
 [1.12.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.11.0...v1.12.0

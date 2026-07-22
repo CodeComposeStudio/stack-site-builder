@@ -1,0 +1,64 @@
+---
+// "Related courses" card section on a course detail page, mirroring
+// RelatedConcepts so course links present the same way (image + title +
+// level/duration meta + description, in a collapsible grid).
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import { courseSlugOf, type CourseEntry } from '../lib/courses';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate } from '../lib/dates';
+import { inlineMd } from '../lib/inline-md';
+import CollapsibleGrid from './CollapsibleGrid.astro';
+import DifficultyStars from './DifficultyStars.astro';
+
+interface Props {
+  lang: Lang;
+  courses: CourseEntry[];
+}
+
+const { lang, courses } = Astro.props;
+const t = useTranslations(lang);
+---
+
+{
+  courses.length > 0 && (
+    <section class="mt-8">
+      <h2 class="text-xs font-semibold tracking-wide text-[var(--aas-muted)] uppercase">
+        {t('course.relatedCourses')}
+      </h2>
+      <CollapsibleGrid lang={lang} count={courses.length}>
+        {courses.map((c) => (
+          <a
+            href={getRelativeLocaleUrl(lang, `course/${courseSlugOf(c)}/`)}
+            class="aas-lift flex items-stretch overflow-hidden rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)] no-underline"
+          >
+            {c.data.image && (
+              <Image src={c.data.image} alt="" class="w-28 shrink-0 self-stretch object-cover" />
+            )}
+            <div class="min-w-0 p-4">
+              <span class="block font-semibold text-[var(--aas-text)]">
+                {c.data.private && (
+                  <span aria-label={t('private.badge')} title={t('private.badge')}>🔒 </span>
+                )}
+                {c.data.title}
+              </span>
+              <span class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-[var(--aas-muted)]">
+                {c.data.level && <DifficultyStars lang={lang} level={c.data.level} size={10} />}
+                {c.data.hours && <span>{c.data.hours}</span>}
+                {c.data.updated && (
+                  <span>
+                    {t('course.updated')} {formatDate(c.data.updated, lang)}
+                  </span>
+                )}
+              </span>
+              <span
+                class="aas-md mt-1.5 line-clamp-2 text-xs leading-relaxed text-[var(--aas-muted)] opacity-75"
+                set:html={inlineMd(c.data.private ? (c.data.teaser ?? '') : c.data.description)}
+              />
+            </div>
+          </a>
+        ))}
+      </CollapsibleGrid>
+    </section>
+  )
+}
