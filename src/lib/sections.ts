@@ -20,6 +20,7 @@ export type SectionKey =
   | 'concepts'
   | 'articles'
   | 'courses'
+  | 'apps'
   | 'samples'
   | 'slides'
   | 'glossary'
@@ -29,6 +30,7 @@ const DEFAULTS: Record<SectionKey, boolean> = {
   concepts: true,
   articles: true,
   courses: false, // opt-in: needs src/data/course-categories.ts on the site
+  apps: true, // no site data needed; an empty collection builds zero pages
   samples: true,
   slides: true,
   glossary: true,

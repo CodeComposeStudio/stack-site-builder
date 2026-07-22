@@ -307,6 +307,137 @@ export function defineAasCollections({
   });
 
   /**
+   * The `apps` collection holds product/app pages — a Things-style marketing
+   * landing per app (`template: 'landing'`) plus its plain subpages (privacy,
+   * terms — `template: 'page'`, the default). Entries are locale-partitioned
+   * and may nest: `apps/<lang>/<slug>.mdx` renders at `/apps/<slug>/`,
+   * `apps/<lang>/<slug>/privacy.mdx` at `/apps/<slug>/privacy/`.
+   *
+   * Landing visuals (icons, screenshots, videos, the phone-frame art) are
+   * plain `public/` paths — videos can't go through the image pipeline, so
+   * the whole landing keeps one convention instead of two.
+   */
+  const apps = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/apps' }),
+    schema: z.object({
+      title: z.string(),
+      description: z.string().optional(), // meta description
+      // 'landing' renders the structured marketing page below; 'page' renders
+      // the markdown body like a standalone page (legal subpages).
+      template: z.enum(['landing', 'page']).default('page'),
+      // Header-nav placement, like the `pages` collection (default off —
+      // landings are usually reached from the home cards).
+      nav: z.boolean().default(false),
+      navLabel: z.string().optional(),
+      order: z.number().default(0),
+
+      // ---- hero ----
+      subtitle: z.string().optional(),
+      icon: z.string().optional(), // app icon (public/ path)
+      // Free-form key a site can target from its CSS (`.aas-hero-bg-<key>`)
+      // for a custom hero background.
+      heroBg: z.string().optional(),
+      tagline: z.string().optional(), // small print under the store buttons (may contain <br>)
+      productHunt: z
+        .object({ url: z.string().url(), image: z.string().url(), alt: z.string() })
+        .optional(),
+      // Store links; "#" renders the button disabled (not yet released), the
+      // label is small print under a button (e.g. "5월 출시 예정").
+      stores: z
+        .object({
+          appstore: z.string().optional(),
+          appstoreLabel: z.string().optional(),
+          playstore: z.string().optional(),
+          playstoreLabel: z.string().optional(),
+        })
+        .optional(),
+
+      // ---- alternating feature rows ----
+      // Device-frame art that screenshots render inside when `phoneFrame` is
+      // set (one per page; features opt in individually).
+      phoneFrameImage: z.string().optional(),
+      features: z
+        .array(
+          z.object({
+            label: z.string().optional(), // small eyebrow above the title
+            title: z.string(),
+            description: z.string(), // may contain <br>
+            image: z.string().optional(),
+            images: z.array(z.string()).default([]), // 2+ → auto-rotating carousel
+            phoneFrame: z.boolean().default(false),
+          }),
+        )
+        .default([]),
+
+      // ---- highlights grid (icon cards) ----
+      highlightsTitle: z.string().optional(),
+      highlights: z
+        .array(
+          z.object({
+            icon: z.string().optional(), // public/ path
+            title: z.string(),
+            description: z.string(),
+          }),
+        )
+        .default([]),
+
+      // ---- themes showcase (video tabs, auto-rotating) ----
+      themesTitle: z.string().optional(),
+      themesSubtitle: z.string().optional(),
+      themes: z
+        .array(
+          z.object({
+            name: z.string(),
+            description: z.string(),
+            tabDesc: z.string().optional(),
+            video: z.string(), // public/ path (mp4)
+            poster: z.string().optional(),
+            icon: z.string().optional(), // emoji or short text on the tab button
+          }),
+        )
+        .default([]),
+      themesLandscape: z
+        .object({ title: z.string(), description: z.string(), image: z.string() })
+        .optional(),
+
+      // ---- pricing ----
+      pricingTitle: z.string().optional(),
+      pricingSubtitle: z.string().optional(),
+      pricingBadge: z.string().optional(), // ribbon on the featured tier
+      pricingNotes: z.array(z.string()).default([]),
+      pricing: z
+        .array(
+          z.object({
+            name: z.string(),
+            price: z.string(),
+            period: z.string().optional(), // "/월", "일회성", …
+            featured: z.boolean().default(false),
+            items: z.array(z.string()).default([]),
+          }),
+        )
+        .default([]),
+
+      // ---- closing CTA + legal links ----
+      ctaTitle: z.string().optional(),
+      ctaDescription: z.string().optional(),
+      // Localized labels; privacy/terms link to the sibling subpages, support
+      // opens mailto site.email.
+      legal: z
+        .object({
+          privacy: z.string().optional(),
+          terms: z.string().optional(),
+          support: z.string().optional(),
+        })
+        .optional(),
+
+      draft: z.boolean().default(false),
+      // Login-gated page (encrypted body; see docs/private-content-design.md).
+      private: z.boolean().default(false),
+      teaser: z.string().optional(),
+    }),
+  });
+
+  /**
    * The `pages` collection holds standalone top-level pages — an About/소개, a
    * contact page, terms, etc. Unlike the other collections there's no index or
    * taxonomy: each entry renders on its own at the site root (`/<slug>/`), and
@@ -338,5 +469,5 @@ export function defineAasCollections({
       }),
   });
 
-  return { stacks, articles, concepts, courses, slides, pages };
+  return { stacks, articles, concepts, courses, slides, apps, pages };
 }
