@@ -173,6 +173,33 @@ const priv = entry.data.private;
         const btnNext = document.querySelector<HTMLButtonElement>('[data-next]');
         if (elTot) elTot.textContent = String(total);
 
+        // Heavy embeds (interactive demo iframes) keep animating offscreen and
+        // make every later slide transition jank. Keep only the on/near-screen
+        // slides' iframes live: leaving a slide blanks its frames (src stashed
+        // on the element), returning restores them — the demo reloads fresh,
+        // exactly like a page refresh. One viewport of margin each side means
+        // the neighbor slide is already loading while you transition into it.
+        const framedSlides = slides.filter((s) => s.querySelector('iframe'));
+        if (framedSlides.length) {
+          const io = new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                for (const f of Array.from(e.target.querySelectorAll<HTMLIFrameElement>('iframe'))) {
+                  const src = f.getAttribute('src');
+                  if (e.isIntersecting) {
+                    if (!src && f.dataset.aasSrc) f.setAttribute('src', f.dataset.aasSrc);
+                  } else if (src) {
+                    f.dataset.aasSrc = src;
+                    f.removeAttribute('src');
+                  }
+                }
+              }
+            },
+            { root: deck, rootMargin: '0px 100% 0px 100%' },
+          );
+          framedSlides.forEach((s) => io.observe(s));
+        }
+
         let current = 0;
         // Step reveal (fragments): each slide's `.aas-step` elements are revealed
         // one at a time. `shown[i]` = how many are currently visible.
