@@ -15,6 +15,15 @@ here is a plain version bump they pull in.
 
 ### Fixed
 
+- **Mermaid never rendered on npm-consuming sites' dev server** — the loader
+  imported the package default (`mermaid.core.mjs`), whose bare CJS
+  dependencies (dayjs, …) are served without interop when the import chain
+  starts inside `node_modules`, killing the whole loader module with a
+  SyntaxError. It now imports the self-contained
+  `mermaid/dist/mermaid.esm.min.mjs` bundle, which loads identically in dev
+  and build. (The theme's own playground never hit this — its workspace
+  symlink resolves outside `node_modules`, so Vite prebundled mermaid.)
+
 - **Course → slide-deck links matched nothing** — a course's `slides`
   frontmatter lists locale-less deck slugs, but the detail page compared
   them against raw collection ids (`ko/<deck>/index`), so the chips never
