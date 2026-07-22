@@ -72,7 +72,7 @@ The rest are opt-out — **concepts, articles, samples, slides, glossary** and t
 standalone **pages** collection (About/소개, …) — so a site can ship only what it
 needs. Turning one off removes both its routes and its header-nav item. (`pages`
 also has finer control: each page's `nav` / `draft` frontmatter, or simply not
-authoring it.) **courses** is the one opt-IN section — see below.
+authoring it.) **courses** and **products** are the opt-IN sections — see below.
 
 Declare the toggles once in `src/data/site.ts` and forward them to the theme in
 astro.config (which needs them to skip route injection). Import `SectionKey` from

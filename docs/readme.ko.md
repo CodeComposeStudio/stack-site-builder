@@ -75,7 +75,7 @@ export const collections = defineAasCollections({ categoryMap });
 등) — 는 끌 수 있어서, 사이트는 필요한 것만 담아 배포할 수 있습니다. 하나를
 끄면 그 라우트와 헤더 네비 항목이 함께 사라집니다. (`pages`는 더 세밀한
 제어도 가능: 각 페이지의 `nav` / `draft` 프런트매터, 또는 그냥 안 쓰기.)
-**courses**만 유일하게 옵트인 섹션입니다 — 아래 참고.
+**courses**와 **products**는 옵트인 섹션입니다 — 아래 참고.
 
 토글은 `src/data/site.ts`에 한 번 선언하고, astro.config에서 테마로
 전달합니다(라우트 주입을 건너뛰는 데 필요). 테마의 `SectionKey`를 import하면
