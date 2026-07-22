@@ -11,13 +11,24 @@ import { site } from '@aas-data/site';
  * the `nav` / `draft` frontmatter, or by not authoring the page.
  *
  * A site sets overrides in `src/data/site.ts` (`sections`), which astro.config
- * also forwards to the theme integration for route filtering. Omitted = enabled.
+ * also forwards to the theme integration for route filtering. Omitted = enabled —
+ * except `courses`, which is opt-IN (`{ courses: true }`): enabling it requires
+ * site-side data (`src/data/course-categories.ts`), so it must never switch on
+ * by a theme upgrade alone.
  */
-export type SectionKey = 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary' | 'pages';
+export type SectionKey =
+  | 'concepts'
+  | 'articles'
+  | 'courses'
+  | 'samples'
+  | 'slides'
+  | 'glossary'
+  | 'pages';
 
 const DEFAULTS: Record<SectionKey, boolean> = {
   concepts: true,
   articles: true,
+  courses: false, // opt-in: needs src/data/course-categories.ts on the site
   samples: true,
   slides: true,
   glossary: true,

@@ -29,6 +29,8 @@ const PAGES = [
   // Standalone top-level pages (the `pages` collection), e.g. an About/소개
   // page. A single dynamic route per locale renders every entry at `/<slug>/`.
   '[page].astro',
+  // Per-locale RSS feed of the articles collection (an endpoint, not a page).
+  'rss.xml.ts',
   'article/index.astro',
   'article/[...id].astro',
   'article/category/[id].astro',
@@ -36,6 +38,9 @@ const PAGES = [
   'concept/index.astro',
   'concept/[...id].astro',
   'concept/category/[id].astro',
+  'course/index.astro',
+  'course/[...id].astro',
+  'course/category/[id].astro',
   'glossary.astro',
   'sample/index.astro',
   'sample/[folder].astro',
@@ -47,10 +52,11 @@ const PAGES = [
 ];
 
 /** `[...lang]/article/[...id].astro` → `/[...lang]/article/[...id]`,
- *  `[...lang]/index.astro` → `/[...lang]` */
+ *  `[...lang]/index.astro` → `/[...lang]`,
+ *  `[...lang]/rss.xml.ts` → `/[...lang]/rss.xml` (endpoints keep their name). */
 /** @param {string} file */
 function patternOf(file) {
-  const p = file.replace(/\.astro$/, '').replace(/\/?index$/, '');
+  const p = file.replace(/\.(astro|ts)$/, '').replace(/\/?index$/, '');
   return `/${p}`.replace(/\/$/, '') || '/';
 }
 
@@ -60,12 +66,19 @@ function patternOf(file) {
 function sectionOf(file) {
   if (file.startsWith('concept/')) return 'concepts';
   if (file.startsWith('article/')) return 'articles';
+  if (file.startsWith('course/')) return 'courses';
   if (file.startsWith('sample/')) return 'samples';
   if (file.startsWith('slides/')) return 'slides';
   if (file === 'glossary.astro') return 'glossary';
   if (file === '[page].astro') return 'pages';
+  if (file === 'rss.xml.ts') return 'articles'; // the feed is the blog's
   return null;
 }
+
+// Sections that are opt-IN rather than opt-out: their routes are injected only
+// when the site passes `{ <key>: true }`. `courses` needs site-side data
+// (src/data/course-categories.ts), so a theme upgrade alone must not enable it.
+const OPT_IN_SECTIONS = new Set(['courses']);
 
 /**
  * @param {object} opts
@@ -73,6 +86,7 @@ function sectionOf(file) {
  *   (`src/data/glossary.mjs`), used by `[[wikilink]]` resolution.
  * @param {Partial<Record<string, boolean>>} [opts.sections] — optional-section
  *   toggles (`{ slides: false }`); a disabled section's routes are not injected.
+ *   `courses` is opt-IN (`{ courses: true }`) — it needs site-side course data.
  *   Keep it in sync with `src/data/site.ts` `sections` (which hides the nav item).
  * @returns {import('astro').AstroIntegration[]}
  */
@@ -97,6 +111,7 @@ export default function aasTheme({ glossary, sections = {} }) {
         for (const file of PAGES) {
           const section = sectionOf(file);
           if (section && sections[section] === false) continue;
+          if (section && OPT_IN_SECTIONS.has(section) && sections[section] !== true) continue;
           injectRoute({
             pattern: patternOf(`[...lang]/${file}`),
             entrypoint: `stack-site-builder/pages/[...lang]/${file}`,

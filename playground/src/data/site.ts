@@ -23,14 +23,16 @@ export const site = {
     { code: 'ko', label: '한국어', dateLocale: 'ko-KR' },
     { code: 'ja', label: '日本語', dateLocale: 'ja-JP' },
   ] as { code: string; label: string; dateLocale?: string }[],
-  /** Optional content sections to turn off (all on by default). A disabled
-   *  section loses both its routes and its header-nav item; the value is
-   *  forwarded to the theme integration in astro.config for route skipping.
-   *  Keys: 'concepts' | 'articles' | 'samples' | 'slides' | 'glossary' | 'pages'.
+  /** Optional content sections to toggle. All are on by default except
+   *  `courses`, which is opt-IN (it needs src/data/course-categories.ts). A
+   *  disabled section loses both its routes and its header-nav item; the value
+   *  is forwarded to the theme integration in astro.config for route skipping.
+   *  Keys: 'concepts' | 'articles' | 'courses' | 'samples' | 'slides' |
+   *  'glossary' | 'pages'.
    *  Example — hide the slides and glossary sections:
    *      sections: { slides: false, glossary: false },
    */
-  sections: {} satisfies Partial<Record<SectionKey, boolean>>,
+  sections: { courses: true } satisfies Partial<Record<SectionKey, boolean>>,
   /** Per-locale overrides for the theme's UI strings; empty = theme defaults.
    *  A locale beyond the theme's en/ko (add it to `locales` above) supplies its
    *  whole string table here; any key it omits falls back to the default locale.
@@ -41,6 +43,7 @@ export const site = {
         'AIシステムの構築に実際に使うツールとサービスのキュレーション — 各項目に詳細ページと実行可能なサンプルコード付き。',
       'nav.browse': '一覧',
       'nav.concepts': 'コンセプト',
+      'nav.courses': 'コース',
       'nav.blog': '記事',
       'nav.samples': 'サンプル',
       'nav.slides': 'スライド',

@@ -3,8 +3,8 @@ import { glob } from 'astro/loaders';
 
 /**
  * The shared content model for awesome-*-stack sites: `stacks` (the tool
- * catalog), `articles`, `concepts` and `slides`. A site's content.config.ts
- * stays thin:
+ * catalog), `articles`, `concepts`, `courses` (opt-in), `slides` and `pages`.
+ * A site's content.config.ts stays thin:
  *
  *   import { defineAasCollections } from 'stack-site-builder/content';
  *   import { categoryMap } from './data/categories';
@@ -15,7 +15,16 @@ import { glob } from 'astro/loaders';
  * tree — stack entries are validated against it so an unknown category id
  * fails the build instead of silently dropping the entry from every listing.
  */
-export function defineAasCollections({ categoryMap }: { categoryMap: Map<string, unknown> }) {
+export function defineAasCollections({
+  categoryMap,
+  courseCategoryMap,
+}: {
+  categoryMap: Map<string, unknown>;
+  /** The site's course category tree (`src/data/course-categories.ts`). Optional
+   *  because `courses` is an opt-in section; when provided, course `category`
+   *  ids are validated against it at build time (like stacks). */
+  courseCategoryMap?: Map<string, unknown>;
+}) {
   /**
    * The `stacks` collection holds one entry per tool/service used to build
    * AI agents. Each entry is an MDX file: frontmatter powers the listing and
@@ -198,6 +207,62 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
   });
 
   /**
+   * The `courses` collection holds structured lessons/lectures — an opt-in
+   * section (`sections: { courses: true }`) for sites that teach rather than
+   * catalog. Each course is one MDX file: frontmatter powers the course cards
+   * (difficulty, duration, category), the body is the course page itself. Paid
+   * courses use `private` + `teaser` like every other collection.
+   *
+   * Locale-partitioned like the others: `courses/<lang>/<slug>.mdx`.
+   */
+  const courses = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/courses' }),
+    schema: ({ image }) =>
+      z.object({
+        title: z.string(),
+        description: z.string(),
+        // Short one-liner for tight card layouts; falls back to `description`.
+        summary: z.string().optional(),
+        date: z.coerce.date(), // first published
+        // Living-doc metadata, mirroring concepts: bump on meaningful edits.
+        version: z.string().optional(), // e.g. "1.0"
+        updated: z.coerce.date().optional(), // last meaningful update (YYYY-MM-DD)
+        image: image().optional(), // hero / card image (optimized; relative to the file)
+        imageAlt: z.string().optional(),
+        // Leaf id from the site's src/data/course-categories.ts. Validated when the
+        // site passes `courseCategoryMap` (strict, like stacks); otherwise resolved
+        // at render time with an uncategorized fallback (loose, like concepts).
+        category: (courseCategoryMap
+          ? z.string().refine((id) => courseCategoryMap.has(id), {
+              message:
+                'unknown course category id — must match a node in the site data course category tree',
+            })
+          : z.string()
+        ).optional(),
+        tags: z.array(z.string()).default([]),
+        // Difficulty, 1 (beginner) … 5 (expert) — rendered as stars on cards
+        // and the detail header; localized labels live in src/i18n/ui.ts.
+        level: z.number().int().min(1).max(5).optional(),
+        // Human-readable duration, e.g. "1:30" or "8주" — displayed verbatim.
+        hours: z.string().optional(),
+        // Manual sort key, highest first (e.g. "2601-01" = YYMM-seq, so newer
+        // cohorts lead). Courses without one sort by `date`, newest first.
+        order: z.string().optional(),
+        // Free-form kind tag a site can style/filter on (e.g. "special-lecture").
+        type: z.string().optional(),
+        related: z.array(z.string()).default([]), // related course slugs
+        // Decks in the `slides` collection that belong to this course
+        // (linked from the course detail header).
+        slides: z.array(z.string()).default([]),
+        draft: z.boolean().default(false),
+        // Login-gated course (encrypted body; listings show title + optional
+        // PUBLIC `teaser`). See docs/private-content-design.md.
+        private: z.boolean().default(false),
+        teaser: z.string().optional(),
+      }),
+  });
+
+  /**
    * The `slides` collection holds presentation decks — one MDX file per deck, with
    * each slide wrapped in a <Slide> component (see src/components/Slide.astro). The
    * deck renders as a fullscreen scroll-snap presentation at /slides/<name>/.
@@ -273,5 +338,5 @@ export function defineAasCollections({ categoryMap }: { categoryMap: Map<string,
       }),
   });
 
-  return { stacks, articles, concepts, slides, pages };
+  return { stacks, articles, concepts, courses, slides, pages };
 }

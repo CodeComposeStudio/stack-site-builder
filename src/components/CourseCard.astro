@@ -1,0 +1,97 @@
+---
+import { Image } from 'astro:assets';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate, isoDate } from '../lib/dates';
+import { inlineMd } from '../lib/inline-md';
+import DifficultyStars from './DifficultyStars.astro';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  lang: Lang;
+  slug: string;
+  title: string;
+  description: string;
+  tags: string[];
+  image?: ImageMetadata;
+  imageAlt?: string;
+  level?: number;
+  hours?: string;
+  version?: string;
+  date: Date;
+  updated?: Date;
+  /** Manual sort key (`order` frontmatter) — beats date recency in the list sort. */
+  order?: string;
+  /** Private entry: show a lock and the (public) `teaser` instead of the description. */
+  isPrivate?: boolean;
+  teaser?: string;
+}
+
+const {
+  lang,
+  slug,
+  title,
+  description,
+  tags,
+  image,
+  imageAlt,
+  level,
+  hours,
+  version,
+  date,
+  updated,
+  order,
+  isPrivate = false,
+  teaser,
+} = Astro.props;
+const t = useTranslations(lang);
+const shownDesc = isPrivate ? (teaser ?? '') : description;
+// ListControls' "recent" sort compares data-date strings descending. Putting
+// `order` in the key keeps the manual curation working client-side too: order
+// keys ("2601-01") outrank ISO dates ("20…") lexicographically, matching the
+// server-side getCourses() order — so the on-load sort causes no reflow.
+const sortKey = order ?? isoDate(updated ?? date);
+const shownDate = updated ?? date;
+---
+
+<a
+  href={getRelativeLocaleUrl(lang, `course/${slug}/`)}
+  data-name={title.toLowerCase()}
+  data-date={sortKey}
+  class="aas-lift block overflow-hidden rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)] no-underline"
+>
+  {image && <Image src={image} alt={imageAlt ?? title} class="aspect-[16/9] w-full object-cover" />}
+  <div class="p-5">
+    <p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--aas-muted)]">
+      {level && <DifficultyStars lang={lang} level={level} />}
+      {
+        hours && (
+          <span class="inline-flex items-center gap-1" title={t('course.hours')}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            {hours}
+          </span>
+        )
+      }
+      <time datetime={isoDate(shownDate)}>{formatDate(shownDate, lang)}</time>
+      {version && <span>{t('meta.docVersion')} {version}</span>}
+    </p>
+    <h3 class="mt-1 text-lg font-semibold text-[var(--aas-text)]">
+      {isPrivate && <span aria-label={t('private.badge')} title={t('private.badge')}>🔒 </span>}{title}
+    </h3>
+    <p
+      class="aas-md mt-2 text-sm leading-relaxed text-[var(--aas-muted)]"
+      set:html={inlineMd(shownDesc)}
+    />
+    {
+      tags.length > 0 && (
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          {tags.slice(0, 4).map((tag) => (
+            <span class="rounded-full border border-[var(--aas-border)] px-2 py-0.5 text-xs text-[var(--aas-muted)]">
+              {tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</a>
