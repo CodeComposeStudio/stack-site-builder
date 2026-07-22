@@ -64,6 +64,7 @@ const priv = entry.data.private;
     <main
       class:list={['aas-deck', themeClass]}
       data-deck
+      data-run-embed-label={t('slides.runEmbed')}
       data-transition={entry.data.transition}
       data-toc={String(entry.data.toc)}
       data-toc-level={String(entry.data.toc_level)}
@@ -173,31 +174,47 @@ const priv = entry.data.private;
         const btnNext = document.querySelector<HTMLButtonElement>('[data-next]');
         if (elTot) elTot.textContent = String(total);
 
-        // Heavy embeds (interactive demo iframes) keep animating offscreen and
-        // make every later slide transition jank. Keep only the on/near-screen
-        // slides' iframes live: leaving a slide blanks its frames (src stashed
-        // on the element), returning restores them — the demo reloads fresh,
-        // exactly like a page refresh. One viewport of margin each side means
-        // the neighbor slide is already loading while you transition into it.
-        const framedSlides = slides.filter((s) => s.querySelector('iframe'));
-        if (framedSlides.length) {
+        // Heavy embeds (interactive demo iframes) jank slide transitions the
+        // moment they run — worse once the viewer has interacted with one. So
+        // embeds are click-to-run: each iframe starts blank behind a "run"
+        // overlay (src stashed), loads only when the viewer asks, and unloads
+        // back to the overlay as soon as its slide leaves the screen. The deck
+        // itself never carries a live embed between slides.
+        const runLabel = deck.dataset.runEmbedLabel || 'Run';
+        const embeds = Array.from(deck.querySelectorAll<HTMLIFrameElement>('.aas-slide iframe'));
+        if (embeds.length) {
+          for (const f of embeds) {
+            f.dataset.aasSrc = f.getAttribute('src') ?? '';
+            f.removeAttribute('src');
+            const wrap = document.createElement('div');
+            wrap.className = 'aas-embed';
+            f.parentNode?.insertBefore(wrap, f);
+            wrap.appendChild(f);
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'aas-embed-run';
+            btn.innerHTML = `<span aria-hidden="true">▶</span> ${runLabel}`;
+            btn.addEventListener('click', () => {
+              if (f.dataset.aasSrc) f.setAttribute('src', f.dataset.aasSrc);
+              wrap.classList.add('running');
+            });
+            wrap.appendChild(btn);
+          }
           const io = new IntersectionObserver(
             (entries) => {
               for (const e of entries) {
+                if (e.isIntersecting) continue;
                 for (const f of Array.from(e.target.querySelectorAll<HTMLIFrameElement>('iframe'))) {
-                  const src = f.getAttribute('src');
-                  if (e.isIntersecting) {
-                    if (!src && f.dataset.aasSrc) f.setAttribute('src', f.dataset.aasSrc);
-                  } else if (src) {
-                    f.dataset.aasSrc = src;
+                  if (f.getAttribute('src')) {
                     f.removeAttribute('src');
+                    f.closest('.aas-embed')?.classList.remove('running');
                   }
                 }
               }
             },
-            { root: deck, rootMargin: '0px 100% 0px 100%' },
+            { root: deck },
           );
-          framedSlides.forEach((s) => io.observe(s));
+          slides.filter((s) => s.querySelector('iframe')).forEach((s) => io.observe(s));
         }
 
         let current = 0;

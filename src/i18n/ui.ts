@@ -90,6 +90,7 @@ export const ui = {
     'slides.zoom': 'Enlarge',
     'slides.close': 'Close',
     'slides.overview': 'Overview',
+    'slides.runEmbed': 'Run the demo',
     'sample.title': 'Samples',
     'sample.tagline':
       'The runnable mini-projects behind the catalog — download a folder and run it with Docker.',
@@ -253,6 +254,7 @@ export const ui = {
     'slides.zoom': '크게 보기',
     'slides.close': '닫기',
     'slides.overview': '한눈에 보기',
+    'slides.runEmbed': '데모 실행',
     'sample.title': '샘플',
     'sample.tagline': '카탈로그 뒤의 실행 가능한 미니 프로젝트 — 폴더를 받아 Docker로 실행해 보세요.',
     'sample.usedBy': '이 샘플을 쓰는 곳',
