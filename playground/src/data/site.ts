@@ -32,7 +32,7 @@ export const site = {
    *  Example — hide the slides and glossary sections:
    *      sections: { slides: false, glossary: false },
    */
-  sections: { courses: true } satisfies Partial<Record<SectionKey, boolean>>,
+  sections: { courses: true, products: true } satisfies Partial<Record<SectionKey, boolean>>,
   /** Per-locale overrides for the theme's UI strings; empty = theme defaults.
    *  A locale beyond the theme's en/ko (add it to `locales` above) supplies its
    *  whole string table here; any key it omits falls back to the default locale.
@@ -44,6 +44,7 @@ export const site = {
       'nav.browse': '一覧',
       'nav.concepts': 'コンセプト',
       'nav.courses': 'コース',
+      'nav.products': '製品',
       'nav.blog': '記事',
       'nav.samples': 'サンプル',
       'nav.slides': 'スライド',

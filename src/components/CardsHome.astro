@@ -1,6 +1,6 @@
 ---
 // The data-driven "cards" homepage (see src/lib/home.ts): hero with the site
-// icon/name, a stack of wide link cards (apps, sections, external links — the
+// icon/name, a stack of wide link cards (products, sections, external links — the
 // Things-style studio home), and a closing CTA banner. Everything renders
 // from `site.home`; sections without data simply don't render.
 import { site } from '@aas-data/site';
@@ -22,7 +22,7 @@ const heroTitle = loc(h?.hero?.title, lang) ?? site.name;
 const heroSubtitle = loc(h?.hero?.subtitle, lang) ?? t('site.tagline');
 const extAttrs = (external?: boolean) =>
   external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
-// Internal links ("/apps/…") are written locale-less in site.home and get the
+// Internal links ("/products/…") are written locale-less in site.home and get the
 // current locale's prefix here, so the en home links to the en pages.
 const resolveHref = (href: string, external?: boolean) =>
   !external && href.startsWith('/') ? getRelativeLocaleUrl(lang, href.replace(/^\//, '')) : href;

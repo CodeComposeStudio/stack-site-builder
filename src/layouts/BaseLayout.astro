@@ -7,7 +7,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import BackToTop from '../components/BackToTop.astro';
 import { getNavPages, pageSlugOf } from '../lib/pages';
-import { getNavApps, getAppLandings, appSlugOf } from '../lib/apps';
+import { getNavProducts, getTopProducts, productSlugOf } from '../lib/products';
 import { homeTemplate } from '../lib/home';
 import { sectionEnabled, type SectionKey } from '../lib/sections';
 
@@ -58,10 +58,10 @@ const isDefaultHome = path === '' && lang === 'en';
 // e.g. an About/소개 page. Rendered as their own nav items alongside the
 // built-in sections; the accessible label comes from the page's own frontmatter.
 const navPages = await getNavPages(lang);
-// App landings that opt into their own header link (the collection's `nav`),
-// plus the Apps-index link, which appears once the locale has any landing.
-const navApps = await getNavApps(lang);
-const hasAppLandings = (await getAppLandings(lang)).length > 0;
+// Products that opt into their own header link (the collection's `nav`), plus
+// the Products-index link, which appears once the locale has any product.
+const navProducts = await getNavProducts(lang);
+const hasProducts = (await getTopProducts(lang)).length > 0;
 // The header's GitHub link — hidden for sites whose repo is private
 // (`repoNav: false` in site.ts) or that declare no repoUrl at all.
 const showRepoLink =
@@ -91,12 +91,12 @@ const allNavItems: {
         },
       ]
     : []),
-  ...(hasAppLandings
+  ...(hasProducts
     ? [
         {
-          href: getRelativeLocaleUrl(lang, 'apps/'),
-          label: t('nav.apps'),
-          section: 'apps' as SectionKey,
+          href: getRelativeLocaleUrl(lang, 'products/'),
+          label: t('nav.products'),
+          section: 'products' as SectionKey,
           svg: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/>',
         },
       ]
@@ -137,10 +137,10 @@ const allNavItems: {
     section: 'glossary',
     svg: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
   },
-  ...navApps.map((a) => ({
-    href: getRelativeLocaleUrl(lang, `apps/${appSlugOf(a)}/`),
+  ...navProducts.map((a) => ({
+    href: getRelativeLocaleUrl(lang, `products/${productSlugOf(a)}/`),
     label: a.data.navLabel ?? a.data.title,
-    section: 'apps' as SectionKey,
+    section: 'products' as SectionKey,
     svg: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
   })),
   ...navPages.map((p) => ({
