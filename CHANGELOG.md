@@ -23,6 +23,12 @@ here is a plain version bump they pull in.
   its slide leaves the screen — the deck never carries a live embed between
   slides.
 
+### Fixed
+
+- **Table label columns wrapped** — in a wide table the first column got
+  squeezed to its minimum width, breaking short labels ("Part 1") onto two
+  lines. The first column of prose and slide tables no longer wraps.
+
 ## [1.17.3] - 2026-07-22
 
 ### Fixed
