@@ -5,7 +5,15 @@
 ---
 
 <script>
-  import mermaid from 'mermaid';
+  // The self-contained browser bundle, NOT the package default: the default
+  // entry (mermaid.core.mjs) keeps dayjs/d3 as bare CJS imports, which break
+  // with a "does not provide an export named 'default'" SyntaxError in a
+  // CONSUMING site's dev server — the theme lives in node_modules there, so
+  // Vite serves the import chain raw without CJS interop. The esm.min bundle
+  // inlines every dependency (relative-chunk imports only), so it loads the
+  // same in dev and build.
+  // @ts-expect-error — the bundled build ships no type mapping; same API.
+  import mermaid from 'mermaid/dist/mermaid.esm.min.mjs';
   import { initOnReady } from '../lib/reinit';
 
   // Read the live site palette so Mermaid matches the current theme exactly.
