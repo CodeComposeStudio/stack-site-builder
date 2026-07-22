@@ -11,6 +11,16 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.17.2] - 2026-07-22
+
+### Fixed
+
+- **Slide decks ignored the site's custom favicon** — DeckView owns its own
+  `<head>` (fullscreen layout) and still hardcoded `/favicon.svg`. Browser
+  icons are now resolved once in `lib/icons` and shared by BaseLayout and
+  DeckView, so `site.icons` applies everywhere (favicon, apple-touch,
+  manifest).
+
 ## [1.17.1] - 2026-07-22
 
 ### Fixed
@@ -244,6 +254,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.17.2]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.1...v1.17.2
 [1.17.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.16.0...v1.17.0
 [1.16.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.15.0...v1.16.0

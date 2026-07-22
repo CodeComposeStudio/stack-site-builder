@@ -6,6 +6,7 @@ import { render, type CollectionEntry } from 'astro:content';
 import MermaidLoader from './MermaidLoader.astro';
 import PrivateGate from './PrivateGate.astro';
 import { useTranslations, type Lang } from '../i18n/ui';
+import { siteIcons } from '../lib/icons';
 
 // Renders a full-screen slide deck as a horizontal scroll-snap presentation.
 // A page (src/pages/slides/[deck].astro and its ko/ sibling) picks the deck for
@@ -33,7 +34,9 @@ const priv = entry.data.private;
     <title>{entry.data.title} — {site.name}</title>
     <meta name="description" content={(priv ? entry.data.teaser : entry.data.description) ?? ''} />
     {priv && <meta name="robots" content="noindex" />}
-    <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+    <link rel="icon" {...(siteIcons.faviconType ? { type: siteIcons.faviconType } : {})} href={`${base}${siteIcons.favicon}`} />
+    {siteIcons.appleTouch && <link rel="apple-touch-icon" href={`${base}${siteIcons.appleTouch}`} />}
+    {siteIcons.manifest && <link rel="manifest" href={`${base}${siteIcons.manifest}`} />}
     {/* Follow the site's light/dark preference before first paint (same logic as
         BaseLayout). The deck's visual theme is a separate CSS class, below. */}
     <script is:inline>
