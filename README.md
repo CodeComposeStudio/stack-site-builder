@@ -36,7 +36,7 @@ export const collections = defineAasCollections({ categoryMap });
 
 | Where | What |
 | --- | --- |
-| `src/data/site.ts` | Site identity: name, repo URL, the `locales` it ships, optional `sections` toggles, per-locale UI string overrides |
+| `src/data/site.ts` | Site identity: name, repo URL (`repoNav: false` hides the header's GitHub link), the `locales` it ships, optional `sections` toggles, browser icons (`icons: { favicon, appleTouch, manifest }`), the `home` template, per-locale UI string overrides |
 | `src/data/categories.ts` | The tool-catalog category tree (validated against content) |
 | `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` (opt-in) | Taxonomies for concepts / articles / courses |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
@@ -134,8 +134,10 @@ carousels), a video themes showcase, a highlights grid, pricing tiers, a
 closing CTA and legal links. Landing media are `public/` paths. Entries nest:
 `apps/<lang>/flowstate.mdx` → `/apps/flowstate/`, and
 `apps/<lang>/flowstate/privacy.mdx` → `/apps/flowstate/privacy/` (a plain
-prose page). `nav: true` adds a header link. See
-`playground/src/content/apps/` for a complete example.
+prose page). An index at `/apps/` lists the landings, and the header gains an
+Apps link automatically once a locale has one; `nav: true` additionally gives
+a landing its own header item. See `playground/src/content/apps/` for a
+complete example.
 
 ## Homepage
 

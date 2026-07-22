@@ -11,7 +11,22 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
-## [1.16.1] - 2026-07-22
+## [1.17.0] - 2026-07-22
+
+### Added
+
+- **Apps index + header link** — `/apps/` lists the product landings (icon,
+  name, subtitle, description) as a "pick an app" entry point, and the
+  header gains an Apps link automatically once a locale has at least one
+  landing. Per-landing header links (`nav: true`) still work for sites that
+  prefer direct items.
+- **Configurable browser icons** — `site.icons = { favicon, appleTouch,
+  manifest }` in site.ts; `favicon` may be SVG, PNG or ICO (type inferred
+  from the extension) so a site can keep its existing logo as the tab icon.
+  Defaults to the theme's `/favicon.svg`.
+- **Hideable GitHub link** — `repoNav: false` in site.ts removes the
+  header's GitHub item (for private-repo sites); it also disappears when no
+  `repoUrl` is declared.
 
 ### Fixed
 
@@ -195,7 +210,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
-[1.16.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.16.0...v1.16.1
+[1.17.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.16.0...v1.17.0
 [1.16.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.13.0...v1.14.0
