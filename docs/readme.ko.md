@@ -112,6 +112,38 @@ integrations: [aasTheme({ glossary, sections: site.sections })];
 콘텐츠는 `src/content/courses/<lang>/<slug>.mdx`. 라우트는 개념과 동일한
 구조: `/course/`, `/course/<slug>/`, `/course/category/<id>/`.
 
+## 앱 (제품 랜딩)
+
+`apps` 컬렉션은 frontmatter만으로 Things 스타일 마케팅 페이지를 렌더합니다
+(`template: 'landing'`): 스토어 버튼·Product Hunt 배지가 있는 히어로, 교차
+배치 기능 소개(디바이스 프레임 스크린샷, 자동 회전 캐러셀), 비디오 테마
+쇼케이스, 하이라이트 그리드, 가격표, 마무리 CTA와 법적 링크까지. 랜딩
+미디어는 `public/` 경로를 씁니다. 항목은 중첩 가능:
+`apps/<lang>/flowstate.mdx` → `/apps/flowstate/`,
+`apps/<lang>/flowstate/privacy.mdx` → `/apps/flowstate/privacy/`(일반 프로즈
+페이지). `nav: true`면 헤더에 링크가 생깁니다. 전체 예시는
+`playground/src/content/apps/` 참고.
+
+## 홈
+
+기본 홈은 스택 카탈로그입니다. 카탈로그가 아닌 사이트는
+`src/data/site.ts`에서 데이터 주도 홈으로 교체할 수 있습니다:
+
+```ts
+home: {
+  template: 'cards',
+  hero: { icon: '/img/logo.png', subtitle: { ko: '…', en: '…' } },
+  cardsTitle: { ko: '앱', en: 'Apps' },
+  cards: [{ href: '/apps/flowstate/', name: 'FlowState', icon: '/img/icon.png',
+            rounded: true, description: { ko: '…', en: '…' }, tags: ['iOS'] }],
+  cta: { title: { … }, description: { … }, button: { label: { … }, href: '/course/' } },
+},
+```
+
+로컬라이즈 값은 문자열 하나 또는 로케일별 레코드(기본 로케일 폴백)를
+씁니다. cards 홈에서는 카탈로그로 앵커되는 헤더의 둘러보기 링크가 자동으로
+숨겨집니다.
+
 ## 본문 컴포넌트
 
 어느 컬렉션의 MDX 본문에서든 import해 쓰는 컴포넌트: `Bookmark`(링크 카드),

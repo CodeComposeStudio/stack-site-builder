@@ -11,6 +11,30 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.16.0] - 2026-07-22
+
+### Added
+
+- **`apps` collection — product landings** — Things-style marketing pages
+  driven entirely by frontmatter (`template: 'landing'`): hero with app icon,
+  App Store / Google Play buttons (`"#"` renders disabled with a
+  "coming soon" label) and a Product Hunt badge; alternating feature rows
+  with optional device-frame screenshots and auto-rotating carousels; a
+  video "themes" showcase with tab switching; a highlights grid; pricing
+  tiers with a featured ribbon; a closing CTA; and legal links. Entries may
+  nest — `apps/<lang>/<slug>/privacy.mdx` renders at
+  `/apps/<slug>/privacy/` as a plain prose page (`template: 'page'`) — via
+  one catch-all route. Landing media (icons, screenshots, videos, frame art)
+  are `public/` paths. `nav: true` puts a landing in the header nav. The
+  section is on by default; an empty collection builds zero pages.
+- **Data-driven "cards" home** — a site that isn't a catalog can declare
+  `home: { template: 'cards', hero, cards, cta }` in `src/data/site.ts` and
+  get a hero + wide-card grid + CTA homepage instead of the stack catalog.
+  Localized strings use per-locale records (`{ ko: '…', en: '…' }`) with
+  default-locale fallback, like category labels. On a cards home the
+  header's catalog-anchored Browse link hides itself; the catalog routes
+  still build (empty without stacks).
+
 ## [1.15.0] - 2026-07-22
 
 ### Added
@@ -162,6 +186,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.16.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.13.0...v1.14.0
 [1.13.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.12.0...v1.13.0

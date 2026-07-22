@@ -125,6 +125,38 @@ teaser: A public one-liner for the login gate.
 
 Routes mirror concepts: `/course/`, `/course/<slug>/`, `/course/category/<id>/`.
 
+## Apps (product landings)
+
+The `apps` collection renders Things-style marketing pages from frontmatter
+alone (`template: 'landing'`): hero with store buttons and an optional Product
+Hunt badge, alternating feature rows (device-frame screenshots, auto-rotating
+carousels), a video themes showcase, a highlights grid, pricing tiers, a
+closing CTA and legal links. Landing media are `public/` paths. Entries nest:
+`apps/<lang>/flowstate.mdx` → `/apps/flowstate/`, and
+`apps/<lang>/flowstate/privacy.mdx` → `/apps/flowstate/privacy/` (a plain
+prose page). `nav: true` adds a header link. See
+`playground/src/content/apps/` for a complete example.
+
+## Homepage
+
+The default home is the stack catalog. A site that isn't a catalog can swap in
+a data-driven home from `src/data/site.ts`:
+
+```ts
+home: {
+  template: 'cards',
+  hero: { icon: '/img/logo.png', subtitle: { ko: '…', en: '…' } },
+  cardsTitle: { ko: '앱', en: 'Apps' },
+  cards: [{ href: '/apps/flowstate/', name: 'FlowState', icon: '/img/icon.png',
+            rounded: true, description: { ko: '…', en: '…' }, tags: ['iOS'] }],
+  cta: { title: { … }, description: { … }, button: { label: { … }, href: '/course/' } },
+},
+```
+
+Localized values are either one string or a per-locale record with
+default-locale fallback. On a cards home the header's Browse link (which
+anchors into the catalog) hides itself.
+
 ## Body components
 
 Reusable MDX-body components, importable from any collection's content:
