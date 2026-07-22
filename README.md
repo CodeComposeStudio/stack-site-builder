@@ -38,9 +38,9 @@ export const collections = defineAasCollections({ categoryMap });
 | --- | --- |
 | `src/data/site.ts` | Site identity: name, repo URL, the `locales` it ships, optional `sections` toggles, per-locale UI string overrides |
 | `src/data/categories.ts` | The tool-catalog category tree (validated against content) |
-| `src/data/concept-categories.ts` · `article-categories.ts` | Taxonomies for concepts / articles |
+| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` (opt-in) | Taxonomies for concepts / articles / courses |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
-| `src/content/{stacks,concepts,articles,slides}/` | The content, one MDX file per locale |
+| `src/content/{stacks,concepts,courses,articles,slides}/` | The content, one MDX file per locale |
 | `src/content/pages/` | Standalone top-level pages (e.g. an About/소개), rendered at `/<slug>/` and optionally linked in the header nav |
 | `public/` · `samples/` | Logos/favicons and runnable sample projects |
 
@@ -72,7 +72,7 @@ The rest are opt-out — **concepts, articles, samples, slides, glossary** and t
 standalone **pages** collection (About/소개, …) — so a site can ship only what it
 needs. Turning one off removes both its routes and its header-nav item. (`pages`
 also has finer control: each page's `nav` / `draft` frontmatter, or simply not
-authoring it.)
+authoring it.) **courses** is the one opt-IN section — see below.
 
 Declare the toggles once in `src/data/site.ts` and forward them to the theme in
 astro.config (which needs them to skip route injection). Import `SectionKey` from
@@ -92,6 +92,57 @@ export const site = {
 import { site } from './src/data/site';
 integrations: [aasTheme({ glossary, sections: site.sections })];
 ```
+
+## Courses (opt-in)
+
+A course section for sites that teach: cards with difficulty stars and
+duration, cohort ordering, category browse pages, and paid courses gated by
+the same private-content machinery. It stays off until a site opts in, because
+it needs site data:
+
+1. `sections: { courses: true }` in `src/data/site.ts` (forwarded to
+   `aasTheme` as above).
+2. `src/data/course-categories.ts` exporting `courseTree` / `courseCatOf`
+   (copy `playground/src/data/course-categories.ts` and edit the tree).
+3. Optionally pass the map to
+   `defineAasCollections({ categoryMap, courseCategoryMap })` so course
+   category ids are validated at build time.
+
+Then author `src/content/courses/<lang>/<slug>.mdx`:
+
+```yaml
+title: Getting Started with AI Agents
+description: A hands-on introduction.
+date: 2026-06-01
+category: ai-basics # id from course-categories.ts
+level: 2 # difficulty 1–5, shown as stars
+hours: "1:30" # duration, shown verbatim
+order: "2601-01" # manual sort key, highest first (optional)
+slides: [deck-id] # decks in the slides collection (optional)
+private: true # paid course — body ships encrypted
+teaser: A public one-liner for the login gate.
+```
+
+Routes mirror concepts: `/course/`, `/course/<slug>/`, `/course/category/<id>/`.
+
+## Body components
+
+Reusable MDX-body components, importable from any collection's content:
+`Bookmark` (link-preview card), `Embed` (responsive iframe for demos/videos —
+`ratio`, `height`, `sandbox`), `Lead` (intro paragraph).
+
+```mdx
+import Bookmark from 'stack-site-builder/components/Bookmark.astro';
+
+<Bookmark url="https://…" title="…" description="…" />
+```
+
+## RSS
+
+The articles collection feeds `/rss.xml` (default locale) and
+`/<code>/rss.xml`, advertised with `<link rel="alternate">`. Drafts and
+private entries stay out (mirroring the sitemap); the feed is injected only
+while the `articles` section is on.
 
 ## Private content
 
