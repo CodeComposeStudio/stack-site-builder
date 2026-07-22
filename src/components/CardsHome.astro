@@ -1,0 +1,108 @@
+---
+// The data-driven "cards" homepage (see src/lib/home.ts): hero with the site
+// icon/name, a stack of wide link cards (apps, sections, external links — the
+// Things-style studio home), and a closing CTA banner. Everything renders
+// from `site.home`; sections without data simply don't render.
+import { site } from '@aas-data/site';
+import { home, loc, locList } from '../lib/home';
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const h = home;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const withBase = (p?: string) => (p && p.startsWith('/') ? base + p : p);
+
+const heroTitle = loc(h?.hero?.title, lang) ?? site.name;
+const heroSubtitle = loc(h?.hero?.subtitle, lang) ?? t('site.tagline');
+const extAttrs = (external?: boolean) =>
+  external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+---
+
+<section class="py-14 text-center">
+  {h?.hero?.icon && <img src={withBase(h.hero.icon)} alt="" class="mx-auto h-20 w-20 rounded-[22%] shadow-md" />}
+  <h1 class="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">{heroTitle}</h1>
+  <p class="mx-auto mt-4 max-w-2xl text-xl text-[var(--aas-muted)]" set:html={heroSubtitle} />
+</section>
+
+{
+  (h?.cards?.length ?? 0) > 0 && (
+    <section class="aas-bleed bg-[var(--aas-panel)] py-14">
+      <div class="mx-auto max-w-[75rem] px-5">
+        {h?.cardsTitle && <h2 class="mb-6 text-3xl font-bold tracking-tight">{loc(h.cardsTitle, lang)}</h2>}
+        <div class="flex flex-col gap-5">
+          {h?.cards?.map((c) => (
+            <a
+              href={c.href}
+              {...extAttrs(c.external)}
+              class="aas-lift flex items-center gap-6 rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-bg)] p-6 no-underline"
+            >
+              {c.icon && (
+                <img
+                  src={withBase(c.icon)}
+                  alt=""
+                  class:list={['h-20 w-20 shrink-0', c.rounded ? 'rounded-[22%]' : 'rounded-xl']}
+                  loading="lazy"
+                />
+              )}
+              <span class="min-w-0">
+                <span class="block text-xl font-semibold text-[var(--aas-text)]">{loc(c.name, lang)}</span>
+                {c.description && (
+                  <span
+                    class="mt-1 block leading-relaxed text-[var(--aas-muted)]"
+                    set:html={loc(c.description, lang)}
+                  />
+                )}
+                {locList(c.tags, lang).length > 0 && (
+                  <span class="mt-3 flex flex-wrap gap-1.5">
+                    {locList(c.tags, lang).map((tag) => (
+                      <span class="rounded-full border border-[var(--aas-border)] px-2 py-0.5 text-xs text-[var(--aas-muted)]">
+                        {tag}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+{
+  h?.cta && (
+    <section class="py-16 text-center">
+      {h.cta.title && <h2 class="text-3xl font-bold tracking-tight">{loc(h.cta.title, lang)}</h2>}
+      {h.cta.description && (
+        <p class="mx-auto mt-3 max-w-2xl text-[var(--aas-muted)]" set:html={loc(h.cta.description, lang)} />
+      )}
+      {h.cta.button && (
+        <a
+          href={h.cta.button.href}
+          {...extAttrs(h.cta.button.external)}
+          class="mt-7 inline-block rounded-full bg-[var(--aas-accent)] px-7 py-3 font-semibold text-white no-underline"
+        >
+          {loc(h.cta.button.label, lang)}
+        </a>
+      )}
+    </section>
+  )
+}
+
+<style>
+  /* Full-bleed section: escape BaseLayout's centered container. */
+  .aas-bleed {
+    position: relative;
+    left: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    right: 50%;
+    width: 100vw;
+  }
+</style>
