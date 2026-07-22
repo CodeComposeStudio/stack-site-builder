@@ -38,11 +38,11 @@ export const collections = defineAasCollections({ categoryMap });
 
 | 위치 | 내용 |
 | --- | --- |
-| `src/data/site.ts` | 사이트 정체성: 이름, 저장소 URL, 제공 `locales`, 선택적 `sections` 토글, 로케일별 UI 문자열 오버라이드 |
+| `src/data/site.ts` | 사이트 정체성: 이름, 저장소 URL(`repoNav: false`면 헤더 GitHub 링크 숨김), 제공 `locales`, 선택적 `sections` 토글, 브라우저 아이콘(`icons: { favicon, appleTouch, manifest }`), `home` 템플릿, 로케일별 UI 문자열 오버라이드 |
 | `src/data/categories.ts` | 도구 카탈로그 카테고리 트리 (콘텐츠와 대조 검증됨) |
-| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` (옵트인) | 개념 / 글 / 강의의 분류 체계 |
+| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` · `product-categories.ts` (옵트인) | 개념 / 글 / 강의 / 제품의 분류 체계 |
 | `src/data/glossary.mjs` | `[[용어]]` 위키링크 대상 |
-| `src/content/{stacks,concepts,courses,articles,slides}/` | 콘텐츠 — 로케일당 MDX 파일 하나 |
+| `src/content/{stacks,concepts,courses,products,articles,slides}/` | 콘텐츠 — 로케일당 MDX 파일 하나 |
 | `src/content/pages/` | 독립 최상위 페이지 (예: 소개/About). `/<slug>/`로 렌더되고 헤더 네비에 연결 가능 |
 | `public/` · `samples/` | 로고/파비콘과 실행 가능한 샘플 프로젝트 |
 
@@ -75,7 +75,7 @@ export const collections = defineAasCollections({ categoryMap });
 등) — 는 끌 수 있어서, 사이트는 필요한 것만 담아 배포할 수 있습니다. 하나를
 끄면 그 라우트와 헤더 네비 항목이 함께 사라집니다. (`pages`는 더 세밀한
 제어도 가능: 각 페이지의 `nav` / `draft` 프런트매터, 또는 그냥 안 쓰기.)
-**courses**만 유일하게 옵트인 섹션입니다 — 아래 참고.
+**courses**와 **products**는 옵트인 섹션입니다 — 아래 참고.
 
 토글은 `src/data/site.ts`에 한 번 선언하고, astro.config에서 테마로
 전달합니다(라우트 주입을 건너뛰는 데 필요). 테마의 `SectionKey`를 import하면
@@ -112,17 +112,24 @@ integrations: [aasTheme({ glossary, sections: site.sections })];
 콘텐츠는 `src/content/courses/<lang>/<slug>.mdx`. 라우트는 개념과 동일한
 구조: `/course/`, `/course/<slug>/`, `/course/category/<id>/`.
 
-## 앱 (제품 랜딩)
+## 제품 (옵트인)
 
-`apps` 컬렉션은 frontmatter만으로 Things 스타일 마케팅 페이지를 렌더합니다
-(`template: 'landing'`): 스토어 버튼·Product Hunt 배지가 있는 히어로, 교차
-배치 기능 소개(디바이스 프레임 스크린샷, 자동 회전 캐러셀), 비디오 테마
-쇼케이스, 하이라이트 그리드, 가격표, 마무리 CTA와 법적 링크까지. 랜딩
-미디어는 `public/` 경로를 씁니다. 항목은 중첩 가능:
-`apps/<lang>/flowstate.mdx` → `/apps/flowstate/`,
-`apps/<lang>/flowstate/privacy.mdx` → `/apps/flowstate/privacy/`(일반 프로즈
-페이지). `nav: true`면 헤더에 링크가 생깁니다. 전체 예시는
-`playground/src/content/apps/` 참고.
+`products` 컬렉션은 "우리가 제공하는 것"의 우산입니다 — 사이트측 미니
+분류(앱, 서비스, 교육…)로 그룹핑되는 `/products/` 인덱스 아래에, 각 항목이
+Things 스타일 마케팅 랜딩(`template: 'landing'`: 스토어 버튼·Product Hunt
+배지 히어로, 디바이스 프레임·자동 회전 캐러셀의 교차 기능 소개, 비디오 테마
+쇼케이스, 하이라이트 그리드, 가격표, CTA, 법적 링크 — 미디어는 `public/`
+경로) 또는 일반 프로즈 페이지(외주 소개, 법적 서브페이지)로 렌더됩니다.
+항목은 중첩 가능: `products/<lang>/flowstate.mdx` → `/products/flowstate/`,
+`products/<lang>/flowstate/privacy.mdx` → `/products/flowstate/privacy/`.
+로케일에 제품이 하나라도 있으면 헤더에 제품 링크가 자동으로 생기고,
+`nav: true`면 개별 항목도 헤더에 노출됩니다.
+
+켜려면 `sections: { products: true }`와 함께 `productTree` / `productCatOf`를
+export하는 `src/data/product-categories.ts`가 필요하고(playground 것을 복사),
+선택적으로 `defineAasCollections`에 `productCategoryMap`을 넘기면 카테고리
+id가 빌드 시점에 검증됩니다. 전체 예시는 `playground/src/content/products/`
+참고.
 
 ## 홈
 
@@ -134,7 +141,7 @@ home: {
   template: 'cards',
   hero: { icon: '/img/logo.png', subtitle: { ko: '…', en: '…' } },
   cardsTitle: { ko: '앱', en: 'Apps' },
-  cards: [{ href: '/apps/flowstate/', name: 'FlowState', icon: '/img/icon.png',
+  cards: [{ href: '/products/flowstate/', name: 'FlowState', icon: '/img/icon.png',
             rounded: true, description: { ko: '…', en: '…' }, tags: ['iOS'] }],
   cta: { title: { … }, description: { … }, button: { label: { … }, href: '/course/' } },
 },

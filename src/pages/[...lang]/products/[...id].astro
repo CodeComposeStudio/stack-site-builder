@@ -3,26 +3,26 @@ import { site } from '@aas-data/site';
 import { render } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import AppLanding from '../../../components/AppLanding.astro';
+import ProductLanding from '../../../components/ProductLanding.astro';
 import PrivateGate from '../../../components/PrivateGate.astro';
 import TocRail from '../../../components/TocRail.astro';
 import MermaidLoader from '../../../components/MermaidLoader.astro';
-import { getApps, appSlugOf } from '../../../lib/apps';
+import { getProducts, productSlugOf } from '../../../lib/products';
 import { allLocales, langParam } from '../../../lib/locales';
 import { inlineMd } from '../../../lib/inline-md';
 
 export const getStaticPaths = (async () => {
   const paths: Awaited<ReturnType<GetStaticPaths>> = [];
   for (const lang of allLocales) {
-    for (const entry of await getApps(lang)) {
-      paths.push({ params: { lang: langParam(lang), id: appSlugOf(entry) }, props: { lang, entry } });
+    for (const entry of await getProducts(lang)) {
+      paths.push({ params: { lang: langParam(lang), id: productSlugOf(entry) }, props: { lang, entry } });
     }
   }
   return paths;
 }) satisfies GetStaticPaths;
 
 const { lang, entry } = Astro.props;
-const slug = appSlugOf(entry);
+const slug = productSlugOf(entry);
 const priv = entry.data.private;
 const isLanding = entry.data.template === 'landing';
 // Plain 'page' template (privacy/terms subpages) renders the markdown body.
@@ -35,13 +35,13 @@ const bodyHasMermaid = (entry.body ?? '').includes('```mermaid');
   title={`${entry.data.title} — ${site.name}`}
   description={priv ? entry.data.teaser : (entry.data.description ?? entry.data.subtitle)}
   lang={lang}
-  path={`apps/${slug}/`}
+  path={`products/${slug}/`}
   noindex={priv}
 >
   <PrivateGate enabled={priv} lang={lang} title={entry.data.title} teaser={entry.data.teaser}>
     {
       isLanding ? (
-        <AppLanding entry={entry} lang={lang} />
+        <ProductLanding entry={entry} lang={lang} />
       ) : (
         <>
           <header class="pb-6">

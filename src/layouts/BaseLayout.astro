@@ -7,7 +7,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import BackToTop from '../components/BackToTop.astro';
 import { getNavPages, pageSlugOf } from '../lib/pages';
-import { getNavApps, appSlugOf } from '../lib/apps';
+import { getNavProducts, getTopProducts, productSlugOf } from '../lib/products';
 import { homeTemplate } from '../lib/home';
 import { sectionEnabled, type SectionKey } from '../lib/sections';
 
@@ -33,6 +33,21 @@ const container = wide ? 'max-w-[81rem]' : 'max-w-[75rem]';
 const home = getRelativeLocaleUrl(lang, '');
 const base = import.meta.env.BASE_URL;
 
+// Site-configurable browser icons (`site.icons`). `favicon` may be any image
+// the browser can render (SVG/PNG/ICO — public/ path); appleTouch/manifest
+// links render only when declared. Defaults to the theme's /favicon.svg.
+const icons =
+  (site as { icons?: { favicon?: string; appleTouch?: string; manifest?: string } }).icons ?? {};
+const faviconHref = icons.favicon ?? '/favicon.svg';
+const faviconType = faviconHref.endsWith('.svg')
+  ? 'image/svg+xml'
+  : faviconHref.endsWith('.png')
+    ? 'image/png'
+    : faviconHref.endsWith('.ico')
+      ? 'image/x-icon'
+      : undefined;
+const baseNoSlash = base.replace(/\/$/, '');
+
 // Home URL per locale, for the language auto-detect redirect on the root home.
 const localeHomes = Object.fromEntries(
   (Object.keys(languages) as Lang[]).map((c) => [c, getRelativeLocaleUrl(c, '')]),
@@ -43,8 +58,14 @@ const isDefaultHome = path === '' && lang === 'en';
 // e.g. an About/소개 page. Rendered as their own nav items alongside the
 // built-in sections; the accessible label comes from the page's own frontmatter.
 const navPages = await getNavPages(lang);
-// App landings that opt into a header link (the `apps` collection's `nav`).
-const navApps = await getNavApps(lang);
+// Products that opt into their own header link (the collection's `nav`), plus
+// the Products-index link, which appears once the locale has any product.
+const navProducts = await getNavProducts(lang);
+const hasProducts = (await getTopProducts(lang)).length > 0;
+// The header's GitHub link — hidden for sites whose repo is private
+// (`repoNav: false` in site.ts) or that declare no repoUrl at all.
+const showRepoLink =
+  !!site.repoUrl && (site as { repoNav?: boolean }).repoNav !== false;
 
 // The header sections, as data — rendered twice from one source so the two
 // layouts never drift: an icon-only row (≥sm) and a labelled dropdown menu
@@ -67,6 +88,16 @@ const allNavItems: {
           label: t('nav.browse'),
           keepFilters: true,
           svg: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
+        },
+      ]
+    : []),
+  ...(hasProducts
+    ? [
+        {
+          href: getRelativeLocaleUrl(lang, 'products/'),
+          label: t('nav.products'),
+          section: 'products' as SectionKey,
+          svg: '<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M10 4v4"/><path d="M2 8h20"/><path d="M6 4v4"/>',
         },
       ]
     : []),
@@ -106,10 +137,10 @@ const allNavItems: {
     section: 'glossary',
     svg: '<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
   },
-  ...navApps.map((a) => ({
-    href: getRelativeLocaleUrl(lang, `apps/${appSlugOf(a)}/`),
+  ...navProducts.map((a) => ({
+    href: getRelativeLocaleUrl(lang, `products/${productSlugOf(a)}/`),
     label: a.data.navLabel ?? a.data.title,
-    section: 'apps' as SectionKey,
+    section: 'products' as SectionKey,
     svg: '<rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/>',
   })),
   ...navPages.map((p) => ({
@@ -118,12 +149,16 @@ const allNavItems: {
     section: 'pages' as SectionKey,
     svg: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
   })),
-  {
-    href: site.repoUrl,
-    label: 'GitHub',
-    external: true,
-    svg: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C4 2 3 2 3 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 2 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
-  },
+  ...(showRepoLink
+    ? [
+        {
+          href: site.repoUrl,
+          label: 'GitHub',
+          external: true,
+          svg: '<path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C4 2 3 2 3 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 2 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/>',
+        },
+      ]
+    : []),
 ];
 // Drop the nav links for sections the site turned off (their routes aren't built).
 const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(item.section));
@@ -138,7 +173,9 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
-    <link rel="icon" type="image/svg+xml" href={`${base.replace(/\/$/, '')}/favicon.svg`} />
+    <link rel="icon" {...(faviconType ? { type: faviconType } : {})} href={`${baseNoSlash}${faviconHref}`} />
+    {icons.appleTouch && <link rel="apple-touch-icon" href={`${baseNoSlash}${icons.appleTouch}`} />}
+    {icons.manifest && <link rel="manifest" href={`${baseNoSlash}${icons.manifest}`} />}
     {
       sectionEnabled('articles') && (
         <link

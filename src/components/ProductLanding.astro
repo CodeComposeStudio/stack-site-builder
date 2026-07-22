@@ -1,5 +1,5 @@
 ---
-// Things-style app/product landing, rendered entirely from an `apps` entry's
+// Things-style product landing, rendered entirely from a `products` entry's
 // frontmatter (`template: 'landing'`): hero (icon / store buttons / Product
 // Hunt badge), alternating feature rows (with optional device frame and
 // auto-rotating screenshot carousels), a video "themes" showcase, a highlights
@@ -9,11 +9,11 @@
 // All media (icons, screenshots, videos, the frame art) are `public/` paths;
 // `description`-like strings may carry authored <br> tags (rendered as HTML).
 import { site } from '@aas-data/site';
-import type { AppEntry } from '../lib/apps';
+import type { ProductEntry } from '../lib/products';
 import type { Lang } from '../i18n/ui';
 
 interface Props {
-  entry: AppEntry;
+  entry: ProductEntry;
   lang: Lang;
 }
 

@@ -18,12 +18,16 @@ import { glob } from 'astro/loaders';
 export function defineAasCollections({
   categoryMap,
   courseCategoryMap,
+  productCategoryMap,
 }: {
   categoryMap: Map<string, unknown>;
   /** The site's course category tree (`src/data/course-categories.ts`). Optional
    *  because `courses` is an opt-in section; when provided, course `category`
    *  ids are validated against it at build time (like stacks). */
   courseCategoryMap?: Map<string, unknown>;
+  /** The site's product category tree (`src/data/product-categories.ts`).
+   *  Optional like `courseCategoryMap` — `products` is opt-in too. */
+  productCategoryMap?: Map<string, unknown>;
 }) {
   /**
    * The `stacks` collection holds one entry per tool/service used to build
@@ -307,26 +311,40 @@ export function defineAasCollections({
   });
 
   /**
-   * The `apps` collection holds product/app pages — a Things-style marketing
-   * landing per app (`template: 'landing'`) plus its plain subpages (privacy,
-   * terms — `template: 'page'`, the default). Entries are locale-partitioned
-   * and may nest: `apps/<lang>/<slug>.mdx` renders at `/apps/<slug>/`,
-   * `apps/<lang>/<slug>/privacy.mdx` at `/apps/<slug>/privacy/`.
+   * The `products` collection is the "what we offer" section — an opt-in
+   * umbrella (`sections: { products: true }`) whose entries are grouped by a
+   * mini-taxonomy (apps, services, education, …) on the `/products/` index.
+   * Each entry is either a Things-style marketing landing
+   * (`template: 'landing'`) or a plain prose page (`template: 'page'`, the
+   * default — an outsourcing pitch, a legal subpage). Entries are
+   * locale-partitioned and may nest: `products/<lang>/<slug>.mdx` renders at
+   * `/products/<slug>/`, `products/<lang>/<slug>/privacy.mdx` at
+   * `/products/<slug>/privacy/`.
    *
    * Landing visuals (icons, screenshots, videos, the phone-frame art) are
    * plain `public/` paths — videos can't go through the image pipeline, so
    * the whole landing keeps one convention instead of two.
    */
-  const apps = defineCollection({
-    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/apps' }),
+  const products = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/products' }),
     schema: z.object({
       title: z.string(),
       description: z.string().optional(), // meta description
       // 'landing' renders the structured marketing page below; 'page' renders
-      // the markdown body like a standalone page (legal subpages).
+      // the markdown body like a standalone page (pitches, legal subpages).
       template: z.enum(['landing', 'page']).default('page'),
+      // Mini-category on the site's src/data/product-categories.ts tree —
+      // groups the index. Validated when the site passes `productCategoryMap`;
+      // unknown/missing ids fall back to uncategorized at render.
+      category: (productCategoryMap
+        ? z.string().refine((id) => productCategoryMap.has(id), {
+            message:
+              'unknown product category id — must match a node in the site data product category tree',
+          })
+        : z.string()
+      ).optional(),
       // Header-nav placement, like the `pages` collection (default off —
-      // landings are usually reached from the home cards).
+      // products are usually reached from the index or the home cards).
       nav: z.boolean().default(false),
       navLabel: z.string().optional(),
       order: z.number().default(0),
@@ -469,5 +487,5 @@ export function defineAasCollections({
       }),
   });
 
-  return { stacks, articles, concepts, courses, slides, apps, pages };
+  return { stacks, articles, concepts, courses, slides, products, pages };
 }

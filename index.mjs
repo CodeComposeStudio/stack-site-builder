@@ -29,9 +29,11 @@ const PAGES = [
   // Standalone top-level pages (the `pages` collection), e.g. an About/소개
   // page. A single dynamic route per locale renders every entry at `/<slug>/`.
   '[page].astro',
-  // App/product pages (the `apps` collection): marketing landings and their
-  // nested subpages (privacy/terms) via one catch-all.
-  'apps/[...id].astro',
+  // Product pages (the `products` collection): a category-grouped index, plus
+  // the landings/pages and their nested subpages (privacy/terms) via one
+  // catch-all.
+  'products/index.astro',
+  'products/[...id].astro',
   // Per-locale RSS feed of the articles collection (an endpoint, not a page).
   'rss.xml.ts',
   'article/index.astro',
@@ -70,7 +72,7 @@ function sectionOf(file) {
   if (file.startsWith('concept/')) return 'concepts';
   if (file.startsWith('article/')) return 'articles';
   if (file.startsWith('course/')) return 'courses';
-  if (file.startsWith('apps/')) return 'apps';
+  if (file.startsWith('products/')) return 'products';
   if (file.startsWith('sample/')) return 'samples';
   if (file.startsWith('slides/')) return 'slides';
   if (file === 'glossary.astro') return 'glossary';
@@ -80,9 +82,10 @@ function sectionOf(file) {
 }
 
 // Sections that are opt-IN rather than opt-out: their routes are injected only
-// when the site passes `{ <key>: true }`. `courses` needs site-side data
-// (src/data/course-categories.ts), so a theme upgrade alone must not enable it.
-const OPT_IN_SECTIONS = new Set(['courses']);
+// when the site passes `{ <key>: true }`. Both need site-side data
+// (src/data/{course,product}-categories.ts), so a theme upgrade alone must
+// not enable them.
+const OPT_IN_SECTIONS = new Set(['courses', 'products']);
 
 /**
  * @param {object} opts

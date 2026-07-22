@@ -16,6 +16,8 @@ import { defaultLang, type Lang } from '../i18n/ui';
 export type Localized = string | Record<string, string>;
 
 export interface HomeCard {
+  /** Locale-less internal path ("/products/foo/", prefixed per locale at
+   *  render) or an external URL (set `external`). */
   href: string;
   external?: boolean;
   name: Localized;

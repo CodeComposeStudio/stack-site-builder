@@ -36,11 +36,11 @@ export const collections = defineAasCollections({ categoryMap });
 
 | Where | What |
 | --- | --- |
-| `src/data/site.ts` | Site identity: name, repo URL, the `locales` it ships, optional `sections` toggles, per-locale UI string overrides |
+| `src/data/site.ts` | Site identity: name, repo URL (`repoNav: false` hides the header's GitHub link), the `locales` it ships, optional `sections` toggles, browser icons (`icons: { favicon, appleTouch, manifest }`), the `home` template, per-locale UI string overrides |
 | `src/data/categories.ts` | The tool-catalog category tree (validated against content) |
-| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` (opt-in) | Taxonomies for concepts / articles / courses |
+| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` · `product-categories.ts` (opt-in) | Taxonomies for concepts / articles / courses / products |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
-| `src/content/{stacks,concepts,courses,articles,slides}/` | The content, one MDX file per locale |
+| `src/content/{stacks,concepts,courses,products,articles,slides}/` | The content, one MDX file per locale |
 | `src/content/pages/` | Standalone top-level pages (e.g. an About/소개), rendered at `/<slug>/` and optionally linked in the header nav |
 | `public/` · `samples/` | Logos/favicons and runnable sample projects |
 
@@ -72,7 +72,7 @@ The rest are opt-out — **concepts, articles, samples, slides, glossary** and t
 standalone **pages** collection (About/소개, …) — so a site can ship only what it
 needs. Turning one off removes both its routes and its header-nav item. (`pages`
 also has finer control: each page's `nav` / `draft` frontmatter, or simply not
-authoring it.) **courses** is the one opt-IN section — see below.
+authoring it.) **courses** and **products** are the opt-IN sections — see below.
 
 Declare the toggles once in `src/data/site.ts` and forward them to the theme in
 astro.config (which needs them to skip route injection). Import `SectionKey` from
@@ -125,17 +125,26 @@ teaser: A public one-liner for the login gate.
 
 Routes mirror concepts: `/course/`, `/course/<slug>/`, `/course/category/<id>/`.
 
-## Apps (product landings)
+## Products (opt-in)
 
-The `apps` collection renders Things-style marketing pages from frontmatter
-alone (`template: 'landing'`): hero with store buttons and an optional Product
-Hunt badge, alternating feature rows (device-frame screenshots, auto-rotating
-carousels), a video themes showcase, a highlights grid, pricing tiers, a
-closing CTA and legal links. Landing media are `public/` paths. Entries nest:
-`apps/<lang>/flowstate.mdx` → `/apps/flowstate/`, and
-`apps/<lang>/flowstate/privacy.mdx` → `/apps/flowstate/privacy/` (a plain
-prose page). `nav: true` adds a header link. See
-`playground/src/content/apps/` for a complete example.
+The `products` collection is the "what we offer" umbrella — entries grouped
+by a site-side mini-taxonomy (apps, services, education, …) on the
+`/products/` index. Each entry is either a Things-style marketing landing
+(`template: 'landing'`: hero with store buttons and an optional Product Hunt
+badge, alternating feature rows with device-frame screenshots and
+auto-rotating carousels, a video themes showcase, a highlights grid, pricing
+tiers, a closing CTA and legal links — media are `public/` paths) or a plain
+prose page (a service pitch, a legal subpage). Entries nest:
+`products/<lang>/flowstate.mdx` → `/products/flowstate/`, and
+`products/<lang>/flowstate/privacy.mdx` → `/products/flowstate/privacy/`.
+The header gains a Products link automatically once a locale has a product;
+`nav: true` additionally gives an entry its own header item.
+
+Enable with `sections: { products: true }` plus
+`src/data/product-categories.ts` (exporting `productTree` / `productCatOf` —
+copy the playground's), and optionally pass `productCategoryMap` to
+`defineAasCollections` for build-time category validation. See
+`playground/src/content/products/` for a complete example.
 
 ## Homepage
 
@@ -147,7 +156,7 @@ home: {
   template: 'cards',
   hero: { icon: '/img/logo.png', subtitle: { ko: '…', en: '…' } },
   cardsTitle: { ko: '앱', en: 'Apps' },
-  cards: [{ href: '/apps/flowstate/', name: 'FlowState', icon: '/img/icon.png',
+  cards: [{ href: '/products/flowstate/', name: 'FlowState', icon: '/img/icon.png',
             rounded: true, description: { ko: '…', en: '…' }, tags: ['iOS'] }],
   cta: { title: { … }, description: { … }, button: { label: { … }, href: '/course/' } },
 },

@@ -11,6 +11,45 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.17.0] - 2026-07-22
+
+### Changed
+
+- **`apps` → `products` (breaking for 1.16.0 `apps` users)** — the day-old
+  apps section is renamed and generalized before real adoption: "apps" was
+  too narrow an umbrella for what a studio offers, so the section is now
+  **products** with a site-side mini-taxonomy (apps, services, education, …).
+  Content moves to `src/content/products/`, routes to `/products/…`, the
+  section key becomes `products` and — because the index needs
+  `src/data/product-categories.ts` (exporting `productTree` /
+  `productCatOf`) — it is now opt-IN (`sections: { products: true }`).
+  Schemas gain an optional `category` (validated via the optional
+  `productCategoryMap` argument to `defineAasCollections`); the landing/page
+  templates, nested subpages and automatic header link carry over unchanged
+  as `ProductLanding` / `ProductsIndex`.
+
+### Added
+
+- **Products index + header link** — `/products/` lists the top-level
+  products (icon, name, subtitle, description) grouped by the site's
+  category tree, and the header gains a Products link automatically once a
+  locale has at least one product. Per-product header links (`nav: true`)
+  still work for sites that prefer direct items.
+- **Configurable browser icons** — `site.icons = { favicon, appleTouch,
+  manifest }` in site.ts; `favicon` may be SVG, PNG or ICO (type inferred
+  from the extension) so a site can keep its existing logo as the tab icon.
+  Defaults to the theme's `/favicon.svg`.
+- **Hideable GitHub link** — `repoNav: false` in site.ts removes the
+  header's GitHub item (for private-repo sites); it also disappears when no
+  `repoUrl` is declared.
+
+### Fixed
+
+- **Cards home links lost the locale** — card and CTA hrefs on the cards
+  home are written locale-less ("/apps/foo/") and now get the current
+  locale's prefix at render, so the `/en/` home links to `/en/…` pages
+  instead of the default locale's.
+
 ## [1.16.0] - 2026-07-22
 
 ### Added
@@ -186,6 +225,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.17.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.16.0...v1.17.0
 [1.16.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.14.0...v1.15.0
 [1.14.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.13.0...v1.14.0
