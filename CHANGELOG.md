@@ -11,6 +11,18 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.17.4] - 2026-07-22
+
+### Changed
+
+- **Deck embeds are click-to-run** — 1.17.3 only paused demos you had merely
+  scrolled past; once you *interacted* with one, its (now heavier) loops kept
+  janking transitions while its slide was near the screen. Every slide iframe
+  now starts blank behind a themed "Run the demo" overlay (`slides.runEmbed`
+  UI string), loads only on click, and unloads back to the overlay as soon as
+  its slide leaves the screen — the deck never carries a live embed between
+  slides.
+
 ## [1.17.3] - 2026-07-22
 
 ### Fixed
@@ -265,6 +277,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.17.4]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.3...v1.17.4
 [1.17.3]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.2...v1.17.3
 [1.17.2]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.1...v1.17.2
 [1.17.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.0...v1.17.1
