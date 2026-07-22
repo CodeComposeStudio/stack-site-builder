@@ -22,3 +22,11 @@ export async function getApps(lang: Lang): Promise<AppEntry[]> {
 export async function getNavApps(lang: Lang): Promise<AppEntry[]> {
   return (await getApps(lang)).filter((e) => e.data.nav);
 }
+
+/** Top-level landing pages for one locale — what the apps index lists (and
+ *  what makes the header's Apps link appear). Nested subpages are excluded. */
+export async function getAppLandings(lang: Lang): Promise<AppEntry[]> {
+  return (await getApps(lang)).filter(
+    (e) => e.data.template === 'landing' && !appSlugOf(e).includes('/'),
+  );
+}

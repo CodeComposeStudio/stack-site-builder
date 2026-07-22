@@ -29,8 +29,10 @@ const PAGES = [
   // Standalone top-level pages (the `pages` collection), e.g. an About/소개
   // page. A single dynamic route per locale renders every entry at `/<slug>/`.
   '[page].astro',
-  // App/product pages (the `apps` collection): marketing landings and their
-  // nested subpages (privacy/terms) via one catch-all.
+  // App/product pages (the `apps` collection): an index listing the landings,
+  // plus the landings and their nested subpages (privacy/terms) via one
+  // catch-all.
+  'apps/index.astro',
   'apps/[...id].astro',
   // Per-locale RSS feed of the articles collection (an endpoint, not a page).
   'rss.xml.ts',
