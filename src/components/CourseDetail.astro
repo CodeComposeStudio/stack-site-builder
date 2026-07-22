@@ -1,7 +1,8 @@
 ---
-import { render, getCollection } from 'astro:content';
+import { render } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { getCourses, courseSlugOf, type CourseEntry } from '../lib/courses';
+import { getDecks, deckSlugOf } from '../lib/slides';
 import { inlineMd } from '../lib/inline-md';
 import { Image } from 'astro:assets';
 import { useTranslations, type Lang } from '../i18n/ui';
@@ -33,14 +34,14 @@ const relatedCourses = data.related
   .map((sl) => courseBySlug.get(sl))
   .filter(Boolean) as CourseEntry[];
 
-// Decks in the `slides` collection that belong to this course. Only linked when
-// the slides section is enabled (otherwise its routes don't exist) and the deck
-// id actually resolves — a typo just drops the chip instead of a dead link.
-const slideDecks = sectionEnabled('slides') && data.slides.length > 0
-  ? (await getCollection('slides')).filter(
-      (d) => data.slides.includes(d.id) && !d.data.draft,
-    )
-  : [];
+// Decks in the `slides` collection that belong to this course, matched by
+// their locale-less slug (what the frontmatter lists). Only linked when the
+// slides section is enabled (otherwise its routes don't exist) and the slug
+// actually resolves — a typo just drops the chip instead of a dead link.
+const slideDecks =
+  sectionEnabled('slides') && data.slides.length > 0
+    ? (await getDecks(lang)).filter((d) => data.slides.includes(deckSlugOf(d)))
+    : [];
 
 // Breadcrumb: All courses › category › subcategory… (each segment linked).
 const crumbs = [
@@ -84,7 +85,7 @@ const crumbs = [
         </span>
         {slideDecks.map((d) => (
           <a
-            href={getRelativeLocaleUrl(lang, `slides/${d.id}/`)}
+            href={getRelativeLocaleUrl(lang, `slides/${deckSlugOf(d)}/`)}
             class="rounded-full border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1 text-sm text-[var(--aas-text)] no-underline hover:bg-[var(--aas-tint)]"
           >
             {d.data.title}

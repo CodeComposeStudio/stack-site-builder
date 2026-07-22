@@ -11,6 +11,16 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.17.1] - 2026-07-22
+
+### Fixed
+
+- **Course → slide-deck links matched nothing** — a course's `slides`
+  frontmatter lists locale-less deck slugs, but the detail page compared
+  them against raw collection ids (`ko/<deck>/index`), so the chips never
+  rendered and would have linked to the wrong path. Decks are now resolved
+  per locale via the slides helpers.
+
 ## [1.17.0] - 2026-07-22
 
 ### Changed
@@ -225,6 +235,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.17.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.0...v1.17.1
 [1.17.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.16.0...v1.17.0
 [1.16.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.15.0...v1.16.0
 [1.15.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.14.0...v1.15.0
