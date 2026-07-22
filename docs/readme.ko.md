@@ -38,7 +38,7 @@ export const collections = defineAasCollections({ categoryMap });
 
 | 위치 | 내용 |
 | --- | --- |
-| `src/data/site.ts` | 사이트 정체성: 이름, 저장소 URL, 제공 `locales`, 선택적 `sections` 토글, 로케일별 UI 문자열 오버라이드 |
+| `src/data/site.ts` | 사이트 정체성: 이름, 저장소 URL(`repoNav: false`면 헤더 GitHub 링크 숨김), 제공 `locales`, 선택적 `sections` 토글, 브라우저 아이콘(`icons: { favicon, appleTouch, manifest }`), `home` 템플릿, 로케일별 UI 문자열 오버라이드 |
 | `src/data/categories.ts` | 도구 카탈로그 카테고리 트리 (콘텐츠와 대조 검증됨) |
 | `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` (옵트인) | 개념 / 글 / 강의의 분류 체계 |
 | `src/data/glossary.mjs` | `[[용어]]` 위키링크 대상 |
@@ -121,8 +121,9 @@ integrations: [aasTheme({ glossary, sections: site.sections })];
 미디어는 `public/` 경로를 씁니다. 항목은 중첩 가능:
 `apps/<lang>/flowstate.mdx` → `/apps/flowstate/`,
 `apps/<lang>/flowstate/privacy.mdx` → `/apps/flowstate/privacy/`(일반 프로즈
-페이지). `nav: true`면 헤더에 링크가 생깁니다. 전체 예시는
-`playground/src/content/apps/` 참고.
+페이지). `/apps/` 인덱스가 랜딩들을 나열하고, 로케일에 랜딩이 하나라도 있으면
+헤더에 앱 링크가 자동으로 생깁니다. `nav: true`면 개별 랜딩도 헤더 항목이
+됩니다. 전체 예시는 `playground/src/content/apps/` 참고.
 
 ## 홈
 
