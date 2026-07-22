@@ -10,6 +10,7 @@ import { getNavPages, pageSlugOf } from '../lib/pages';
 import { getNavProducts, getTopProducts, productSlugOf } from '../lib/products';
 import { homeTemplate } from '../lib/home';
 import { sectionEnabled, type SectionKey } from '../lib/sections';
+import { siteIcons } from '../lib/icons';
 
 interface Props {
   title: string;
@@ -33,19 +34,6 @@ const container = wide ? 'max-w-[81rem]' : 'max-w-[75rem]';
 const home = getRelativeLocaleUrl(lang, '');
 const base = import.meta.env.BASE_URL;
 
-// Site-configurable browser icons (`site.icons`). `favicon` may be any image
-// the browser can render (SVG/PNG/ICO — public/ path); appleTouch/manifest
-// links render only when declared. Defaults to the theme's /favicon.svg.
-const icons =
-  (site as { icons?: { favicon?: string; appleTouch?: string; manifest?: string } }).icons ?? {};
-const faviconHref = icons.favicon ?? '/favicon.svg';
-const faviconType = faviconHref.endsWith('.svg')
-  ? 'image/svg+xml'
-  : faviconHref.endsWith('.png')
-    ? 'image/png'
-    : faviconHref.endsWith('.ico')
-      ? 'image/x-icon'
-      : undefined;
 const baseNoSlash = base.replace(/\/$/, '');
 
 // Home URL per locale, for the language auto-detect redirect on the root home.
@@ -173,9 +161,9 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
     <title>{title}</title>
     <meta name="description" content={description} />
     {noindex && <meta name="robots" content="noindex" />}
-    <link rel="icon" {...(faviconType ? { type: faviconType } : {})} href={`${baseNoSlash}${faviconHref}`} />
-    {icons.appleTouch && <link rel="apple-touch-icon" href={`${baseNoSlash}${icons.appleTouch}`} />}
-    {icons.manifest && <link rel="manifest" href={`${baseNoSlash}${icons.manifest}`} />}
+    <link rel="icon" {...(siteIcons.faviconType ? { type: siteIcons.faviconType } : {})} href={`${baseNoSlash}${siteIcons.favicon}`} />
+    {siteIcons.appleTouch && <link rel="apple-touch-icon" href={`${baseNoSlash}${siteIcons.appleTouch}`} />}
+    {siteIcons.manifest && <link rel="manifest" href={`${baseNoSlash}${siteIcons.manifest}`} />}
     {
       sectionEnabled('articles') && (
         <link
