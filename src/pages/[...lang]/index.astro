@@ -3,6 +3,8 @@ import { site } from '@aas-data/site';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Home from '../../components/Home.astro';
+import CardsHome from '../../components/CardsHome.astro';
+import { homeTemplate } from '../../lib/home';
 import { allLocales, langParam } from '../../lib/locales';
 
 export const getStaticPaths = (() =>
@@ -12,5 +14,5 @@ const { lang } = Astro.props;
 ---
 
 <BaseLayout title={site.name} lang={lang} path="">
-  <Home lang={lang} />
+  {homeTemplate === 'cards' ? <CardsHome lang={lang} /> : <Home lang={lang} />}
 </BaseLayout>

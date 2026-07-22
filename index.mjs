@@ -29,6 +29,9 @@ const PAGES = [
   // Standalone top-level pages (the `pages` collection), e.g. an About/소개
   // page. A single dynamic route per locale renders every entry at `/<slug>/`.
   '[page].astro',
+  // App/product pages (the `apps` collection): marketing landings and their
+  // nested subpages (privacy/terms) via one catch-all.
+  'apps/[...id].astro',
   // Per-locale RSS feed of the articles collection (an endpoint, not a page).
   'rss.xml.ts',
   'article/index.astro',
@@ -67,6 +70,7 @@ function sectionOf(file) {
   if (file.startsWith('concept/')) return 'concepts';
   if (file.startsWith('article/')) return 'articles';
   if (file.startsWith('course/')) return 'courses';
+  if (file.startsWith('apps/')) return 'apps';
   if (file.startsWith('sample/')) return 'samples';
   if (file.startsWith('slides/')) return 'slides';
   if (file === 'glossary.astro') return 'glossary';

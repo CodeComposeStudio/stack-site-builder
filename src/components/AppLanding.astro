@@ -1,0 +1,445 @@
+---
+// Things-style app/product landing, rendered entirely from an `apps` entry's
+// frontmatter (`template: 'landing'`): hero (icon / store buttons / Product
+// Hunt badge), alternating feature rows (with optional device frame and
+// auto-rotating screenshot carousels), a video "themes" showcase, a highlights
+// grid, pricing tiers, a closing CTA and legal links. Sections render only
+// when their data is present, so a minimal landing is just hero + features.
+//
+// All media (icons, screenshots, videos, the frame art) are `public/` paths;
+// `description`-like strings may carry authored <br> tags (rendered as HTML).
+import { site } from '@aas-data/site';
+import type { AppEntry } from '../lib/apps';
+import type { Lang } from '../i18n/ui';
+
+interface Props {
+  entry: AppEntry;
+  lang: Lang;
+}
+
+const { entry } = Astro.props;
+const d = entry.data;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const withBase = (p?: string) => (p && p.startsWith('/') ? base + p : p);
+const frame = withBase(d.phoneFrameImage);
+// Optional site contact for the legal "support" link (read defensively — not
+// every site declares an email).
+const email = (site as { email?: string }).email;
+
+const storeButtons = d.stores
+  ? [
+      { href: d.stores.appstore, brand: 'App Store', label: d.stores.appstoreLabel },
+      { href: d.stores.playstore, brand: 'Google Play', label: d.stores.playstoreLabel },
+    ].filter((b) => b.href)
+  : [];
+
+// Alternation matches the Hugo original: odd rows get the tinted background,
+// even rows put the visual on the left.
+const altBg = (i: number) => i % 2 === 1;
+---
+
+<div class="aas-landing">
+  {/* ---- hero ---- */}
+  <section
+    class:list={[
+      'aas-bleed py-16 text-center',
+      d.heroBg && `aas-hero-bg-${d.heroBg}`,
+    ]}
+  >
+    <div class="mx-auto max-w-[75rem] px-5">
+      {d.icon && <img src={withBase(d.icon)} alt="" class="mx-auto h-24 w-24 rounded-[22%] shadow-lg" />}
+      <h1 class="mt-6 text-4xl font-bold tracking-tight sm:text-5xl">{d.title}</h1>
+      {d.subtitle && <p class="mt-3 text-xl text-[var(--aas-muted)]" set:html={d.subtitle} />}
+      {
+        storeButtons.length > 0 && (
+          <div class="mt-7 flex flex-wrap items-start justify-center gap-3">
+            {storeButtons.map((b) => (
+              <span class="inline-flex flex-col items-center gap-1.5">
+                <a
+                  href={b.href === '#' ? undefined : b.href}
+                  {...(b.href !== '#' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                  class:list={[
+                    'rounded-full bg-[var(--aas-accent)] px-6 py-2.5 font-semibold text-white no-underline',
+                    b.href === '#' && 'pointer-events-none opacity-40',
+                  ]}
+                >
+                  {b.brand}
+                </a>
+                {b.label && <span class="text-xs text-[var(--aas-muted)]">{b.label}</span>}
+              </span>
+            ))}
+          </div>
+        )
+      }
+      {d.tagline && <p class="mt-5 text-sm text-[var(--aas-muted)]" set:html={d.tagline} />}
+      {
+        d.productHunt && (
+          <p class="mt-6">
+            <a href={d.productHunt.url} target="_blank" rel="noopener noreferrer" class="inline-block">
+              <img src={d.productHunt.image} alt={d.productHunt.alt} width="250" height="54" loading="lazy" />
+            </a>
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  {/* ---- alternating feature rows ---- */}
+  {
+    d.features.map((f, i) => {
+      const imgs = f.images.length > 0 ? f.images : f.image ? [f.image] : [];
+      const isSvg = imgs.length === 1 && /\.svg$/i.test(imgs[0]);
+      return (
+        <section class:list={['aas-bleed py-16', altBg(i) && 'bg-[var(--aas-panel)]']}>
+          <div
+            class:list={[
+              'mx-auto grid max-w-[75rem] items-center gap-10 px-5 md:grid-cols-2',
+            ]}
+          >
+            <div class:list={[!altBg(i) && 'md:order-2']}>
+              {f.label && (
+                <p class="text-sm font-semibold tracking-wide text-[var(--aas-accent)] uppercase">{f.label}</p>
+              )}
+              <h2 class="mt-2 text-3xl font-bold tracking-tight">{f.title}</h2>
+              <p class="mt-4 leading-relaxed text-[var(--aas-muted)]" set:html={f.description} />
+            </div>
+            <div class:list={['flex justify-center', !altBg(i) && 'md:order-1']}>
+              {imgs.length > 1 ? (
+                <div class="aas-carousel w-full max-w-xs" data-carousel>
+                  <div class="aas-carousel-track" data-track>
+                    {imgs.map((src) => (
+                      <div class="aas-carousel-slide">
+                        {f.phoneFrame && frame ? (
+                          <span class="aas-phone">
+                            <img class="aas-phone-frame" src={frame} alt="" loading="lazy" />
+                            <img class="aas-phone-screen" src={withBase(src)} alt={f.title} loading="lazy" />
+                          </span>
+                        ) : (
+                          <img src={withBase(src)} alt={f.title} class="w-full rounded-2xl" loading="lazy" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div class="mt-3 flex justify-center gap-1.5" data-dots />
+                </div>
+              ) : imgs.length === 1 ? (
+                isSvg ? (
+                  <img src={withBase(imgs[0])} alt={f.title} class="aas-feature-icon" loading="lazy" />
+                ) : f.phoneFrame && frame ? (
+                  <span class="aas-phone max-w-xs">
+                    <img class="aas-phone-frame" src={frame} alt="" loading="lazy" />
+                    <img class="aas-phone-screen" src={withBase(imgs[0])} alt={f.title} loading="lazy" />
+                  </span>
+                ) : (
+                  <img src={withBase(imgs[0])} alt={f.title} class="max-w-full rounded-2xl" loading="lazy" />
+                )
+              ) : null}
+            </div>
+          </div>
+        </section>
+      );
+    })
+  }
+
+  {/* ---- themes showcase (video tabs) ---- */}
+  {
+    d.themes.length > 0 && (
+      <section class:list={['aas-bleed py-16 text-center', altBg(d.features.length) && 'bg-[var(--aas-panel)]']}>
+        <div class="mx-auto max-w-[75rem] px-5" data-themes>
+          {d.themesTitle && <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">{d.themesTitle}</h2>}
+          {d.themesSubtitle && <p class="mt-2 mb-10 text-[var(--aas-muted)]">{d.themesSubtitle}</p>}
+          <div class="mb-8 flex justify-center gap-2">
+            {d.themes.map((t, i) => (
+              <button
+                type="button"
+                class="aas-theme-tab rounded-full border border-[var(--aas-border)] px-4 py-2 text-lg"
+                data-theme={String(i)}
+                aria-pressed={i === 0 ? 'true' : 'false'}
+                title={t.name}
+              >
+                {t.icon ?? String(i + 1)}
+              </button>
+            ))}
+          </div>
+          <div class="grid items-center gap-10 md:grid-cols-2">
+            <div class="flex justify-center">
+              <span class="aas-phone max-w-xs">
+                {frame && <img class="aas-phone-frame" src={frame} alt="" loading="lazy" />}
+                {d.themes.map((t, i) => (
+                  <video
+                    class:list={['aas-phone-screen aas-theme-video', i !== 0 && 'hidden']}
+                    data-theme={String(i)}
+                    autoplay={i === 0}
+                    muted
+                    playsinline
+                    poster={withBase(t.poster)}
+                  >
+                    <source src={withBase(t.video)} type="video/mp4" />
+                  </video>
+                ))}
+              </span>
+            </div>
+            <div class="text-left">
+              {d.themes.map((t, i) => (
+                <div class:list={['aas-theme-detail', i !== 0 && 'hidden']} data-theme={String(i)}>
+                  <h3 class="text-2xl font-bold">{t.name}</h3>
+                  {t.tabDesc && <p class="mt-1 text-sm text-[var(--aas-accent)]">{t.tabDesc}</p>}
+                  <p class="mt-4 leading-relaxed text-[var(--aas-muted)]" set:html={t.description} />
+                </div>
+              ))}
+            </div>
+          </div>
+          {d.themesLandscape && (
+            <div class="mt-14">
+              <h3 class="text-xl font-bold">{d.themesLandscape.title}</h3>
+              <p class="mt-1 mb-6 text-[var(--aas-muted)]">{d.themesLandscape.description}</p>
+              <img
+                src={withBase(d.themesLandscape.image)}
+                alt={d.themesLandscape.title}
+                class="mx-auto max-w-full rounded-2xl sm:max-w-2xl"
+                loading="lazy"
+              />
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  {/* ---- highlights grid ---- */}
+  {
+    d.highlights.length > 0 && (
+      <section class="aas-bleed bg-[var(--aas-panel)] py-16 text-center">
+        <div class="mx-auto max-w-[75rem] px-5">
+          {d.highlightsTitle && <h2 class="mb-10 text-3xl font-bold tracking-tight sm:text-4xl">{d.highlightsTitle}</h2>}
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {d.highlights.map((h) => (
+              <div class="rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-bg)] p-6">
+                {h.icon && <img src={withBase(h.icon)} alt="" class="aas-feature-glyph mx-auto mb-4 h-10 w-10" loading="lazy" />}
+                <h3 class="font-semibold">{h.title}</h3>
+                <p class="mt-2 text-sm leading-relaxed text-[var(--aas-muted)]" set:html={h.description} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {/* ---- pricing ---- */}
+  {
+    d.pricing.length > 0 && (
+      <section class="aas-bleed py-16 text-center">
+        <div class="mx-auto max-w-[75rem] px-5">
+          {d.pricingTitle && <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">{d.pricingTitle}</h2>}
+          {d.pricingSubtitle && <p class="mt-2 text-[var(--aas-muted)]">{d.pricingSubtitle}</p>}
+          {d.pricingNotes.length > 0 && (
+            <p class="mt-2 text-sm text-[var(--aas-muted)] opacity-75">
+              {d.pricingNotes.map((n, i) => (
+                <>
+                  {i > 0 && <br />}
+                  {n}
+                </>
+              ))}
+            </p>
+          )}
+          <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {d.pricing.map((p) => (
+              <div
+                class:list={[
+                  'relative rounded-3xl border p-6 text-left',
+                  p.featured
+                    ? 'border-[var(--aas-accent)] bg-[var(--aas-panel)] shadow-lg'
+                    : 'border-[var(--aas-border)] bg-[var(--aas-panel)]',
+                ]}
+              >
+                {p.featured && d.pricingBadge && (
+                  <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--aas-accent)] px-3 py-0.5 text-xs font-semibold text-white">
+                    {d.pricingBadge}
+                  </span>
+                )}
+                <h3 class="font-semibold">{p.name}</h3>
+                <p class="mt-2 text-3xl font-bold">
+                  {p.price}
+                  {p.period && <span class="ml-1 text-sm font-normal text-[var(--aas-muted)]">{p.period}</span>}
+                </p>
+                <ul class="mt-4 space-y-2 text-sm text-[var(--aas-muted)]">
+                  {p.items.map((it) => (
+                    <li class="flex gap-2">
+                      <span aria-hidden="true" class="text-[var(--aas-accent)]">✓</span>
+                      {it}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {/* ---- closing CTA ---- */}
+  {
+    (d.ctaTitle || d.ctaDescription) && (
+      <section class="aas-bleed bg-[var(--aas-panel)] py-16 text-center">
+        <div class="mx-auto max-w-[75rem] px-5">
+          {d.ctaTitle && <h2 class="text-3xl font-bold tracking-tight">{d.ctaTitle}</h2>}
+          {d.ctaDescription && <p class="mt-3 text-[var(--aas-muted)]" set:html={d.ctaDescription} />}
+          {storeButtons.length > 0 && (
+            <div class="mt-7 flex flex-wrap items-start justify-center gap-3">
+              {storeButtons.map((b) => (
+                <span class="inline-flex flex-col items-center gap-1.5">
+                  <a
+                    href={b.href === '#' ? undefined : b.href}
+                    {...(b.href !== '#' ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+                    class:list={[
+                      'rounded-full bg-[var(--aas-accent)] px-6 py-2.5 font-semibold text-white no-underline',
+                      b.href === '#' && 'pointer-events-none opacity-40',
+                    ]}
+                  >
+                    {b.brand}
+                  </a>
+                  {b.label && <span class="text-xs text-[var(--aas-muted)]">{b.label}</span>}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
+  {/* ---- legal links ---- */}
+  {
+    d.legal && (
+      <section class="py-10 text-center text-sm">
+        <div class="flex flex-wrap justify-center gap-6 text-[var(--aas-muted)]">
+          {d.legal.privacy && <a href="privacy/" class="no-underline hover:text-[var(--aas-text)]">{d.legal.privacy}</a>}
+          {d.legal.terms && <a href="terms/" class="no-underline hover:text-[var(--aas-text)]">{d.legal.terms}</a>}
+          {d.legal.support && email && (
+            <a href={`mailto:${email}`} class="no-underline hover:text-[var(--aas-text)]">{d.legal.support}</a>
+          )}
+        </div>
+      </section>
+    )
+  }
+</div>
+
+<style>
+  /* Full-bleed section: escape BaseLayout's centered container. */
+  .aas-bleed {
+    position: relative;
+    left: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    right: 50%;
+    width: 100vw;
+  }
+  /* Screenshot inside the device-frame art. The frame draws on top; the
+     screen sits inset behind it (tune per frame art via site CSS if needed). */
+  .aas-phone {
+    position: relative;
+    display: inline-block;
+  }
+  .aas-phone-frame {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    pointer-events: none;
+  }
+  .aas-phone :global(.aas-phone-screen) {
+    position: absolute;
+    z-index: 1;
+    inset: 2.5% 5.5%;
+    width: 89%;
+    height: 95%;
+    object-fit: cover;
+    border-radius: 9% / 4.5%;
+  }
+  .aas-feature-icon {
+    width: 10rem;
+    opacity: 0.9;
+  }
+  /* Monochrome icon files follow the text color in dark mode. */
+  :root[data-theme='dark'] .aas-feature-glyph,
+  :root[data-theme='dark'] .aas-feature-icon {
+    filter: invert(1) hue-rotate(180deg);
+  }
+  .aas-carousel {
+    overflow: hidden;
+  }
+  .aas-carousel-track {
+    display: flex;
+    transition: transform 0.45s ease;
+  }
+  .aas-carousel-slide {
+    flex: 0 0 100%;
+    display: flex;
+    justify-content: center;
+  }
+  .aas-theme-tab[aria-pressed='true'] {
+    border-color: var(--aas-accent);
+    background: var(--aas-tint);
+  }
+</style>
+
+<script>
+  // Screenshot carousels: dots + 4s auto-advance.
+  document.querySelectorAll<HTMLElement>('[data-carousel]').forEach((carousel) => {
+    const track = carousel.querySelector<HTMLElement>('[data-track]');
+    const dots = carousel.querySelector<HTMLElement>('[data-dots]');
+    const total = track?.children.length ?? 0;
+    if (!track || !dots || total < 2) return;
+    let current = 0;
+    const buttons: HTMLButtonElement[] = [];
+    const goTo = (idx: number) => {
+      current = idx;
+      track.style.transform = `translateX(-${current * 100}%)`;
+      buttons.forEach((b, j) => b.setAttribute('aria-pressed', String(j === current)));
+    };
+    for (let i = 0; i < total; i++) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className =
+        'h-2 w-2 rounded-full border border-[var(--aas-border)] aria-[pressed=true]:bg-[var(--aas-accent)] aria-[pressed=true]:border-[var(--aas-accent)]';
+      b.setAttribute('aria-pressed', String(i === 0));
+      b.setAttribute('aria-label', String(i + 1));
+      b.addEventListener('click', () => goTo(i));
+      dots.appendChild(b);
+      buttons.push(b);
+    }
+    setInterval(() => goTo((current + 1) % total), 4000);
+  });
+
+  // Themes showcase: tab switching; a finished video advances to the next
+  // theme after a beat.
+  document.querySelectorAll<HTMLElement>('[data-themes]').forEach((root) => {
+    const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('.aas-theme-tab'));
+    const videos = Array.from(root.querySelectorAll<HTMLVideoElement>('.aas-theme-video'));
+    const details = Array.from(root.querySelectorAll<HTMLElement>('.aas-theme-detail'));
+    if (tabs.length < 2) return;
+    const switchTo = (idx: number) => {
+      const s = String(idx);
+      tabs.forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.theme === s)));
+      details.forEach((el) => el.classList.toggle('hidden', el.dataset.theme !== s));
+      videos.forEach((v) => {
+        const on = v.dataset.theme === s;
+        v.classList.toggle('hidden', !on);
+        if (on) {
+          v.currentTime = 0;
+          v.play().catch(() => {});
+        } else {
+          v.pause();
+        }
+      });
+    };
+    tabs.forEach((t) => t.addEventListener('click', () => switchTo(Number(t.dataset.theme))));
+    videos.forEach((v) =>
+      v.addEventListener('ended', () => {
+        const cur = Number(v.dataset.theme);
+        setTimeout(() => switchTo((cur + 1) % tabs.length), 2000);
+      }),
+    );
+  });
+</script>

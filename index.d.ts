@@ -7,6 +7,7 @@ export type SectionKey =
   | 'concepts'
   | 'articles'
   | 'courses'
+  | 'apps'
   | 'samples'
   | 'slides'
   | 'glossary'
