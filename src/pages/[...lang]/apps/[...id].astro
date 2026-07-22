@@ -1,0 +1,67 @@
+---
+import { site } from '@aas-data/site';
+import { render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AppLanding from '../../../components/AppLanding.astro';
+import PrivateGate from '../../../components/PrivateGate.astro';
+import TocRail from '../../../components/TocRail.astro';
+import MermaidLoader from '../../../components/MermaidLoader.astro';
+import { getApps, appSlugOf } from '../../../lib/apps';
+import { allLocales, langParam } from '../../../lib/locales';
+import { inlineMd } from '../../../lib/inline-md';
+
+export const getStaticPaths = (async () => {
+  const paths: Awaited<ReturnType<GetStaticPaths>> = [];
+  for (const lang of allLocales) {
+    for (const entry of await getApps(lang)) {
+      paths.push({ params: { lang: langParam(lang), id: appSlugOf(entry) }, props: { lang, entry } });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { lang, entry } = Astro.props;
+const slug = appSlugOf(entry);
+const priv = entry.data.private;
+const isLanding = entry.data.template === 'landing';
+// Plain 'page' template (privacy/terms subpages) renders the markdown body.
+const { Content, headings } = await render(entry);
+const tocItems = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const bodyHasMermaid = (entry.body ?? '').includes('```mermaid');
+---
+
+<BaseLayout
+  title={`${entry.data.title} — ${site.name}`}
+  description={priv ? entry.data.teaser : (entry.data.description ?? entry.data.subtitle)}
+  lang={lang}
+  path={`apps/${slug}/`}
+  noindex={priv}
+>
+  <PrivateGate enabled={priv} lang={lang} title={entry.data.title} teaser={entry.data.teaser}>
+    {
+      isLanding ? (
+        <AppLanding entry={entry} lang={lang} />
+      ) : (
+        <>
+          <header class="pb-6">
+            <h1 class="text-3xl font-bold tracking-tight">{entry.data.title}</h1>
+            {entry.data.description && (
+              <p
+                class="mt-2 aas-md text-lg whitespace-pre-line text-[var(--aas-muted)]"
+                set:html={inlineMd(entry.data.description)}
+              />
+            )}
+          </header>
+          <div class="mt-4 flex items-start gap-8">
+            <article class="prose max-w-none aas-reading min-w-0 flex-1">
+              <Content />
+            </article>
+            <TocRail lang={lang} items={tocItems} />
+          </div>
+          {bodyHasMermaid && <MermaidLoader />}
+        </>
+      )
+    }
+  </PrivateGate>
+</BaseLayout>
