@@ -1,5 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import { listedInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 import { getDecks, deckSlugOf } from '../lib/slides';
 
@@ -12,7 +13,7 @@ const t = useTranslations(lang);
 
 // Decks are locale-partitioned (content/slides/<lang>/); list this locale's and
 // link to its localized deck page. `related` points at the concept it summarizes.
-const decks = await getDecks(lang);
+const decks = (await getDecks(lang)).filter((e) => listedInIndex(e.data));
 ---
 
 <section class="py-6">

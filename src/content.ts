@@ -125,6 +125,10 @@ export function defineAasCollections({
       // See docs/private-content-design.md. Requires the AAS_PRIVATE_* env vars.
       private: z.boolean().default(false),
       teaser: z.string().optional(),
+      // Show this PRIVATE entry on index listings as a locked teaser card.
+      // Default: private entries stay OUT of listings and are reached via
+      // direct links / the related sections on detail pages.
+      listed: z.boolean().default(false),
     }),
   });
 
@@ -169,6 +173,10 @@ export function defineAasCollections({
         // PUBLIC `teaser`). See docs/private-content-design.md.
         private: z.boolean().default(false),
         teaser: z.string().optional(),
+        // Show this PRIVATE entry on index listings as a locked teaser card.
+        // Default: private entries stay OUT of listings and are reached via
+        // direct links / the related sections on detail pages.
+        listed: z.boolean().default(false),
       }),
   });
 
@@ -207,6 +215,10 @@ export function defineAasCollections({
         // PUBLIC `teaser`). See docs/private-content-design.md.
         private: z.boolean().default(false),
         teaser: z.string().optional(),
+        // Show this PRIVATE entry on index listings as a locked teaser card.
+        // Default: private entries stay OUT of listings and are reached via
+        // direct links / the related sections on detail pages.
+        listed: z.boolean().default(false),
       }),
   });
 
@@ -263,6 +275,10 @@ export function defineAasCollections({
         // PUBLIC `teaser`). See docs/private-content-design.md.
         private: z.boolean().default(false),
         teaser: z.string().optional(),
+        // Show this PRIVATE entry on index listings as a locked teaser card.
+        // Default: private entries stay OUT of listings and are reached via
+        // direct links / the related sections on detail pages.
+        listed: z.boolean().default(false),
       }),
   });
 
@@ -307,6 +323,10 @@ export function defineAasCollections({
       // optional PUBLIC `teaser`). See docs/private-content-design.md.
       private: z.boolean().default(false),
       teaser: z.string().optional(),
+      // Show this PRIVATE entry on index listings as a locked teaser card.
+      // Default: private entries stay OUT of listings and are reached via
+      // direct links / the related sections on detail pages.
+      listed: z.boolean().default(false),
     }),
   });
 
@@ -452,6 +472,10 @@ export function defineAasCollections({
       // Login-gated page (encrypted body; see docs/private-content-design.md).
       private: z.boolean().default(false),
       teaser: z.string().optional(),
+      // Show this PRIVATE entry on index listings as a locked teaser card.
+      // Default: private entries stay OUT of listings and are reached via
+      // direct links / the related sections on detail pages.
+      listed: z.boolean().default(false),
     }),
   });
 
@@ -484,6 +508,10 @@ export function defineAasCollections({
         // PUBLIC `teaser`). See docs/private-content-design.md.
         private: z.boolean().default(false),
         teaser: z.string().optional(),
+        // Show this PRIVATE entry on index listings as a locked teaser card.
+        // Default: private entries stay OUT of listings and are reached via
+        // direct links / the related sections on detail pages.
+        listed: z.boolean().default(false),
       }),
   });
 
