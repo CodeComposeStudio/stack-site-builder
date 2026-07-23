@@ -6,6 +6,10 @@ import { useTranslations, languages, type Lang } from '../i18n/ui';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import BackToTop from '../components/BackToTop.astro';
+// Resolved by the integration: the site's src/components/Footer.astro when it
+// exists, the theme's DefaultFooter otherwise.
+// @ts-expect-error -- virtual alias, no static types
+import Footer from '@aas-footer';
 import { getNavPages, pageSlugOf } from '../lib/pages';
 import { getNavProducts, getTopProducts, productSlugOf } from '../lib/products';
 import { homeTemplate } from '../lib/home';
@@ -378,21 +382,7 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
       <slot />
     </main>
 
-    <footer
-      class="border-t border-[var(--aas-border)] py-8 text-center text-sm text-[var(--aas-muted)]"
-    >
-      <p>
-        {t('footer.builtWith')}
-        <a
-          href="https://astro.build"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="text-[var(--aas-accent)]">Astro</a
-        >. {
-          t('footer.contribute')
-        }
-      </p>
-    </footer>
+    <Footer lang={lang} />
 
     <BackToTop lang={lang} />
 

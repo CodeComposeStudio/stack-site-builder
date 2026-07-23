@@ -43,6 +43,7 @@ export const collections = defineAasCollections({ categoryMap });
 | `src/content/{stacks,concepts,courses,products,papers,articles,slides}/` | The content, one MDX file per locale |
 | `src/content/pages/` | Standalone top-level pages (e.g. an About/소개), rendered at `/<slug>/` and optionally linked in the header nav |
 | `public/` · `samples/` | Logos/favicons and runnable sample projects |
+| `src/components/Footer.astro` (optional) | Replaces the theme's stock footer wholesale — receives a `lang` prop |
 
 The theme reaches the site's data through the `@aas-data/*` alias (set up by
 the integration), so everything above is swappable per site.
