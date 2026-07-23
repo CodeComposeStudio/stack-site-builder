@@ -11,6 +11,16 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.21.0] - 2026-07-24
+
+### Added
+
+- **Header brand options** — `site.header = { logo, logoInvert, name }`:
+  `logo` (a public/ path) replaces the hardcoded ⚡ bolt with the site's
+  mark, `name: false` drops the wordmark for a logo-only brand (the home
+  link keeps `site.name` as its aria-label), and `logoInvert` flips a
+  black line-art logo in dark mode. Defaults unchanged: ⚡ + site name.
+
 ## [1.20.0] - 2026-07-24
 
 ### Added
