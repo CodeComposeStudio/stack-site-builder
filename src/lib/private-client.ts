@@ -60,11 +60,55 @@ function storedKey(days: number): Uint8Array | null {
   }
 }
 
-function clearSession(): void {
+export function clearSession(): void {
   try {
     localStorage.removeItem(STORE);
   } catch {
     /* ignore */
+  }
+}
+
+/** The user table a login form needs — a GateData without the content. */
+export interface AuthData {
+  users: { h: string; s: string; iv: string; w: string }[];
+  salt: string;
+  days: number;
+}
+
+/** Whether this device holds a live session key. */
+export function hasSession(days: number): boolean {
+  return storedKey(days) !== null;
+}
+
+/**
+ * Verify credentials by unwrapping the site key (AES-GCM authentication
+ * fails on a wrong password) and store the session on success. Shared by
+ * the per-page gate form and the header login control.
+ */
+export async function loginWithCredentials(
+  data: AuthData,
+  id: string,
+  password: string,
+): Promise<boolean> {
+  const salt = dec(data.salt);
+  const idBytes = new TextEncoder().encode(id.trim().toLowerCase());
+  const joined = new Uint8Array(salt.length + idBytes.length);
+  joined.set(salt);
+  joined.set(idBytes, salt.length);
+  const h = await sha256Hex(joined);
+  const user = data.users.find((u) => u.h === h);
+  if (!user) return false;
+  try {
+    const kek = await deriveKek(password, dec(user.s));
+    const k = new Uint8Array(await aesDecrypt(kek, dec(user.iv), dec(user.w)));
+    try {
+      localStorage.setItem(STORE, JSON.stringify({ k: enc(k), t: Date.now() }));
+    } catch {
+      /* private browsing — session just won't persist */
+    }
+    return true;
+  } catch {
+    return false; // wrong password (unwrap failed)
   }
 }
 

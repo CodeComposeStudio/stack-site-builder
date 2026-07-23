@@ -129,6 +129,13 @@ export default function aasTheme({ glossary, sections = {} }) {
           });
         }
 
+        // Global (locale-less) login user table for the header login control —
+        // `{ enabled: false }` on sites without private-content env config.
+        injectRoute({
+          pattern: '/aas-auth.json',
+          entrypoint: 'stack-site-builder/pages/aas-auth.json.ts',
+        });
+
         updateConfig({
           markdown: aasMarkdown({ glossary, locales, defaultLocale }),
 
