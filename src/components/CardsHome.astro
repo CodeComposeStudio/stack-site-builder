@@ -29,7 +29,7 @@ const resolveHref = (href: string, external?: boolean) =>
 ---
 
 <section class="py-14 text-center">
-  {h?.hero?.icon && <img src={withBase(h.hero.icon)} alt="" class="mx-auto h-20 w-20 rounded-[22%] shadow-md" />}
+  {h?.hero?.icon && <img src={withBase(h.hero.icon)} alt="" class="mx-auto h-20 w-20 rounded-[22%] object-contain" />}
   <h1 class="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">{heroTitle}</h1>
   <p class="mx-auto mt-4 max-w-2xl text-xl text-[var(--aas-muted)]" set:html={heroSubtitle} />
 </section>
@@ -50,7 +50,7 @@ const resolveHref = (href: string, external?: boolean) =>
                 <img
                   src={withBase(c.icon)}
                   alt=""
-                  class:list={['h-20 w-20 shrink-0', c.rounded ? 'rounded-[22%]' : 'rounded-xl']}
+                  class:list={['h-20 w-20 shrink-0 object-contain', c.rounded ? 'rounded-[22%]' : 'rounded-xl']}
                   loading="lazy"
                 />
               )}

@@ -11,6 +11,16 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.19.3] - 2026-07-23
+
+### Fixed
+
+- **Hero/card icons: no more drop shadow, no more distortion** — the cards
+  home and product-landing hero icons dropped their shadow, and every icon
+  slot (heroes, home cards, products index) now uses `object-contain`, so a
+  non-square source keeps its aspect ratio instead of stretching to fill
+  the square box.
+
 ## [1.19.2] - 2026-07-23
 
 ### Fixed
@@ -345,6 +355,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.19.3]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.19.2...v1.19.3
 [1.19.2]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.19.1...v1.19.2
 [1.19.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.18.0...v1.19.0
