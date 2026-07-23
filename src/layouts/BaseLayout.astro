@@ -53,6 +53,14 @@ const base = import.meta.env.BASE_URL;
 
 const baseNoSlash = base.replace(/\/$/, '');
 
+// Header brand: `site.header = { logo?: '/path.png', logoInvert?: bool,
+// name?: bool }`. A logo replaces the ⚡ bolt; `name: false` drops the
+// wordmark (logo-only brand — the link keeps site.name as its aria-label).
+const header = (site as { header?: { logo?: string; logoInvert?: boolean; name?: boolean } })
+  .header;
+const brandLogo = header?.logo;
+const brandName = header?.name !== false;
+
 // Home URL per locale, for the language auto-detect redirect on the root home.
 const localeHomes = Object.fromEntries(
   (Object.keys(languages) as Lang[]).map((c) => [c, getRelativeLocaleUrl(c, '')]),
@@ -266,9 +274,19 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
           aria-label={site.name}
           class="flex min-w-0 items-center gap-1.5 text-base font-bold tracking-tight whitespace-nowrap no-underline sm:text-lg"
         >
-          <span aria-hidden="true">⚡</span>
-          {/* Below 600px only the bolt remains, so the narrow header never truncates the wordmark. */}
-          <span class="hidden truncate min-[600px]:inline">{site.name}</span>
+          {
+            brandLogo ? (
+              <img
+                src={`${baseNoSlash}${brandLogo}`}
+                alt=""
+                class:list={['h-7 w-7 shrink-0 object-contain', header?.logoInvert && 'aas-icon-invert']}
+              />
+            ) : (
+              <span aria-hidden="true">⚡</span>
+            )
+          }
+          {/* Below 600px only the mark remains, so the narrow header never truncates the wordmark. */}
+          {brandName && <span class="hidden truncate min-[600px]:inline">{site.name}</span>}
         </a>
         {/* Section links are icon-only (labels live in aria-label). On phones
             (<sm) they collapse into the labelled dropdown menu below, so the
