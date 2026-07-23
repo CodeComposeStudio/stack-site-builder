@@ -40,9 +40,9 @@ export const collections = defineAasCollections({ categoryMap });
 | --- | --- |
 | `src/data/site.ts` | 사이트 정체성: 이름, 저장소 URL(`repoNav: false`면 헤더 GitHub 링크 숨김), 제공 `locales`, 선택적 `sections` 토글, 브라우저 아이콘(`icons: { favicon, appleTouch, manifest }`), `home` 템플릿, 로케일별 UI 문자열 오버라이드 |
 | `src/data/categories.ts` | 도구 카탈로그 카테고리 트리 (콘텐츠와 대조 검증됨) |
-| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` · `product-categories.ts` (옵트인) | 개념 / 글 / 강의 / 제품의 분류 체계 |
+| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` · `product-categories.ts` · `paper-categories.ts` (옵트인) | 개념 / 글 / 강의 / 제품 / 논문의 분류 체계 |
 | `src/data/glossary.mjs` | `[[용어]]` 위키링크 대상 |
-| `src/content/{stacks,concepts,courses,products,articles,slides}/` | 콘텐츠 — 로케일당 MDX 파일 하나 |
+| `src/content/{stacks,concepts,courses,products,papers,articles,slides}/` | 콘텐츠 — 로케일당 MDX 파일 하나 |
 | `src/content/pages/` | 독립 최상위 페이지 (예: 소개/About). `/<slug>/`로 렌더되고 헤더 네비에 연결 가능 |
 | `public/` · `samples/` | 로고/파비콘과 실행 가능한 샘플 프로젝트 |
 
@@ -75,7 +75,7 @@ export const collections = defineAasCollections({ categoryMap });
 등) — 는 끌 수 있어서, 사이트는 필요한 것만 담아 배포할 수 있습니다. 하나를
 끄면 그 라우트와 헤더 네비 항목이 함께 사라집니다. (`pages`는 더 세밀한
 제어도 가능: 각 페이지의 `nav` / `draft` 프런트매터, 또는 그냥 안 쓰기.)
-**courses**와 **products**는 옵트인 섹션입니다 — 아래 참고.
+**courses**·**products**·**papers**는 옵트인 섹션입니다 — 아래 참고.
 
 토글은 `src/data/site.ts`에 한 번 선언하고, astro.config에서 테마로
 전달합니다(라우트 주입을 건너뛰는 데 필요). 테마의 `SectionKey`를 import하면
@@ -151,6 +151,17 @@ home: {
 씁니다. cards 홈에서는 카탈로그로 앵커되는 헤더의 둘러보기 링크가 자동으로
 숨겨집니다.
 
+## 논문 (옵트인)
+
+스택 뒤의 문헌을 정리하는 독서실입니다: 항목마다 전체 저자 목록(카드에서는
+"et al."로 축약), 학회/연도, arXiv·원문·코드 링크와 **코드 공개 여부
+배지**(`openSource` + `repo`)를 갖고, 본문은 사이트의 리뷰/정리입니다.
+`tools`로 카탈로그 스택과 교차 연결됩니다. 켜려면
+`sections: { papers: true }`와 `paperTree` / `paperCatOf`를 export하는
+`src/data/paper-categories.ts`가 필요하고, `paperCategoryMap`을 넘기면
+카테고리가 빌드 시점에 검증됩니다. 라우트는 개념과 동일: `/paper/`,
+`/paper/<id>/`, `/paper/category/<id>/`.
+
 ## 본문 컴포넌트
 
 어느 컬렉션의 MDX 본문에서든 import해 쓰는 컴포넌트: `Bookmark`(링크 카드),
@@ -180,7 +191,7 @@ teaser: 카드와 로그인 폼 위에 표시되는 공개 한 줄 소개. # 선
 
 본문은 **암호화되어** 배포되고(AES-256-GCM, 사용자별 PBKDF2 키 래핑) 로그인
 후 브라우저에서 복호화됩니다 — 서버가 필요 없어 어떤 정적 호스팅에서도
-동작합니다. 목록에는 제목 + 🔒 (+ teaser)만 표시되고, 비공개 URL은
+동작합니다. 기본적으로 비공개 항목은 **목록에 노출되지 않고**(직접 링크·관련 섹션으로 접근) `listed: true`를 주면 잠금 카드(제목+🔒+teaser)로 목록에 노출됩니다. 비공개 URL은
 `noindex`가 붙고 사이트맵에서 제외됩니다. 사용자와 키는 환경변수로
 관리합니다(`playground/.env.sample` 참고): `AAS_PRIVATE_USERS`
 (`id:비밀번호,…`), `AAS_PRIVATE_MASTER_SECRET`(회전하면 모든 기기가

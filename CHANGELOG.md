@@ -11,6 +11,26 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.18.0] - 2026-07-23
+
+### Added
+
+- **`papers` collection — the reading room** — an opt-in section
+  (`sections: { papers: true }` + `src/data/paper-categories.ts`, with an
+  optional `paperCategoryMap` for build-time category validation) for sites
+  that review the literature behind their stack. Frontmatter carries the
+  full author list (cards abbreviate to "et al."), venue/year, arXiv /
+  publisher / released-code links, and an **open-source availability badge**
+  (`openSource` + `repo`); `tools` cross-links catalog stacks on the detail
+  page. Routes mirror concepts: `/paper/`, `/paper/<id>/`,
+  `/paper/category/<id>/`, with a category-grouped index.
+- **Private entries are unlisted by default** — index listings (catalog
+  home, categories, tags, vendors, blog, concepts, courses, papers,
+  products, slides) now skip `private` entries unless they opt in with
+  `listed: true`, which shows the familiar locked teaser card. Unlisted
+  private entries still build and stay reachable via direct links and the
+  related sections on detail pages — the discovery path for gated content.
+
 ## [1.17.4] - 2026-07-22
 
 ### Changed
@@ -283,6 +303,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.18.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.4...v1.18.0
 [1.17.4]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.3...v1.17.4
 [1.17.3]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.2...v1.17.3
 [1.17.2]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.1...v1.17.2

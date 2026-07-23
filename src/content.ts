@@ -19,6 +19,7 @@ export function defineAasCollections({
   categoryMap,
   courseCategoryMap,
   productCategoryMap,
+  paperCategoryMap,
 }: {
   categoryMap: Map<string, unknown>;
   /** The site's course category tree (`src/data/course-categories.ts`). Optional
@@ -28,6 +29,9 @@ export function defineAasCollections({
   /** The site's product category tree (`src/data/product-categories.ts`).
    *  Optional like `courseCategoryMap` — `products` is opt-in too. */
   productCategoryMap?: Map<string, unknown>;
+  /** The site's paper category tree (`src/data/paper-categories.ts`).
+   *  Optional like the others — `papers` is opt-in too. */
+  paperCategoryMap?: Map<string, unknown>;
 }) {
   /**
    * The `stacks` collection holds one entry per tool/service used to build
@@ -283,6 +287,60 @@ export function defineAasCollections({
   });
 
   /**
+   * The `papers` collection is the reading room — one entry per academic
+   * paper, an opt-in section (`sections: { papers: true }`) for sites that
+   * review the literature behind their stack. Frontmatter powers the cards
+   * (authors, venue/year, open-source availability, links); the body is the
+   * site's own reading/review of the paper. Locale-partitioned:
+   * `papers/<lang>/<slug>.mdx`.
+   */
+  const papers = defineCollection({
+    loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/papers' }),
+    schema: ({ image }) =>
+      z.object({
+        title: z.string(),
+        // The full author list, in publication order. Cards abbreviate to the
+        // first names + "et al."; the detail page shows everyone.
+        authors: z.array(z.string()).default([]),
+        year: z.number().int().optional(),
+        venue: z.string().optional(), // NeurIPS, ICML, arXiv, JMLR, …
+        description: z.string(), // one-line takeaway, shown on cards
+        // Leaf id from the site's src/data/paper-categories.ts. Validated when
+        // the site passes `paperCategoryMap`; otherwise resolved at render
+        // with an uncategorized fallback.
+        category: (paperCategoryMap
+          ? z.string().refine((id) => paperCategoryMap.has(id), {
+              message:
+                'unknown paper category id — must match a node in the site data paper category tree',
+            })
+          : z.string()
+        ).optional(),
+        image: image().optional(), // key figure / teaser image
+        imageAlt: z.string().optional(),
+        arxiv: z.string().url().optional(),
+        paperUrl: z.string().url().optional(), // publisher / DOI page
+        // Has the paper's code been released? Shown as a badge and filterable
+        // at a glance; `repo` links the released implementation.
+        openSource: z.boolean().default(false),
+        repo: z.string().url().optional(),
+        tools: z.array(z.string()).default([]), // catalog stacks this paper underpins
+        related: z.array(z.string()).default([]), // related paper slugs
+        tags: z.array(z.string()).default([]),
+        // Living-doc metadata for the review itself, mirroring concepts.
+        version: z.string().optional(),
+        updated: z.coerce.date().optional(),
+        draft: z.boolean().default(false),
+        // Login-gated entry (encrypted body; see docs/private-content-design.md).
+        private: z.boolean().default(false),
+        teaser: z.string().optional(),
+        // Show this PRIVATE entry on index listings as a locked teaser card.
+        // Default: private entries stay OUT of listings and are reached via
+        // direct links / the related sections on detail pages.
+        listed: z.boolean().default(false),
+      }),
+  });
+
+  /**
    * The `slides` collection holds presentation decks — one MDX file per deck, with
    * each slide wrapped in a <Slide> component (see src/components/Slide.astro). The
    * deck renders as a fullscreen scroll-snap presentation at /slides/<name>/.
@@ -515,5 +573,5 @@ export function defineAasCollections({
       }),
   });
 
-  return { stacks, articles, concepts, courses, slides, products, pages };
+  return { stacks, articles, concepts, courses, papers, slides, products, pages };
 }

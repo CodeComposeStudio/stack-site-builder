@@ -44,6 +44,9 @@ const PAGES = [
   'concept/[...id].astro',
   'concept/category/[id].astro',
   'course/index.astro',
+  'paper/index.astro',
+  'paper/[...id].astro',
+  'paper/category/[id].astro',
   'course/[...id].astro',
   'course/category/[id].astro',
   'glossary.astro',
@@ -72,6 +75,7 @@ function sectionOf(file) {
   if (file.startsWith('concept/')) return 'concepts';
   if (file.startsWith('article/')) return 'articles';
   if (file.startsWith('course/')) return 'courses';
+  if (file.startsWith('paper/')) return 'papers';
   if (file.startsWith('products/')) return 'products';
   if (file.startsWith('sample/')) return 'samples';
   if (file.startsWith('slides/')) return 'slides';
@@ -85,7 +89,7 @@ function sectionOf(file) {
 // when the site passes `{ <key>: true }`. Both need site-side data
 // (src/data/{course,product}-categories.ts), so a theme upgrade alone must
 // not enable them.
-const OPT_IN_SECTIONS = new Set(['courses', 'products']);
+const OPT_IN_SECTIONS = new Set(['courses', 'products', 'papers']);
 
 /**
  * @param {object} opts
