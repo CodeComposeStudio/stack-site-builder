@@ -179,6 +179,12 @@ html {
 :root[data-theme='dark'] .aas-deprecated {
   color: #fbbf24;
 }
+/* Icons flagged `iconInvert` (home cards, products) are black line art that
+   would vanish on the dark card background — flip them to white in dark. */
+:root[data-theme='dark'] .aas-icon-invert {
+  filter: invert(1);
+}
+
 /* "No updates in 1+ year" — same amber warning weight as deprecated. */
 .aas-stale {
   background: color-mix(in srgb, #d97706 16%, transparent);

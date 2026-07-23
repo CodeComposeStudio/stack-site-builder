@@ -24,6 +24,9 @@ export interface HomeCard {
   description?: Localized;
   icon?: string; // public/ path
   rounded?: boolean; // app-icon style rounding for the icon
+  /** Invert the icon in dark mode — for black line-art icons that would
+   *  otherwise vanish on the dark card background. */
+  iconInvert?: boolean;
   tags?: string[] | Record<string, string[]>;
 }
 
@@ -31,6 +34,7 @@ export interface HomeConfig {
   template: 'cards';
   hero?: {
     icon?: string; // public/ path, shown above the title
+    iconInvert?: boolean; // invert the icon in dark mode (black line art)
     title?: Localized; // defaults to site.name
     subtitle?: Localized; // defaults to the site.tagline UI string
   };

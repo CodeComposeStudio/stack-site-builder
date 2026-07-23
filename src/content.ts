@@ -430,6 +430,9 @@ export function defineAasCollections({
       // ---- hero ----
       subtitle: z.string().optional(),
       icon: z.string().optional(), // app icon (public/ path)
+      // Invert the icon in dark mode — for black line-art icons that would
+      // otherwise vanish on the dark card background.
+      iconInvert: z.boolean().default(false),
       // Free-form key a site can target from its CSS (`.aas-hero-bg-<key>`)
       // for a custom hero background.
       heroBg: z.string().optional(),
