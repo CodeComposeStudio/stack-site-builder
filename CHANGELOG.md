@@ -11,6 +11,20 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.19.1] - 2026-07-23
+
+### Changed
+
+- **Member-only entries are login-aware, and the Slides nav is back** —
+  1.18.0 dropped unlisted private entries from listings for everyone; the
+  intended behavior is per-VIEWER: logged-out visitors don't see them,
+  logged-in members do. Listings now render member-only cards with
+  `data-aas-member-only`; a pre-paint script stamps `html[data-aas-member]`
+  when a session exists and CSS does the rest — no flash either way. A
+  "shows after login" hint line replaces the invisible content for
+  logged-out visitors, and 1.19.0's listed-deck nav gating is reverted (the
+  Slides item follows the section toggle again).
+
 ## [1.19.0] - 2026-07-23
 
 ### Added
@@ -319,6 +333,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.19.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.4...v1.18.0
 [1.17.4]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.3...v1.17.4

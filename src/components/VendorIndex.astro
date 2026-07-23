@@ -2,7 +2,7 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import StackCard from './StackCard.astro';
 import { getStacksByVendor, slugOf } from '../lib/stacks';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 
 const { lang, vendor } = Astro.props;
 const t = useTranslations(lang);
-const entries = (await getStacksByVendor(lang, vendor)).filter((e) => listedInIndex(e.data));
+const entries = await getStacksByVendor(lang, vendor);
 // The display name is whatever the entries wrote (e.g. "Hugging Face").
 const vendorName = entries[0]?.data.vendor ?? vendor;
 ---
@@ -30,6 +30,7 @@ const vendorName = entries[0]?.data.vendor ?? vendor;
   {
     entries.map((e) => (
       <StackCard
+        memberOnly={memberOnlyInIndex(e.data)}
         slug={slugOf(e)}
         lang={lang}
         name={e.data.name}

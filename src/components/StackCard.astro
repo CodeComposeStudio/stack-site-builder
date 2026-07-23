@@ -29,9 +29,11 @@ interface Props {
   /** Private entry: show a lock and the (public) `teaser` instead of the description. */
   isPrivate?: boolean;
   teaser?: string;
+  /** Hidden from logged-out visitors (private without listed). */
+  memberOnly?: boolean;
 }
 
-const { slug, lang, name, formerNames = [], vendor, description, tags, pricing, license, language, category, logo, logoDark, repo, version, deprecated, isPrivate = false, teaser } =
+const { slug, lang, name, formerNames = [], vendor, description, tags, pricing, license, language, category, logo, logoDark, repo, version, deprecated, isPrivate = false, teaser, memberOnly = false } =
   Astro.props;
 const t = useTranslations(lang);
 const href = getRelativeLocaleUrl(lang, `stack/${slug}/`);
@@ -70,6 +72,7 @@ const searchText = `${name} ${shownDesc} ${tags.join(' ')}`.toLowerCase();
 <div
   class="aas-lift relative isolate flex flex-col gap-3 overflow-hidden rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-5 min-[1000px]:flex-row"
   data-tool
+  data-aas-member-only={memberOnly ? '' : undefined}
   data-name={name}
   data-search={searchText}
   data-pricing={pricingTags(pricing).join('|')}

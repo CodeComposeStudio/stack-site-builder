@@ -7,7 +7,7 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { productTree, productCatOf } from '@aas-data/product-categories';
 import { getTopProducts, productSlugOf, type ProductEntry } from '../lib/products';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -16,7 +16,8 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const all = (await getTopProducts(lang)).filter((e) => listedInIndex(e.data));
+const all = await getTopProducts(lang);
+const hasMemberOnly = all.some((e) => memberOnlyInIndex(e.data));
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const withBase = (p?: string) => (p && p.startsWith('/') ? base + p : p);
 
@@ -36,6 +37,9 @@ const sections = productTree.roots
 </section>
 
 {all.length === 0 && <p class="mt-8 text-[var(--aas-muted)]">{t('products.empty')}</p>}
+{hasMemberOnly && (
+  <p data-aas-member-hint class="mt-4 text-sm text-[var(--aas-muted)]">{t('private.memberHint')}</p>
+)}
 
 {
   sections.map(({ cat, items }) => (
@@ -46,6 +50,7 @@ const sections = productTree.roots
         {items.map((a: ProductEntry) => (
           <a
             href={getRelativeLocaleUrl(lang, `products/${productSlugOf(a)}/`)}
+            data-aas-member-only={memberOnlyInIndex(a.data) ? '' : undefined}
             class="aas-lift flex items-center gap-6 rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-6 no-underline"
           >
             {a.data.icon && (
