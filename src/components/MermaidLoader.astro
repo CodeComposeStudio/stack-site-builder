@@ -56,6 +56,19 @@
     });
   }
 
+  // Authored `style X fill:#…` lines carry light-mode colors, and Mermaid's
+  // HTML labels take their text color from the THEME variables — in dark mode
+  // that pairs light text with the hardcoded light fills, unreadable. So in
+  // dark mode we drop those fill styles and let the diagram render entirely
+  // from the theme palette; light mode keeps the authored colors.
+  function srcForTheme(src: string): string {
+    if (document.documentElement.dataset.theme !== 'dark') return src;
+    return src
+      .split('\n')
+      .filter((l) => !/^\s*style\s+\S+.*fill:#/.test(l))
+      .join('\n');
+  }
+
   async function renderAll() {
     const nodes = Array.from(document.querySelectorAll<HTMLElement>('pre.mermaid'));
     if (nodes.length === 0) return;
@@ -66,7 +79,7 @@
       // injecting it as HTML would turn `<…>` in labels into live DOM (the
       // server-side escaping exists precisely to prevent that). Mermaid reads
       // the element's innerHTML and decodes entities itself.
-      n.textContent = n.dataset.src ?? '';
+      n.textContent = srcForTheme(n.dataset.src ?? '');
     }
     init();
     try {
