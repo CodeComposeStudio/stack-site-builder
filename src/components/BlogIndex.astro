@@ -8,7 +8,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 const PAGE = 12;
 import { articleTree, articleCatOf } from '@aas-data/article-categories';
 import { getArticles, articleSlugOf, type ArticleEntry } from '../lib/articles';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 // Doubles as the writing index (no `categoryId` → all articles, grouped by
@@ -21,7 +21,8 @@ interface Props {
 
 const { lang, categoryId } = Astro.props;
 const t = useTranslations(lang);
-const all = (await getArticles(lang)).filter((e) => listedInIndex(e.data));
+const all = await getArticles(lang);
+const hasMemberOnly = all.some((e) => memberOnlyInIndex(e.data));
 const catUrl = (cid: string) => getRelativeLocaleUrl(lang, `article/category/${cid}/`);
 
 const itemsIn = (cid: string): ArticleEntry[] => {
@@ -61,6 +62,7 @@ const card = (a: ArticleEntry) => ({
   imageAlt: a.data.imageAlt,
   isPrivate: a.data.private,
   teaser: a.data.teaser,
+  memberOnly: memberOnlyInIndex(a.data),
 });
 ---
 
@@ -84,6 +86,9 @@ const card = (a: ArticleEntry) => ({
 }
 
 {all.length === 0 && <p class="mt-8 text-[var(--aas-muted)]">{t('blog.empty')}</p>}
+{hasMemberOnly && (
+  <p data-aas-member-hint class="mt-4 text-sm text-[var(--aas-muted)]">{t('private.memberHint')}</p>
+)}
 
 {all.length > 0 && <div class="mt-6"><ListControls lang={lang} /></div>}
 

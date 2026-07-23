@@ -21,6 +21,8 @@ interface Props {
   /** Private entry: show a lock and the (public) `teaser` instead of the description. */
   isPrivate?: boolean;
   teaser?: string;
+  /** Hidden from logged-out visitors (private without listed). */
+  memberOnly?: boolean;
 }
 
 const {
@@ -37,6 +39,7 @@ const {
   imageAlt,
   isPrivate = false,
   teaser,
+  memberOnly = false,
 } = Astro.props;
 const t = useTranslations(lang);
 const shownDesc = isPrivate ? (teaser ?? '') : description;
@@ -45,6 +48,7 @@ const shownDesc = isPrivate ? (teaser ?? '') : description;
 <a
   href={getRelativeLocaleUrl(lang, `paper/${slug}/`)}
   data-name={title.toLowerCase()}
+  data-aas-member-only={memberOnly ? '' : undefined}
   data-date={year ? String(year) : ''}
   class="aas-lift block overflow-hidden rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)] no-underline"
 >

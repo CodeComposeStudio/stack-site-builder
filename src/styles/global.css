@@ -2392,3 +2392,13 @@ summary {
 .aas-slide :where(table) :where(th, td):first-child {
   white-space: nowrap;
 }
+
+/* Member-only listing cards (private without `listed: true`): rendered for
+   everyone, hidden unless the pre-paint script stamped html[data-aas-member]
+   (a login session exists). The hint line inverts: visible only logged-out. */
+html:not([data-aas-member]) [data-aas-member-only] {
+  display: none;
+}
+html[data-aas-member] [data-aas-member-hint] {
+  display: none;
+}

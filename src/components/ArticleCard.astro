@@ -19,9 +19,11 @@ interface Props {
   /** Private entry: show a lock and the (public) `teaser` instead of the description. */
   isPrivate?: boolean;
   teaser?: string;
+  /** Hidden from logged-out visitors (private without listed). */
+  memberOnly?: boolean;
 }
 
-const { slug, lang, title, description, date, tags, image, imageAlt, version, isPrivate = false, teaser } = Astro.props;
+const { slug, lang, title, description, date, tags, image, imageAlt, version, isPrivate = false, teaser, memberOnly = false } = Astro.props;
 const t = useTranslations(lang);
 const shownDesc = isPrivate ? (teaser ?? '') : description;
 const href = getRelativeLocaleUrl(lang, `article/${slug}/`);
@@ -31,6 +33,7 @@ const dateStr = date.toISOString().slice(0, 10);
 <a
   href={href}
   data-name={title.toLowerCase()}
+  data-aas-member-only={memberOnly ? '' : undefined}
   data-date={date.toISOString()}
   class="aas-lift flex items-stretch overflow-hidden rounded-2xl border border-[var(--aas-border)] bg-[var(--aas-panel)] no-underline"
 >

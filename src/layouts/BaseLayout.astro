@@ -8,8 +8,6 @@ import ThemeToggle from '../components/ThemeToggle.astro';
 import BackToTop from '../components/BackToTop.astro';
 import { getNavPages, pageSlugOf } from '../lib/pages';
 import { getNavProducts, getTopProducts, productSlugOf } from '../lib/products';
-import { getDecks } from '../lib/slides';
-import { listedInIndex } from '../lib/listing';
 import { homeTemplate } from '../lib/home';
 import { sectionEnabled, type SectionKey } from '../lib/sections';
 import { siteIcons } from '../lib/icons';
@@ -52,9 +50,6 @@ const navPages = await getNavPages(lang);
 // the Products-index link, which appears once the locale has any product.
 const navProducts = await getNavProducts(lang);
 const hasProducts = (await getTopProducts(lang)).length > 0;
-// The slides nav item only makes sense when the index actually lists decks —
-// a site whose decks are all private+unlisted reaches them from course pages.
-const hasListedDecks = (await getDecks(lang)).some((d) => listedInIndex(d.data));
 // The header's GitHub link — hidden for sites whose repo is private
 // (`repoNav: false` in site.ts) or that declare no repoUrl at all.
 const showRepoLink =
@@ -124,16 +119,12 @@ const allNavItems: {
     section: 'samples',
     svg: '<polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/>',
   },
-  ...(hasListedDecks
-    ? [
-        {
-          href: getRelativeLocaleUrl(lang, 'slides/'),
-          label: t('nav.slides'),
-          section: 'slides' as SectionKey,
-          svg: '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/><path d="M12 12v9"/>',
-        },
-      ]
-    : []),
+  {
+    href: getRelativeLocaleUrl(lang, 'slides/'),
+    label: t('nav.slides'),
+    section: 'slides',
+    svg: '<path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/><path d="M12 12v9"/>',
+  },
   {
     href: getRelativeLocaleUrl(lang, 'glossary/'),
     label: t('nav.glossary'),
@@ -225,6 +216,15 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
             pref === 'dark' ||
             (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
           document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
+    {/* Stamp html[data-aas-member] before paint when a login session exists,
+        so member-only listing cards render without a flash (CSS keys off it). */}
+    <script is:inline>
+      (function () {
+        try {
+          if (localStorage.getItem('aas:pk')) document.documentElement.dataset.aasMember = '1';
         } catch (e) {}
       })();
     </script>
