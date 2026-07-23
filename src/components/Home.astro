@@ -7,7 +7,7 @@ import { rootCategories, descendantIds } from '@aas-data/categories';
 import { getStacks, slugOf } from '../lib/stacks';
 import { site } from '@aas-data/site';
 import { deriveFacets } from '../lib/facets';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const entries = (await getStacks(lang)).filter((e) => listedInIndex(e.data));
+const entries = await getStacks(lang);
 
 // Default order is alphabetical (matches the client's default sort, so no flash).
 // Group by top-level category, rolling up every subcategory in its subtree.
@@ -65,6 +65,7 @@ const facets = deriveFacets(entries, lang);
           <div class="mt-5 grid gap-4 sm:grid-cols-2" data-grid>
             {items.map((e) => (
               <StackCard
+                memberOnly={memberOnlyInIndex(e.data)}
                 slug={slugOf(e)}
                 lang={lang}
                 name={e.data.name}

@@ -7,7 +7,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 import { categoryMap, childrenOf, pathOf } from '@aas-data/categories';
 import { getStacks, getStacksByCategory, slugOf, type StackEntry } from '../lib/stacks';
 import { deriveFacets } from '../lib/facets';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -32,23 +32,19 @@ const crumbs = [
 
 const children = childrenOf(id);
 // Stacks attached directly to this node (vs. nested under a subcategory).
-const direct = (await getStacksByCategory(lang, id)).filter(
-  (s) => s.data.category === id && listedInIndex(s.data),
-);
+const direct = (await getStacksByCategory(lang, id)).filter((s) => s.data.category === id);
 // Each child subcategory with its own rolled-up stacks.
 const childGroups = await Promise.all(
-  children.map(async (c) => ({
-    cat: c,
-    items: (await getStacksByCategory(lang, c.id)).filter((s) => listedInIndex(s.data)),
-  })),
+  children.map(async (c) => ({ cat: c, items: await getStacksByCategory(lang, c.id) })),
 );
 
 // Filter facets are built from the WHOLE catalog (not just this page's tools) so
 // they're identical on every page — a sort/filter carried in from elsewhere can
 // always be restored here, even if no tool in this category has that value.
-const facets = deriveFacets((await getStacks(lang)).filter((e) => listedInIndex(e.data)), lang);
+const facets = deriveFacets(await getStacks(lang), lang);
 
 const cardProps = (e: StackEntry) => ({
+  memberOnly: memberOnlyInIndex(e.data),
   slug: slugOf(e),
   lang,
   name: e.data.name,

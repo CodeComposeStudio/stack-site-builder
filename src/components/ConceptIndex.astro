@@ -8,7 +8,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 const PAGE = 12;
 import { conceptTree, conceptCatOf } from '@aas-data/concept-categories';
 import { getConcepts, conceptSlugOf, type ConceptEntry } from '../lib/concepts';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 // Doubles as the concept index (no `categoryId` → all concepts, grouped by
@@ -23,11 +23,12 @@ const { lang, categoryId } = Astro.props;
 const t = useTranslations(lang);
 // Default order is most-recently-updated first (matches the ListControls
 // default), so the server render and the client sort agree — no reflow on load.
-const all = (await getConcepts(lang)).filter((e) => listedInIndex(e.data)).sort(
+const all = (await getConcepts(lang)).sort(
   (a, b) =>
     (b.data.updated?.getTime() ?? 0) - (a.data.updated?.getTime() ?? 0) ||
     a.data.title.localeCompare(b.data.title),
 );
+const hasMemberOnly = all.some((e) => memberOnlyInIndex(e.data));
 const catUrl = (cid: string) => getRelativeLocaleUrl(lang, `concept/category/${cid}/`);
 
 const itemsIn = (cid: string): ConceptEntry[] => {
@@ -67,6 +68,7 @@ const card = (c: ConceptEntry) => ({
   updated: c.data.updated,
   isPrivate: c.data.private,
   teaser: c.data.teaser,
+  memberOnly: memberOnlyInIndex(c.data),
 });
 ---
 
@@ -90,6 +92,9 @@ const card = (c: ConceptEntry) => ({
 }
 
 {all.length === 0 && <p class="mt-8 text-[var(--aas-muted)]">{t('concept.empty')}</p>}
+{hasMemberOnly && (
+  <p data-aas-member-hint class="mt-4 text-sm text-[var(--aas-muted)]">{t('private.memberHint')}</p>
+)}
 
 {all.length > 0 && <div class="mt-6"><ListControls lang={lang} /></div>}
 

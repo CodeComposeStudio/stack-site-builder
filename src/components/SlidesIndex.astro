@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 import { getDecks, deckSlugOf } from '../lib/slides';
 
@@ -13,18 +13,25 @@ const t = useTranslations(lang);
 
 // Decks are locale-partitioned (content/slides/<lang>/); list this locale's and
 // link to its localized deck page. `related` points at the concept it summarizes.
-const decks = (await getDecks(lang)).filter((e) => listedInIndex(e.data));
+const decks = await getDecks(lang);
+const hasMemberOnly = decks.some((e) => memberOnlyInIndex(e.data));
 ---
 
 <section class="py-6">
   <h1 class="text-4xl font-bold tracking-tight">{t('slides.title')}</h1>
   <p class="mt-3 max-w-2xl text-lg text-[var(--aas-muted)]">{t('slides.tagline')}</p>
 </section>
+{hasMemberOnly && (
+  <p data-aas-member-hint class="mt-4 text-sm text-[var(--aas-muted)]">{t('private.memberHint')}</p>
+)}
 
 <div class="mt-6 grid gap-5 sm:grid-cols-2">
   {
     decks.map((deck) => (
-      <div class="overflow-hidden rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)]">
+      <div
+        class="overflow-hidden rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)]"
+        data-aas-member-only={memberOnlyInIndex(deck.data) ? '' : undefined}
+      >
         <a
           href={getRelativeLocaleUrl(lang, `slides/${deckSlugOf(deck)}/`)}
           class="aas-lift block p-5 no-underline"

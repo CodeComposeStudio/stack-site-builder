@@ -8,7 +8,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 const PAGE = 12;
 import { paperTree, paperCatOf } from '@aas-data/paper-categories';
 import { getPapers, paperSlugOf, type PaperEntry } from '../lib/papers';
-import { listedInIndex } from '../lib/listing';
+import { memberOnlyInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 // Doubles as the papers index (no `categoryId` → all papers, grouped by
@@ -23,7 +23,8 @@ const { lang, categoryId } = Astro.props;
 const t = useTranslations(lang);
 // getPapers() sorts newest publication year first, matching the client-side
 // "recent" comparator over PaperCard's data-date (= year) — no reflow on load.
-const all = (await getPapers(lang)).filter((e) => listedInIndex(e.data));
+const all = await getPapers(lang);
+const hasMemberOnly = all.some((e) => memberOnlyInIndex(e.data));
 const catUrl = (cid: string) => getRelativeLocaleUrl(lang, `paper/category/${cid}/`);
 
 const itemsIn = (cid: string): PaperEntry[] => {
@@ -65,6 +66,7 @@ const card = (c: PaperEntry) => ({
   imageAlt: c.data.imageAlt,
   isPrivate: c.data.private,
   teaser: c.data.teaser,
+  memberOnly: memberOnlyInIndex(c.data),
 });
 ---
 
@@ -88,6 +90,9 @@ const card = (c: PaperEntry) => ({
 }
 
 {all.length === 0 && <p class="mt-8 text-[var(--aas-muted)]">{t('paper.empty')}</p>}
+{hasMemberOnly && (
+  <p data-aas-member-hint class="mt-4 text-sm text-[var(--aas-muted)]">{t('private.memberHint')}</p>
+)}
 
 {all.length > 0 && <div class="mt-6"><ListControls lang={lang} /></div>}
 
