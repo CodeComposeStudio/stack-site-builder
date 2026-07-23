@@ -206,8 +206,10 @@ teaser: A public one-liner shown on cards and above the login form. # optional
 
 The body ships **encrypted** (AES-256-GCM, key wrapped per user with PBKDF2) and
 is decrypted in the browser after login — no server needed, works on any static
-host. Listings show only the title + 🔒 (+ teaser); private URLs get `noindex`
-and stay out of the sitemap. Users and keys come from env vars (see
+host. By default a private entry stays OUT of index listings (reachable via
+direct links and the related sections on detail pages); set `listed: true` to
+show it as a locked teaser card (title + 🔒 + teaser). Private URLs get
+`noindex` and stay out of the sitemap. Users and keys come from env vars (see
 `playground/.env.sample`): `AAS_PRIVATE_USERS` (`id:password,…`),
 `AAS_PRIVATE_MASTER_SECRET` (rotate it to log every device out) and
 `AAS_PRIVATE_SESSION_DAYS`. Set them in `.env` locally or as CI secrets.
