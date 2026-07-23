@@ -11,6 +11,16 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.20.0] - 2026-07-24
+
+### Added
+
+- **Per-site custom footer** — footers are site identity, not theme chrome.
+  A site that ships `src/components/Footer.astro` (receiving a `lang` prop)
+  now replaces the theme's stock footer wholesale; without one, the stock
+  "Built with Astro" footer renders as before (now living in
+  `DefaultFooter.astro`, resolved through the `@aas-footer` alias).
+
 ## [1.19.5] - 2026-07-24
 
 ### Added

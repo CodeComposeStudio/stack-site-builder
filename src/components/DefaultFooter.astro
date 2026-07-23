@@ -1,0 +1,26 @@
+---
+// The theme's stock footer. A site replaces it wholesale by shipping its own
+// `src/components/Footer.astro` — the integration aliases `@aas-footer` to
+// that file when it exists (this one otherwise), so BaseLayout needs no
+// site-specific knowledge. A custom footer receives the same `lang` prop.
+import { useTranslations, type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<footer class="border-t border-[var(--aas-border)] py-8 text-center text-sm text-[var(--aas-muted)]">
+  <p>
+    {t('footer.builtWith')}
+    <a
+      href="https://astro.build"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="text-[var(--aas-accent)]">Astro</a
+    >. {t('footer.contribute')}
+  </p>
+</footer>
