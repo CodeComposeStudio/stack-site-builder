@@ -11,6 +11,16 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.19.5] - 2026-07-24
+
+### Added
+
+- **`iconInvert` for dark mode** — black line-art icons (e.g. Tabler-style
+  SVGs) vanished on the dark card background. Home cards and the home hero
+  (`iconInvert: true` in `site.home`), and product entries (`iconInvert`
+  frontmatter — applies on the products index and the landing hero) can now
+  flag an icon to be color-inverted when the dark theme is active.
+
 ## [1.19.4] - 2026-07-24
 
 ### Fixed

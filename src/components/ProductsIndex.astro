@@ -54,7 +54,7 @@ const sections = productTree.roots
             class="aas-lift flex items-center gap-6 rounded-3xl border border-[var(--aas-border)] bg-[var(--aas-panel)] p-6 no-underline"
           >
             {a.data.icon && (
-              <img src={withBase(a.data.icon)} alt="" class="h-20 w-20 shrink-0 rounded-[22%] object-contain" loading="lazy" />
+              <img src={withBase(a.data.icon)} alt="" class:list={['h-20 w-20 shrink-0 rounded-[22%] object-contain', a.data.iconInvert && 'aas-icon-invert']} loading="lazy" />
             )}
             <span class="min-w-0">
               <span class="block text-xl font-semibold text-[var(--aas-text)]">{a.data.title}</span>
