@@ -11,6 +11,22 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.19.0] - 2026-07-23
+
+### Added
+
+- **Header member login/logout** — sites with private content get an account
+  control in the header: a login dropdown (id/password, same credential
+  machinery as the page gates) and a logout button once signed in. The
+  control reveals itself only when the new `/aas-auth.json` endpoint reports
+  configured login users (it serves the salted user table every private page
+  already embeds — nothing new is exposed); sites without `AAS_PRIVATE_*`
+  env see nothing. Credential verification moved into a shared
+  `loginWithCredentials` helper in `lib/private-client`.
+- **Slides nav hides without listed decks** — a site whose decks are all
+  private+unlisted reaches them from course pages, so the header's Slides
+  item now appears only when the index actually lists at least one deck.
+
 ## [1.18.0] - 2026-07-23
 
 ### Added
@@ -303,6 +319,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.19.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.4...v1.18.0
 [1.17.4]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.3...v1.17.4
 [1.17.3]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.2...v1.17.3
