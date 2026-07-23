@@ -15,6 +15,7 @@
 // components resolve per-site taxonomy (categories, glossary, site identity)
 // at build time.
 import { fileURLToPath } from 'node:url';
+import { existsSync } from 'node:fs';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
@@ -175,6 +176,17 @@ export default function aasTheme({ glossary, sections = {} }) {
               alias: {
                 '@aas-data': fileURLToPath(new URL('./src/data', config.root)),
                 '@assets': fileURLToPath(new URL('./src/assets', config.root)),
+                // Footers are site identity, not theme chrome: when the site
+                // ships `src/components/Footer.astro`, BaseLayout renders it
+                // (via this alias) instead of the theme's stock footer.
+                '@aas-footer': (() => {
+                  const siteFooter = fileURLToPath(
+                    new URL('./src/components/Footer.astro', config.root),
+                  );
+                  return existsSync(siteFooter)
+                    ? siteFooter
+                    : fileURLToPath(new URL('./src/components/DefaultFooter.astro', import.meta.url));
+                })(),
               },
             },
 
