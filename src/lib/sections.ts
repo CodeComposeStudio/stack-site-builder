@@ -21,6 +21,7 @@ export type SectionKey =
   | 'articles'
   | 'courses'
   | 'products'
+  | 'papers'
   | 'samples'
   | 'slides'
   | 'glossary'
@@ -31,6 +32,7 @@ const DEFAULTS: Record<SectionKey, boolean> = {
   articles: true,
   courses: false, // opt-in: needs src/data/course-categories.ts on the site
   products: false, // opt-in: needs src/data/product-categories.ts on the site
+  papers: false, // opt-in: needs src/data/paper-categories.ts on the site
   samples: true,
   slides: true,
   glossary: true,

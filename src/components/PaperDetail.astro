@@ -1,0 +1,123 @@
+---
+import { render } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { getPapers, paperSlugOf, type PaperEntry } from '../lib/papers';
+import { inlineMd } from '../lib/inline-md';
+import { Image } from 'astro:assets';
+import { useTranslations, type Lang } from '../i18n/ui';
+import { formatDate } from '../lib/dates';
+import MermaidLoader from './MermaidLoader.astro';
+import TocRail from './TocRail.astro';
+import Breadcrumb from './Breadcrumb.astro';
+import ArrowUpRight from './ArrowUpRight.astro';
+import { paperTree, paperCatOf } from '@aas-data/paper-categories';
+import RelatedPapers from './RelatedPapers.astro';
+import RelatedTools from './RelatedTools.astro';
+
+interface Props {
+  entry: PaperEntry;
+  lang: Lang;
+}
+
+const { entry, lang } = Astro.props;
+const t = useTranslations(lang);
+const { Content, headings } = await render(entry);
+const data = entry.data;
+const tocItems = headings.filter((h) => h.depth >= 2 && h.depth <= 3);
+const bodyHasMermaid = (entry.body ?? '').includes('```mermaid');
+
+// Sibling papers linked from frontmatter (mutual cross-links, like concepts).
+const papers = await getPapers(lang);
+const paperBySlug = new Map(papers.map((c) => [paperSlugOf(c), c]));
+const relatedPapers = data.related
+  .map((sl) => paperBySlug.get(sl))
+  .filter(Boolean) as PaperEntry[];
+
+// External resource buttons: arXiv, the publisher page, and released code.
+const links = [
+  data.arxiv && { label: t('paper.arxiv'), href: data.arxiv },
+  data.paperUrl && { label: t('paper.paper'), href: data.paperUrl },
+  data.repo && { label: t('paper.code'), href: data.repo },
+].filter(Boolean) as { label: string; href: string }[];
+
+// Breadcrumb: All papers › category › subcategory… (each segment linked).
+const crumbs = [
+  { label: t('paper.backToPapers'), href: getRelativeLocaleUrl(lang, 'paper/') },
+  ...paperTree.pathOf(paperCatOf(data.category)).map((c) => ({
+    label: c.label[lang],
+    href: getRelativeLocaleUrl(lang, `paper/category/${c.id}/`),
+  })),
+];
+---
+
+<Breadcrumb segments={crumbs} />
+
+<header class="mt-4 pb-6">
+  <h1 class="text-3xl font-bold tracking-tight">{data.title}</h1>
+  {
+    data.authors.length > 0 && (
+      <p class="mt-2 text-sm text-[var(--aas-muted)]">
+        <span class="font-semibold">{t('paper.authors')}:</span> {data.authors.join(', ')}
+      </p>
+    )
+  }
+  <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[var(--aas-muted)]">
+    {data.venue && <span>{data.venue}</span>}
+    {data.year && <span>{data.year}</span>}
+    {
+      data.openSource && (
+        <span class="rounded-full border border-[var(--aas-accent)] px-2 py-0.5 text-xs text-[var(--aas-accent)]">
+          {t('paper.openSource')}
+        </span>
+      )
+    }
+    {data.version && <span>{t('meta.docVersion')} {data.version}</span>}
+    {
+      data.updated && (
+        <span>
+          {t('paper.updated')} {formatDate(data.updated, lang)}
+        </span>
+      )
+    }
+  </p>
+  {
+    links.length > 0 && (
+      <p class="mt-3 flex flex-wrap items-center gap-2">
+        {links.map((l) => (
+          <a
+            href={l.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="rounded-full border border-[var(--aas-border)] bg-[var(--aas-panel)] px-3 py-1 text-sm text-[var(--aas-text)] no-underline hover:bg-[var(--aas-tint)]"
+          >
+            {l.label}
+            <ArrowUpRight size={14} class="ml-0.5 text-[var(--aas-muted)]" />
+          </a>
+        ))}
+      </p>
+    )
+  }
+  <p class="mt-2 aas-md text-lg whitespace-pre-line text-[var(--aas-muted)]" set:html={inlineMd(data.description)} />
+  {
+    data.image && (
+      <Image
+        src={data.image}
+        alt={data.imageAlt ?? data.title}
+        class="mt-5 aspect-[2/1] w-full rounded-2xl border border-[var(--aas-border)] object-cover"
+      />
+    )
+  }
+</header>
+
+<RelatedPapers lang={lang} papers={relatedPapers} />
+
+<div class="mt-8 flex items-start gap-8">
+  <article class="prose max-w-none aas-reading min-w-0 flex-1">
+    <Content />
+  </article>
+  <TocRail lang={lang} items={tocItems} />
+</div>
+
+<RelatedTools lang={lang} slugs={data.tools} />
+
+{bodyHasMermaid && <MermaidLoader />}

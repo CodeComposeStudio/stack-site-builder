@@ -1,0 +1,35 @@
+---
+import { site } from '@aas-data/site';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PaperDetail from '../../../components/PaperDetail.astro';
+import PrivateGate from '../../../components/PrivateGate.astro';
+import { getPapers, paperSlugOf } from '../../../lib/papers';
+import { allLocales, langParam } from '../../../lib/locales';
+
+export const getStaticPaths = (async () => {
+  const paths: Awaited<ReturnType<GetStaticPaths>> = [];
+  for (const lang of allLocales) {
+    for (const entry of await getPapers(lang)) {
+      paths.push({ params: { lang: langParam(lang), id: paperSlugOf(entry) }, props: { lang, entry } });
+    }
+  }
+  return paths;
+}) satisfies GetStaticPaths;
+
+const { lang, entry } = Astro.props;
+const slug = paperSlugOf(entry);
+const priv = entry.data.private;
+---
+
+<BaseLayout
+  title={`${entry.data.title} — ${site.name}`}
+  description={priv ? entry.data.teaser : entry.data.description}
+  lang={lang}
+  path={`paper/${slug}/`}
+  noindex={priv}
+>
+  <PrivateGate enabled={priv} lang={lang} title={entry.data.title} teaser={entry.data.teaser}>
+    <PaperDetail entry={entry} lang={lang} />
+  </PrivateGate>
+</BaseLayout>
