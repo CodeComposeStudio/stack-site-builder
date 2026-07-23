@@ -8,6 +8,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 const PAGE = 12;
 import { courseTree, courseCatOf } from '@aas-data/course-categories';
 import { getCourses, courseSlugOf, type CourseEntry } from '../lib/courses';
+import { listedInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 // Doubles as the course index (no `categoryId` → all courses, grouped by
@@ -22,7 +23,7 @@ const { lang, categoryId } = Astro.props;
 const t = useTranslations(lang);
 // getCourses() order (manual `order` desc, then date) agrees with the client
 // "recent" comparator over CourseCard's data-date keys — no reflow on load.
-const all = await getCourses(lang);
+const all = (await getCourses(lang)).filter((e) => listedInIndex(e.data));
 const catUrl = (cid: string) => getRelativeLocaleUrl(lang, `course/category/${cid}/`);
 
 const itemsIn = (cid: string): CourseEntry[] => {

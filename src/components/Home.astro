@@ -7,6 +7,7 @@ import { rootCategories, descendantIds } from '@aas-data/categories';
 import { getStacks, slugOf } from '../lib/stacks';
 import { site } from '@aas-data/site';
 import { deriveFacets } from '../lib/facets';
+import { listedInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -15,7 +16,7 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const entries = await getStacks(lang);
+const entries = (await getStacks(lang)).filter((e) => listedInIndex(e.data));
 
 // Default order is alphabetical (matches the client's default sort, so no flash).
 // Group by top-level category, rolling up every subcategory in its subtree.
