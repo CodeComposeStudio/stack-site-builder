@@ -11,6 +11,18 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.19.2] - 2026-07-23
+
+### Fixed
+
+- **Dark mode made custom-styled diagrams unreadable** — authored
+  `style X fill:#…` lines carry light-mode colors, while Mermaid's HTML
+  labels take their text color from the theme variables; in dark mode that
+  paired light text with the hardcoded light fills. The loader now drops
+  fill styles when rendering in dark mode, so those diagrams follow the
+  theme palette there — light mode keeps the authored colors, and toggling
+  the theme re-renders accordingly.
+
 ## [1.19.1] - 2026-07-23
 
 ### Changed
@@ -333,6 +345,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.19.2]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.19.1...v1.19.2
 [1.19.1]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.19.0...v1.19.1
 [1.19.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.18.0...v1.19.0
 [1.18.0]: https://github.com/CodeCompose7/stack-site-builder/compare/v1.17.4...v1.18.0
