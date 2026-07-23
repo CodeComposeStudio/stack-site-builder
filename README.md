@@ -38,9 +38,9 @@ export const collections = defineAasCollections({ categoryMap });
 | --- | --- |
 | `src/data/site.ts` | Site identity: name, repo URL (`repoNav: false` hides the header's GitHub link), the `locales` it ships, optional `sections` toggles, browser icons (`icons: { favicon, appleTouch, manifest }`), the `home` template, per-locale UI string overrides |
 | `src/data/categories.ts` | The tool-catalog category tree (validated against content) |
-| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` · `product-categories.ts` (opt-in) | Taxonomies for concepts / articles / courses / products |
+| `src/data/concept-categories.ts` · `article-categories.ts` · `course-categories.ts` · `product-categories.ts` · `paper-categories.ts` (opt-in) | Taxonomies for concepts / articles / courses / products / papers |
 | `src/data/glossary.mjs` | `[[Term]]` wikilink targets |
-| `src/content/{stacks,concepts,courses,products,articles,slides}/` | The content, one MDX file per locale |
+| `src/content/{stacks,concepts,courses,products,papers,articles,slides}/` | The content, one MDX file per locale |
 | `src/content/pages/` | Standalone top-level pages (e.g. an About/소개), rendered at `/<slug>/` and optionally linked in the header nav |
 | `public/` · `samples/` | Logos/favicons and runnable sample projects |
 
@@ -72,7 +72,7 @@ The rest are opt-out — **concepts, articles, samples, slides, glossary** and t
 standalone **pages** collection (About/소개, …) — so a site can ship only what it
 needs. Turning one off removes both its routes and its header-nav item. (`pages`
 also has finer control: each page's `nav` / `draft` frontmatter, or simply not
-authoring it.) **courses** and **products** are the opt-IN sections — see below.
+authoring it.) **courses**, **products** and **papers** are the opt-IN sections — see below.
 
 Declare the toggles once in `src/data/site.ts` and forward them to the theme in
 astro.config (which needs them to skip route injection). Import `SectionKey` from
@@ -166,6 +166,16 @@ Localized values are either one string or a per-locale record with
 default-locale fallback. On a cards home the header's Browse link (which
 anchors into the catalog) hides itself.
 
+## Papers (opt-in)
+
+A reading room for the literature behind the stack: each entry is one paper
+with its full author list, venue/year, arXiv / publisher / code links and an
+open-source availability badge; the body is your reading of it. `tools`
+cross-links catalog stacks. Enable with `sections: { papers: true }` plus
+`src/data/paper-categories.ts` (exporting `paperTree` / `paperCatOf`), and
+optionally pass `paperCategoryMap` to `defineAasCollections`. Routes mirror
+concepts: `/paper/`, `/paper/<id>/`, `/paper/category/<id>/`.
+
 ## Body components
 
 Reusable MDX-body components, importable from any collection's content:
@@ -196,8 +206,10 @@ teaser: A public one-liner shown on cards and above the login form. # optional
 
 The body ships **encrypted** (AES-256-GCM, key wrapped per user with PBKDF2) and
 is decrypted in the browser after login — no server needed, works on any static
-host. Listings show only the title + 🔒 (+ teaser); private URLs get `noindex`
-and stay out of the sitemap. Users and keys come from env vars (see
+host. By default a private entry stays OUT of index listings (reachable via
+direct links and the related sections on detail pages); set `listed: true` to
+show it as a locked teaser card (title + 🔒 + teaser). Private URLs get
+`noindex` and stay out of the sitemap. Users and keys come from env vars (see
 `playground/.env.sample`): `AAS_PRIVATE_USERS` (`id:password,…`),
 `AAS_PRIVATE_MASTER_SECRET` (rotate it to log every device out) and
 `AAS_PRIVATE_SESSION_DAYS`. Set them in `.env` locally or as CI secrets.

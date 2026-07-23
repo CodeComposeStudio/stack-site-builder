@@ -8,6 +8,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 const PAGE = 12;
 import { conceptTree, conceptCatOf } from '@aas-data/concept-categories';
 import { getConcepts, conceptSlugOf, type ConceptEntry } from '../lib/concepts';
+import { listedInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 // Doubles as the concept index (no `categoryId` → all concepts, grouped by
@@ -22,7 +23,7 @@ const { lang, categoryId } = Astro.props;
 const t = useTranslations(lang);
 // Default order is most-recently-updated first (matches the ListControls
 // default), so the server render and the client sort agree — no reflow on load.
-const all = (await getConcepts(lang)).sort(
+const all = (await getConcepts(lang)).filter((e) => listedInIndex(e.data)).sort(
   (a, b) =>
     (b.data.updated?.getTime() ?? 0) - (a.data.updated?.getTime() ?? 0) ||
     a.data.title.localeCompare(b.data.title),

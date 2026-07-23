@@ -8,6 +8,7 @@ import ArrowUpRight from './ArrowUpRight.astro';
 const PAGE = 12;
 import { articleTree, articleCatOf } from '@aas-data/article-categories';
 import { getArticles, articleSlugOf, type ArticleEntry } from '../lib/articles';
+import { listedInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 // Doubles as the writing index (no `categoryId` → all articles, grouped by
@@ -20,7 +21,7 @@ interface Props {
 
 const { lang, categoryId } = Astro.props;
 const t = useTranslations(lang);
-const all = await getArticles(lang);
+const all = (await getArticles(lang)).filter((e) => listedInIndex(e.data));
 const catUrl = (cid: string) => getRelativeLocaleUrl(lang, `article/category/${cid}/`);
 
 const itemsIn = (cid: string): ArticleEntry[] => {

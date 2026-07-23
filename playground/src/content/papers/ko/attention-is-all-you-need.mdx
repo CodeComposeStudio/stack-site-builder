@@ -1,0 +1,33 @@
+---
+title: Attention Is All You Need
+authors:
+  - Ashish Vaswani
+  - Noam Shazeer
+  - Niki Parmar
+  - Jakob Uszkoreit
+  - Llion Jones
+  - Aidan N. Gomez
+  - Łukasz Kaiser
+  - Illia Polosukhin
+year: 2017
+venue: NeurIPS
+description: Transformer — 어텐션이 순환 구조를 대체하며 현대 LLM의 토대가 된 논문.
+category: paper-architecture
+arxiv: "https://arxiv.org/abs/1706.03762"
+openSource: true
+repo: "https://github.com/tensorflow/tensor2tensor"
+tags: [transformer, attention, nlp]
+version: "1.0"
+updated: 2026-07-23
+---
+
+## 왜 중요한가 \{#why}
+
+순환 구조를 셀프 어텐션으로 대체해 병렬 학습과 장거리 의존성 처리를 가능하게
+했습니다 — 현대의 모든 LLM이 이 아키텍처 위에 서 있습니다.
+
+## 핵심 아이디어 \{#key-ideas}
+
+- Scaled dot-product attention과 multi-head attention
+- 순환 대신 positional encoding
+- 어텐션과 feed-forward만으로 쌓은 인코더–디코더 스택

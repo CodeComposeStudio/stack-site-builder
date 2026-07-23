@@ -2,6 +2,7 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import StackCard from './StackCard.astro';
 import { getStacksByTag, slugOf } from '../lib/stacks';
+import { listedInIndex } from '../lib/listing';
 import { useTranslations, type Lang } from '../i18n/ui';
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 
 const { lang, tag } = Astro.props;
 const t = useTranslations(lang);
-const entries = (await getStacksByTag(lang, tag)).sort((a, b) =>
+const entries = (await getStacksByTag(lang, tag)).filter((e) => listedInIndex(e.data)).sort((a, b) =>
   a.data.name.localeCompare(b.data.name),
 );
 ---

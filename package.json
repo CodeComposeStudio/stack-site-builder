@@ -1,7 +1,7 @@
 {
   "name": "stack-site-builder",
   "type": "module",
-  "version": "1.17.5",
+  "version": "1.18.0",
   "license": "MIT",
   "packageManager": "pnpm@11.7.0",
   "description": "The engine behind the awesome-*-stack catalog sites: an Astro theme with the catalog/concepts/articles/slides/samples routes, components, styles and markdown pipeline. Sites provide content, taxonomy data and config.",
