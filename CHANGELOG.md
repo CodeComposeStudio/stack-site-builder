@@ -11,6 +11,17 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.19.4] - 2026-07-24
+
+### Fixed
+
+- **Header no longer flickers on navigation** — the member login control used
+  to render `hidden` and only appear after a runtime `/aas-auth.json` fetch,
+  shifting the whole right-side icon row on every page load. Whether login
+  users are configured is a build-time fact (`AAS_PRIVATE_*` env), so the
+  control now renders in its final state; the fetch only wires the login form,
+  and is skipped entirely on sites without private users.
+
 ## [1.19.3] - 2026-07-23
 
 ### Fixed

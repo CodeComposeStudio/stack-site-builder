@@ -11,6 +11,19 @@ import { getNavProducts, getTopProducts, productSlugOf } from '../lib/products';
 import { homeTemplate } from '../lib/home';
 import { sectionEnabled, type SectionKey } from '../lib/sections';
 import { siteIcons } from '../lib/icons';
+import { privateClientData } from '../lib/private';
+
+// Whether the site has login users configured is a build-time fact (AAS_PRIVATE_*
+// env), so the header login control renders in its final state instead of being
+// revealed after a runtime fetch — a late reveal shifted the whole icon row on
+// every navigation.
+let authEnabled = false;
+try {
+  privateClientData();
+  authEnabled = true;
+} catch {
+  /* no private env — control stays hidden */
+}
 
 interface Props {
   title: string;
@@ -272,9 +285,9 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
               ))
             }
           </div>
-          {/* Member login/logout for private content — hidden until
-              /aas-auth.json reports the site has login users configured. */}
-          <details class="aas-menu relative" data-auth hidden>
+          {/* Member login/logout for private content — rendered only when the
+              build has login users configured, so the header never reflows. */}
+          <details class="aas-menu relative" data-auth hidden={!authEnabled}>
             <summary
               class="flex cursor-pointer list-none items-center rounded-lg border border-[var(--aas-border)] px-2.5 py-1 text-[var(--aas-text)] select-none"
               aria-label={t('private.login')}
@@ -391,17 +404,17 @@ const navItems = allNavItems.filter((item) => !item.section || sectionEnabled(it
         type AuthData,
       } from '../lib/private-client';
 
-      // Header member login/logout: reveal the control only when the site has
-      // login users configured (/aas-auth.json — { enabled: false } otherwise).
+      // Header member login/logout: visibility is decided at build time (the
+      // control renders hidden on sites without login users) — the fetch only
+      // wires the login form with the user table from /aas-auth.json.
       const authCtrl = document.querySelector<HTMLDetailsElement>('[data-auth]');
-      if (authCtrl) {
+      if (authCtrl && !authCtrl.hidden) {
         (async () => {
           try {
             const base = import.meta.env.BASE_URL.replace(/\/$/, '');
             const res = await fetch(`${base}/aas-auth.json`);
             const data = (await res.json()) as { enabled: boolean } & AuthData;
             if (!data.enabled) return;
-            authCtrl.hidden = false;
             const form = authCtrl.querySelector<HTMLFormElement>('[data-auth-form]')!;
             const logoutBtn = authCtrl.querySelector<HTMLButtonElement>('[data-auth-logout]')!;
             const errorEl = authCtrl.querySelector<HTMLElement>('[data-auth-error]')!;
