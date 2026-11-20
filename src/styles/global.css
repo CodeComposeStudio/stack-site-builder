@@ -468,6 +468,14 @@ body {
   font-family: var(--aas-sans);
 }
 
+/* Full-bleed sections (.aas-bleed: the product landing, the cards home) size
+   themselves in cqw against <body> instead of 100vw, which includes a classic
+   vertical scrollbar and made those pages scroll sideways by half its width.
+   Scoped to pages that have one, so other pages keep a plain <body>. */
+body:has(.aas-bleed) {
+  container-type: inline-size;
+}
+
 /* Tailwind v4 no longer sets a pointer cursor on buttons; restore it (and for
    <summary>, used by the custom dropdowns). */
 button:not(:disabled),

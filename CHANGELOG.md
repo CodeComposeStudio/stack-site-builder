@@ -11,6 +11,19 @@ content schema, while a consuming site supplies only content, taxonomy data and
 config. Sites track the theme with `pnpm up stack-site-builder`, so each release
 here is a plain version bump they pull in.
 
+## [1.26.1] - 2026-11-20
+
+### Fixed
+
+- **Product landings and the cards home scrolled sideways by a few pixels.**
+  Their full-bleed sections (`.aas-bleed`) were `100vw` wide, and `100vw`
+  includes a classic, always-shown vertical scrollbar (Windows, or macOS with
+  "Show scroll bars: Always" or a mouse attached), so each section stuck out
+  past the page by half the scrollbar's width and the page gained a horizontal
+  scrollbar. On pages with a bleed, `<body>` is now an inline-size container
+  and the sections size in `cqw` against it, so they span exactly the visible
+  width. Browsers without container units keep the old `100vw` sizing.
+
 ## [1.26.0] - 2026-09-02
 
 ### Added
@@ -664,6 +677,7 @@ catalog sites from a thin content-only repository.
 - **Standalone development setup** — a devcontainer and a minimal `playground/`
   consuming site for developing and previewing the theme on its own.
 
+[1.26.1]: https://github.com/CodeComposeStudio/stack-site-builder/compare/v1.26.0...v1.26.1
 [1.26.0]: https://github.com/CodeComposeStudio/stack-site-builder/compare/v1.25.5...v1.26.0
 [1.25.5]: https://github.com/CodeComposeStudio/stack-site-builder/compare/v1.25.4...v1.25.5
 [1.25.4]: https://github.com/CodeComposeStudio/stack-site-builder/compare/v1.25.3...v1.25.4
