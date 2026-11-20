@@ -336,6 +336,16 @@ const altBg = (i: number) => i % 2 === 1;
     right: 50%;
     width: 100vw;
   }
+  /* 100vw counts a classic (always-shown) vertical scrollbar, so the section
+     stuck out past the page and the page scrolled sideways. 100cqw measures
+     <body>, which global.css makes a container on pages with a bleed. */
+  @supports (width: 1cqw) {
+    .aas-bleed {
+      margin-left: -50cqw;
+      margin-right: -50cqw;
+      width: 100cqw;
+    }
+  }
   /* Screenshot inside the device-frame art. The frame draws on top; the
      screen sits inset behind it (tune per frame art via site CSS if needed). */
   .aas-phone {
